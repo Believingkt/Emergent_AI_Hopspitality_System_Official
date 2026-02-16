@@ -1,34 +1,136 @@
-.App-logo {
-    height: 40vmin;
-    pointer-events: none;
+/* Lakeze Prestige - Multi-Venue AI Butler Platform */
+
+/* Remove default center alignment */
+.App {
+  min-height: 100vh;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-    .App-logo {
-        animation: App-logo-spin infinite 20s linear;
-    }
+/* Ensure proper scrolling */
+html, body, #root {
+  height: 100%;
+  overflow: hidden;
 }
 
-.App-header {
-    background-color: #0f0f10;
-    min-height: 100vh;
-    display: flex;
+/* Loading spinner animation enhancement */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Task card transitions */
+.task-card-enter {
+  opacity: 0;
+  transform: translateX(-10px);
+}
+
+.task-card-enter-active {
+  opacity: 1;
+  transform: translateX(0);
+  transition: opacity 200ms ease-out, transform 200ms ease-out;
+}
+
+/* Button hover effects */
+button {
+  transition: background-color 200ms ease, box-shadow 200ms ease, transform 100ms ease;
+}
+
+button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+/* Input focus effects */
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+}
+
+/* Card shadow transitions */
+.card-shadow-transition {
+  transition: box-shadow 200ms ease;
+}
+
+/* Sidebar tooltip animation */
+[data-radix-popper-content-wrapper] {
+  animation: fadeIn 150ms ease-out;
+}
+
+/* Dialog animations */
+[data-state="open"] > [data-radix-dialog-content] {
+  animation: dialogShow 200ms ease-out;
+}
+
+@keyframes dialogShow {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -48%) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+/* Scrollbar styling for WebKit browsers */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #3D4A2C transparent;
+}
+
+/* Badge animations */
+.badge-pulse {
+  animation: badgePulse 2s ease-in-out infinite;
+}
+
+@keyframes badgePulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Table row hover */
+tr {
+  transition: background-color 150ms ease;
+}
+
+/* Toast customizations */
+[data-sonner-toast] {
+  font-family: 'Public Sans', sans-serif !important;
+}
+
+/* Calendar customizations */
+.rdp-day_selected {
+  background-color: #3D4A2C !important;
+}
+
+.rdp-day_selected:hover {
+  background-color: #2C381E !important;
+}
+
+/* Select dropdown styling */
+[data-radix-select-viewport] {
+  padding: 4px;
+}
+
+/* Tab indicator animation */
+[data-state="active"][role="tab"] {
+  transition: background-color 200ms ease, color 200ms ease;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .three-column-layout {
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    font-size: calc(10px + 2vmin);
-    color: white;
-}
-
-.App-link {
-    color: #61dafb;
-}
-
-@keyframes App-logo-spin {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(360deg);
-    }
+  }
 }
