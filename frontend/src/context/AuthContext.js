@@ -17,6 +17,7 @@ export const AuthProvider = ({ children }) => {
         password
       });
       
+      // Manus API: { access_token, user: {...} }
       const { access_token, user: userData } = response.data;
       
       localStorage.setItem('token', access_token);
@@ -25,7 +26,7 @@ export const AuthProvider = ({ children }) => {
       
       return { success: true };
     } catch (error) {
-      const message = error.response?.data?.detail || '登入失敗，請檢查帳號密碼';
+      const message = error.response?.data?.error || error.response?.data?.detail || '登入失敗，請檢查帳號密碼';
       return { success: false, error: message };
     }
   };
@@ -46,7 +47,9 @@ export const AuthProvider = ({ children }) => {
       const response = await axios.get(`${API_URL}/api/auth/me`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setUser(response.data);
+      // Manus API: { user: {...} }
+      const userData = response.data.user || response.data;
+      setUser(userData);
     } catch (error) {
       console.error('Failed to fetch user:', error);
       logout();
