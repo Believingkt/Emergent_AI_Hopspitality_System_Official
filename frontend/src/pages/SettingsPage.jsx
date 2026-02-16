@@ -141,13 +141,13 @@ export default function SettingsPage() {
 
   if (!isAdmin) {
     return (
-      <div className="h-screen flex bg-[#F5F5F0]">
+      <div className="h-screen flex bg-[#09090b]">
         <Sidebar />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
-            <Shield className="w-16 h-16 mx-auto mb-4 text-[#64748B]" />
-            <h2 className="text-xl font-semibold text-[#1F2E0E] mb-2">權限不足</h2>
-            <p className="text-[#64748B]">只有管理員可以存取設定頁面</p>
+            <Shield className="w-16 h-16 mx-auto mb-4 text-[#71717a]" />
+            <h2 className="text-xl font-semibold text-white mb-2">權限不足</h2>
+            <p className="text-[#a1a1aa]">只有管理員可以存取設定頁面</p>
           </div>
         </div>
       </div>
@@ -155,7 +155,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="h-screen flex bg-[#F5F5F0]" data-testid="settings-page">
+    <div className="h-screen flex bg-[#09090b]" data-testid="settings-page">
       <Sidebar />
       
       <div className="flex-1 flex flex-col min-w-0">
@@ -163,10 +163,10 @@ export default function SettingsPage() {
 
         <div className="flex-1 p-6 overflow-auto">
           <Tabs defaultValue="venues" className="space-y-6">
-            <TabsList className="bg-white border border-[#E2E8F0] p-1">
+            <TabsList className="bg-[#18181b] border border-[#27272a] p-1 rounded-lg">
               <TabsTrigger 
                 value="venues"
-                className="data-[state=active]:bg-[#3D4A2C] data-[state=active]:text-white rounded-sm px-4"
+                className="data-[state=active]:bg-[#FF6B35] data-[state=active]:text-white text-[#a1a1aa] rounded-lg px-4 transition-all duration-300"
                 data-testid="tab-venues"
               >
                 <Building2 className="w-4 h-4 mr-2" />
@@ -174,7 +174,7 @@ export default function SettingsPage() {
               </TabsTrigger>
               <TabsTrigger 
                 value="managers"
-                className="data-[state=active]:bg-[#3D4A2C] data-[state=active]:text-white rounded-sm px-4"
+                className="data-[state=active]:bg-[#FF6B35] data-[state=active]:text-white text-[#a1a1aa] rounded-lg px-4 transition-all duration-300"
                 data-testid="tab-managers"
               >
                 <Users className="w-4 h-4 mr-2" />
@@ -187,10 +187,10 @@ export default function SettingsPage() {
               <div className="grid grid-cols-12 gap-6">
                 {/* Venue List */}
                 <div className="col-span-4">
-                  <Card className="border-[#E2E8F0] rounded-sm shadow-sm">
+                  <Card className="border-[#27272a] bg-[#18181b] rounded-xl">
                     <CardHeader className="pb-3">
-                      <CardTitle className="text-lg flex items-center gap-2">
-                        <Building2 className="w-5 h-5 text-[#3D4A2C]" />
+                      <CardTitle className="text-lg flex items-center gap-2 text-white">
+                        <Building2 className="w-5 h-5 text-[#FF6B35]" />
                         場域列表
                       </CardTitle>
                     </CardHeader>
@@ -201,16 +201,16 @@ export default function SettingsPage() {
                             <div
                               key={venue.id}
                               onClick={() => handleVenueSelect(venue)}
-                              className={`p-4 rounded-sm cursor-pointer transition-all duration-200 ${
+                              className={`p-4 rounded-lg cursor-pointer transition-all duration-300 ${
                                 selectedVenue?.id === venue.id
-                                  ? 'bg-[#3D4A2C] text-white'
-                                  : 'bg-[#F5F5F0] hover:bg-[#EBEBE6] text-[#1F2E0E]'
+                                  ? 'bg-[#FF6B35] text-white'
+                                  : 'bg-[#27272a]/50 hover:bg-[#27272a] text-white'
                               }`}
                               data-testid={`venue-item-${venue.id}`}
                             >
                               <div className="font-medium">{venue.name}</div>
                               <div className={`text-sm mt-1 ${
-                                selectedVenue?.id === venue.id ? 'text-white/70' : 'text-[#64748B]'
+                                selectedVenue?.id === venue.id ? 'text-white/70' : 'text-[#a1a1aa]'
                               }`}>
                                 ID: {venue.id}
                               </div>
@@ -224,22 +224,22 @@ export default function SettingsPage() {
 
                 {/* Venue Config */}
                 <div className="col-span-8">
-                  <Card className="border-[#E2E8F0] rounded-sm shadow-sm">
+                  <Card className="border-[#27272a] bg-[#18181b] rounded-xl">
                     <CardHeader className="pb-3">
                       <div className="flex items-center justify-between">
                         <div>
-                          <CardTitle className="text-lg flex items-center gap-2">
-                            <SettingsIcon className="w-5 h-5 text-[#3D4A2C]" />
+                          <CardTitle className="text-lg flex items-center gap-2 text-white">
+                            <SettingsIcon className="w-5 h-5 text-[#00B4D8]" />
                             場域設定
                           </CardTitle>
-                          <CardDescription className="mt-1">
+                          <CardDescription className="mt-1 text-[#a1a1aa]">
                             {selectedVenue?.name || '請選擇場域'}
                           </CardDescription>
                         </div>
                         <Button
                           onClick={handleSaveConfig}
                           disabled={saving || !venueConfig}
-                          className="bg-[#3D4A2C] hover:bg-[#2C381E] text-white rounded-sm"
+                          className="bg-[#FF6B35] hover:bg-[#E55A2B] text-white rounded-full btn-glow transition-all duration-300"
                           data-testid="save-venue-config-btn"
                         >
                           {saving ? (
@@ -254,14 +254,14 @@ export default function SettingsPage() {
                     <CardContent>
                       {configLoading ? (
                         <div className="flex items-center justify-center py-12">
-                          <Loader2 className="w-6 h-6 animate-spin text-[#3D4A2C]" />
+                          <Loader2 className="w-6 h-6 animate-spin text-[#FF6B35]" />
                         </div>
                       ) : venueConfig ? (
                         <div className="space-y-6">
                           {/* AI Model */}
                           <div className="space-y-2">
-                            <Label className="flex items-center gap-2 text-[#1F2E0E]">
-                              <Bot className="w-4 h-4 text-[#3D4A2C]" />
+                            <Label className="flex items-center gap-2 text-white">
+                              <Bot className="w-4 h-4 text-[#00B4D8]" />
                               AI 模型
                             </Label>
                             <Select
@@ -271,14 +271,14 @@ export default function SettingsPage() {
                               }
                             >
                               <SelectTrigger 
-                                className="bg-white border-[#E2E8F0] rounded-sm"
+                                className="bg-[#27272a]/50 border-[#27272a] text-white rounded-lg"
                                 data-testid="ai-model-select"
                               >
                                 <SelectValue placeholder="選擇 AI 模型" />
                               </SelectTrigger>
-                              <SelectContent className="bg-white rounded-sm">
+                              <SelectContent className="bg-[#18181b] border-[#27272a] rounded-lg">
                                 {AI_MODELS.map((model) => (
-                                  <SelectItem key={model.value} value={model.value}>
+                                  <SelectItem key={model.value} value={model.value} className="text-white hover:bg-[#27272a] focus:bg-[#27272a] focus:text-white">
                                     {model.label}
                                   </SelectItem>
                                 ))}
@@ -288,8 +288,8 @@ export default function SettingsPage() {
 
                           {/* Knowledge Base URL */}
                           <div className="space-y-2">
-                            <Label className="flex items-center gap-2 text-[#1F2E0E]">
-                              <Link className="w-4 h-4 text-[#3D4A2C]" />
+                            <Label className="flex items-center gap-2 text-white">
+                              <Link className="w-4 h-4 text-[#00B4D8]" />
                               AI 知識庫 URL
                             </Label>
                             <Input
@@ -298,23 +298,23 @@ export default function SettingsPage() {
                                 setVenueConfig({ ...venueConfig, ai_knowledge_base_url: e.target.value })
                               }
                               placeholder="https://example.com/knowledge-base"
-                              className="bg-white border-[#E2E8F0] rounded-sm"
+                              className="bg-[#27272a]/50 border-[#27272a] text-white placeholder:text-[#52525b] rounded-lg"
                               data-testid="knowledge-base-input"
                             />
                           </div>
 
-                          <Separator className="bg-[#E2E8F0]" />
+                          <Separator className="bg-[#27272a]" />
 
                           {/* Raw Config Display */}
                           <div className="space-y-2">
-                            <Label className="text-[#64748B]">完整設定（JSON）</Label>
-                            <pre className="p-4 bg-[#F5F5F0] rounded-sm text-sm overflow-auto max-h-48 font-mono">
+                            <Label className="text-[#a1a1aa]">完整設定（JSON）</Label>
+                            <pre className="p-4 bg-[#27272a]/50 rounded-lg text-sm overflow-auto max-h-48 font-mono text-[#00B4D8] border border-[#27272a]">
                               {JSON.stringify(venueConfig, null, 2)}
                             </pre>
                           </div>
                         </div>
                       ) : (
-                        <div className="text-center py-12 text-[#64748B]">
+                        <div className="text-center py-12 text-[#71717a]">
                           <SettingsIcon className="w-12 h-12 mx-auto mb-4 opacity-30" />
                           <p>請從左側選擇場域以查看設定</p>
                         </div>
@@ -327,19 +327,19 @@ export default function SettingsPage() {
 
             {/* Managers Tab */}
             <TabsContent value="managers" className="mt-6">
-              <Card className="border-[#E2E8F0] rounded-sm shadow-sm">
+              <Card className="border-[#27272a] bg-[#18181b] rounded-xl">
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
                     <div>
-                      <CardTitle className="text-lg flex items-center gap-2">
-                        <Users className="w-5 h-5 text-[#3D4A2C]" />
+                      <CardTitle className="text-lg flex items-center gap-2 text-white">
+                        <Users className="w-5 h-5 text-[#00B4D8]" />
                         管家團隊
                       </CardTitle>
-                      <CardDescription>管理平台管家帳號</CardDescription>
+                      <CardDescription className="text-[#a1a1aa]">管理平台管家帳號</CardDescription>
                     </div>
                     <Button
                       onClick={() => setAddManagerOpen(true)}
-                      className="bg-[#3D4A2C] hover:bg-[#2C381E] text-white rounded-sm"
+                      className="bg-[#FF6B35] hover:bg-[#E55A2B] text-white rounded-full btn-glow transition-all duration-300"
                       data-testid="add-manager-btn"
                     >
                       <Plus className="w-4 h-4 mr-2" />
@@ -350,39 +350,39 @@ export default function SettingsPage() {
                 <CardContent>
                   {managersLoading ? (
                     <div className="flex items-center justify-center py-12">
-                      <Loader2 className="w-6 h-6 animate-spin text-[#3D4A2C]" />
+                      <Loader2 className="w-6 h-6 animate-spin text-[#FF6B35]" />
                     </div>
                   ) : (
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                       {managers.map((manager) => (
                         <div
                           key={manager.id}
-                          className="p-4 bg-[#F5F5F0] rounded-sm border border-[#E2E8F0] hover:shadow-md transition-shadow duration-200"
+                          className="p-4 bg-[#27272a]/50 rounded-xl border border-[#27272a] hover:border-[#FF6B35]/50 transition-all duration-300"
                           data-testid={`manager-card-${manager.id}`}
                         >
                           <div className="flex items-start gap-3">
-                            <div className="w-10 h-10 rounded-full bg-[#3D4A2C] flex items-center justify-center flex-shrink-0">
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FF6B35] to-[#00B4D8] flex items-center justify-center flex-shrink-0">
                               <span className="text-white font-medium">
                                 {manager.name?.charAt(0) || '?'}
                               </span>
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2">
-                                <span className="font-medium text-[#1F2E0E] truncate">
+                                <span className="font-medium text-white truncate">
                                   {manager.name}
                                 </span>
                                 <Badge 
                                   variant="outline" 
                                   className={
                                     manager.role === 'admin' 
-                                      ? 'bg-purple-100 text-purple-800 border-purple-200' 
-                                      : 'bg-blue-100 text-blue-800 border-blue-200'
+                                      ? 'bg-[#FF6B35]/20 text-[#FF6B35] border-[#FF6B35]/30' 
+                                      : 'bg-[#00B4D8]/20 text-[#00B4D8] border-[#00B4D8]/30'
                                   }
                                 >
                                   {manager.role === 'admin' ? '管理員' : '管家'}
                                 </Badge>
                               </div>
-                              <p className="text-sm text-[#64748B] truncate mt-1">
+                              <p className="text-sm text-[#a1a1aa] truncate mt-1">
                                 {manager.email}
                               </p>
                             </div>
@@ -400,34 +400,34 @@ export default function SettingsPage() {
 
       {/* Add Manager Dialog */}
       <Dialog open={addManagerOpen} onOpenChange={setAddManagerOpen}>
-        <DialogContent className="bg-white rounded-sm">
+        <DialogContent className="bg-[#18181b] border-[#27272a] rounded-xl">
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold text-[#1F2E0E]">
+            <DialogTitle className="text-xl font-bold text-white">
               新增管家
             </DialogTitle>
-            <DialogDescription className="text-[#64748B]">
+            <DialogDescription className="text-[#a1a1aa]">
               填寫以下資訊以建立新的管家帳號
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <User className="w-4 h-4 text-[#3D4A2C]" />
+              <Label className="flex items-center gap-2 text-white">
+                <User className="w-4 h-4 text-[#FF6B35]" />
                 姓名
               </Label>
               <Input
                 value={newManager.name}
                 onChange={(e) => setNewManager({ ...newManager, name: e.target.value })}
                 placeholder="輸入姓名"
-                className="bg-white border-[#E2E8F0] rounded-sm"
+                className="bg-[#27272a]/50 border-[#27272a] text-white placeholder:text-[#52525b] rounded-lg"
                 data-testid="new-manager-name"
               />
             </div>
 
             <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <Mail className="w-4 h-4 text-[#3D4A2C]" />
+              <Label className="flex items-center gap-2 text-white">
+                <Mail className="w-4 h-4 text-[#FF6B35]" />
                 電子郵件
               </Label>
               <Input
@@ -435,14 +435,14 @@ export default function SettingsPage() {
                 value={newManager.email}
                 onChange={(e) => setNewManager({ ...newManager, email: e.target.value })}
                 placeholder="輸入電子郵件"
-                className="bg-white border-[#E2E8F0] rounded-sm"
+                className="bg-[#27272a]/50 border-[#27272a] text-white placeholder:text-[#52525b] rounded-lg"
                 data-testid="new-manager-email"
               />
             </div>
 
             <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <Shield className="w-4 h-4 text-[#3D4A2C]" />
+              <Label className="flex items-center gap-2 text-white">
+                <Shield className="w-4 h-4 text-[#FF6B35]" />
                 密碼
               </Label>
               <Input
@@ -450,23 +450,23 @@ export default function SettingsPage() {
                 value={newManager.password}
                 onChange={(e) => setNewManager({ ...newManager, password: e.target.value })}
                 placeholder="設定密碼"
-                className="bg-white border-[#E2E8F0] rounded-sm"
+                className="bg-[#27272a]/50 border-[#27272a] text-white placeholder:text-[#52525b] rounded-lg"
                 data-testid="new-manager-password"
               />
             </div>
 
             <div className="space-y-2">
-              <Label>角色</Label>
+              <Label className="text-white">角色</Label>
               <Select
                 value={newManager.role}
                 onValueChange={(value) => setNewManager({ ...newManager, role: value })}
               >
-                <SelectTrigger className="bg-white border-[#E2E8F0] rounded-sm">
+                <SelectTrigger className="bg-[#27272a]/50 border-[#27272a] text-white rounded-lg">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-white rounded-sm">
-                  <SelectItem value="manager">管家</SelectItem>
-                  <SelectItem value="admin">管理員</SelectItem>
+                <SelectContent className="bg-[#18181b] border-[#27272a] rounded-lg">
+                  <SelectItem value="manager" className="text-white hover:bg-[#27272a] focus:bg-[#27272a] focus:text-white">管家</SelectItem>
+                  <SelectItem value="admin" className="text-white hover:bg-[#27272a] focus:bg-[#27272a] focus:text-white">管理員</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -476,14 +476,14 @@ export default function SettingsPage() {
             <Button
               variant="outline"
               onClick={() => setAddManagerOpen(false)}
-              className="border-[#E2E8F0] rounded-sm"
+              className="border-[#27272a] text-[#a1a1aa] hover:bg-[#27272a] hover:text-white rounded-lg"
             >
               取消
             </Button>
             <Button
               onClick={handleAddManager}
               disabled={addingManager || !newManager.name || !newManager.email || !newManager.password}
-              className="bg-[#3D4A2C] hover:bg-[#2C381E] text-white rounded-sm"
+              className="bg-[#FF6B35] hover:bg-[#E55A2B] text-white rounded-full transition-all duration-300"
               data-testid="confirm-add-manager-btn"
             >
               {addingManager ? (

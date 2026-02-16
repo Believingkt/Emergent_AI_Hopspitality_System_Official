@@ -64,13 +64,13 @@ export const PMSModal = ({ open, onClose, venueId }) => {
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl bg-white rounded-sm">
+      <DialogContent className="max-w-2xl bg-[#18181b] border-[#27272a] rounded-xl" data-testid="pms-modal">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold text-[#1F2E0E] flex items-center gap-2" style={{ fontFamily: 'Manrope, sans-serif' }}>
-            <CalendarIcon className="w-5 h-5 text-[#3D4A2C]" />
+          <DialogTitle className="text-xl font-bold text-white flex items-center gap-2" style={{ fontFamily: 'Manrope, sans-serif' }}>
+            <CalendarIcon className="w-5 h-5 text-[#00B4D8]" />
             查詢房間可用性
           </DialogTitle>
-          <DialogDescription className="text-[#64748B]">
+          <DialogDescription className="text-[#a1a1aa]">
             選擇日期範圍以查詢 PMS 系統中的房間可用性
           </DialogDescription>
         </DialogHeader>
@@ -79,8 +79,8 @@ export const PMSModal = ({ open, onClose, venueId }) => {
           {/* Date Selection */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label className="text-[#1F2E0E] font-medium mb-2 block">開始日期</Label>
-              <div className="border border-[#E2E8F0] rounded-sm p-2">
+              <Label className="text-white font-medium mb-2 block">開始日期</Label>
+              <div className="border border-[#27272a] rounded-lg p-2 bg-[#27272a]/30">
                 <Calendar
                   mode="single"
                   selected={startDate}
@@ -90,14 +90,14 @@ export const PMSModal = ({ open, onClose, venueId }) => {
                 />
               </div>
               {startDate && (
-                <p className="mt-2 text-sm text-[#3D4A2C] font-medium">
+                <p className="mt-2 text-sm text-[#FF6B35] font-medium">
                   已選擇: {format(startDate, 'yyyy/MM/dd')}
                 </p>
               )}
             </div>
             <div>
-              <Label className="text-[#1F2E0E] font-medium mb-2 block">結束日期</Label>
-              <div className="border border-[#E2E8F0] rounded-sm p-2">
+              <Label className="text-white font-medium mb-2 block">結束日期</Label>
+              <div className="border border-[#27272a] rounded-lg p-2 bg-[#27272a]/30">
                 <Calendar
                   mode="single"
                   selected={endDate}
@@ -107,7 +107,7 @@ export const PMSModal = ({ open, onClose, venueId }) => {
                 />
               </div>
               {endDate && (
-                <p className="mt-2 text-sm text-[#3D4A2C] font-medium">
+                <p className="mt-2 text-sm text-[#FF6B35] font-medium">
                   已選擇: {format(endDate, 'yyyy/MM/dd')}
                 </p>
               )}
@@ -118,7 +118,7 @@ export const PMSModal = ({ open, onClose, venueId }) => {
           <Button
             onClick={handleSearch}
             disabled={!startDate || !endDate || loading}
-            className="w-full bg-[#3D4A2C] hover:bg-[#2C381E] text-white rounded-sm h-11"
+            className="w-full bg-[#FF6B35] hover:bg-[#E55A2B] text-white rounded-full h-11 btn-glow transition-all duration-300"
             data-testid="pms-search-btn"
           >
             {loading ? (
@@ -136,7 +136,7 @@ export const PMSModal = ({ open, onClose, venueId }) => {
 
           {/* Error */}
           {error && (
-            <div className="flex items-center gap-2 p-4 bg-red-50 border border-red-200 rounded-sm text-red-700">
+            <div className="flex items-center gap-2 p-4 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400">
               <AlertCircle className="w-5 h-5 flex-shrink-0" />
               <span>{error}</span>
             </div>
@@ -145,9 +145,9 @@ export const PMSModal = ({ open, onClose, venueId }) => {
           {/* Result */}
           {result && (
             <div className="animate-fade-in">
-              <Label className="text-[#1F2E0E] font-medium mb-2 block">查詢結果（原始 JSON）</Label>
-              <ScrollArea className="h-[200px] border border-[#E2E8F0] rounded-sm">
-                <pre className="p-4 text-sm text-[#1F2E0E] bg-[#F5F5F0] font-mono whitespace-pre-wrap">
+              <Label className="text-white font-medium mb-2 block">查詢結果（原始 JSON）</Label>
+              <ScrollArea className="h-[200px] border border-[#27272a] rounded-lg">
+                <pre className="p-4 text-sm text-[#00B4D8] bg-[#27272a]/50 font-mono whitespace-pre-wrap">
                   {JSON.stringify(result, null, 2)}
                 </pre>
               </ScrollArea>
