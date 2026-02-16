@@ -3,7 +3,7 @@ import { useAuth } from './AuthContext';
 
 const WebSocketContext = createContext(null);
 
-const WS_URL = process.env.REACT_APP_WS_URL;
+const WS_URL = process.env.REACT_APP_WS_URL || 'wss://line-ai-bot-xiaosen.onrender.com/ws';
 
 export const WebSocketProvider = ({ children }) => {
   const { token, isAuthenticated } = useAuth();
@@ -15,7 +15,7 @@ export const WebSocketProvider = ({ children }) => {
   const reconnectTimeoutRef = useRef(null);
 
   const connect = useCallback(() => {
-    if (!token || wsRef.current?.readyState === WebSocket.OPEN) return;
+    if (!token || !WS_URL || wsRef.current?.readyState === WebSocket.OPEN) return;
 
     try {
       const ws = new WebSocket(`${WS_URL}?token=${token}`);
