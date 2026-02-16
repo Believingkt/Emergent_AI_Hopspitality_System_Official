@@ -84,7 +84,7 @@ export default function LoginPage() {
             </div>
             <h1 className="text-4xl lg:text-5xl font-bold text-white leading-tight mb-6" style={{ fontFamily: 'Manrope, sans-serif' }}>
               AI 智能接單<br/>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FF6B35] to-[#00B4D8]">您專注更重要的事</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FF6B35] to-[#00B4D8]">您專心經營品牌</span>
             </h1>
             <p className="text-xl text-white/70 leading-relaxed max-w-lg">
               源自 <span className="text-white font-semibold">10 萬筆以上成交訂單</span> 的真實接單經驗，
@@ -140,7 +140,7 @@ export default function LoginPage() {
               alt="Lakeze 人客多 Logo"
               className="h-12 mx-auto mb-4"
             />
-            <h2 className="text-xl font-bold text-white mb-2">AI 智能接單，您專注更重要的事</h2>
+            <h2 className="text-xl font-bold text-white mb-2">AI 智能接單，您專心經營品牌</h2>
             <p className="text-[#a1a1aa] text-sm">10萬筆經驗訓練 · 96% 成交率</p>
           </div>
 
