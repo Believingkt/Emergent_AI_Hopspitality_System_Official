@@ -231,7 +231,38 @@ const HandoffCard = ({ handoff, onLearn }) => {
 };
 
 export const HandoffAnalysis = ({ venue }) => {
-  const [handoffs, setHandoffs] = useState(() => generateMockHandoffs());
+  const { token } = useAuth();
+  const [handoffs, setHandoffs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
+  // 從 API 獲取真實對話數據
+  const fetchHandoffs = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await axios.get(`${API_URL}/api/tasks`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      const tasks = response.data.tasks || [];
+      const transformedHandoffs = tasks.map(transformTaskToHandoff);
+      setHandoffs(transformedHandoffs);
+    } catch (err) {
+      console.error('Failed to fetch tasks:', err);
+      setError('無法載入轉交對話數據');
+      toast.error('載入失敗，請稍後再試');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  useEffect(() => {
+    if (token) {
+      fetchHandoffs();
+    }
+  }, [token]);
   
   // 計算各原因的數量
   const reasonStats = useMemo(() => {
@@ -252,69 +283,115 @@ export const HandoffAnalysis = ({ venue }) => {
     console.log('Learn request:', { handoffId, data });
   };
   
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 space-y-4">
+        <Loader2 className="w-8 h-8 animate-spin text-[#FF6B35]" />
+        <p className="text-[#a1a1aa]">正在載入真實對話數據...</p>
+      </div>
+    );
+  }
+  
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 space-y-4">
+        <AlertCircle className="w-8 h-8 text-red-400" />
+        <p className="text-red-400">{error}</p>
+        <Button 
+          variant="outline" 
+          onClick={fetchHandoffs}
+          className="text-[#FF6B35] border-[#FF6B35] hover:bg-[#FF6B35]/10"
+        >
+          <RefreshCw className="w-4 h-4 mr-2" />
+          重新載入
+        </Button>
+      </div>
+    );
+  }
+  
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h2 className="text-xl font-bold text-white flex items-center gap-2" style={{ fontFamily: 'Manrope, sans-serif' }}>
-          <AlertCircle className="w-5 h-5 text-[#FF6B35]" />
-          轉交真人分析
-        </h2>
-        <p className="text-[#a1a1aa] text-sm mt-1">了解為什麼需要轉交真人處理</p>
-      </div>
-      
-      {/* Reason Distribution */}
-      <div className="bg-[#18181b] rounded-xl p-5 border border-[#27272a]">
-        <h3 className="text-sm font-semibold text-[#a1a1aa] uppercase tracking-wide mb-4">
-          轉交原因分佈
-        </h3>
-        <div className="space-y-3">
-          {reasonStats.map(([key, count]) => {
-            const reason = HANDOFF_REASONS[key];
-            const ReasonIcon = reason.icon;
-            const percentage = ((count / handoffs.length) * 100).toFixed(0);
-            
-            return (
-              <div key={key} className="flex items-center gap-3">
-                <div className={`w-8 h-8 rounded-lg ${reason.bgColor} flex items-center justify-center flex-shrink-0`}>
-                  <ReasonIcon className={`w-4 h-4 ${reason.color}`} />
-                </div>
-                <div className="flex-1">
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-white text-sm">{reason.label}</span>
-                    <span className="text-[#a1a1aa] text-sm">{count} 則 ({percentage}%)</span>
-                  </div>
-                  <div className="h-2 bg-[#27272a] rounded-full overflow-hidden">
-                    <div 
-                      className={`h-full rounded-full ${reason.bgColor.replace('/15', '')}`}
-                      style={{ width: `${percentage}%`, backgroundColor: reason.color.replace('text-', '').includes('[') ? reason.color.match(/\[(.*?)\]/)[1] : undefined }}
-                    />
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-white flex items-center gap-2" style={{ fontFamily: 'Manrope, sans-serif' }}>
+            <AlertCircle className="w-5 h-5 text-[#FF6B35]" />
+            轉交真人分析
+          </h2>
+          <p className="text-[#a1a1aa] text-sm mt-1">來自 LINE OA 的真實對話數據</p>
         </div>
+        <Button 
+          variant="ghost" 
+          size="sm"
+          onClick={fetchHandoffs}
+          className="text-[#a1a1aa] hover:text-white"
+        >
+          <RefreshCw className="w-4 h-4 mr-2" />
+          重新整理
+        </Button>
       </div>
       
-      {/* Handoff List */}
-      <div>
-        <h3 className="text-sm font-semibold text-[#a1a1aa] uppercase tracking-wide mb-4 flex items-center gap-2">
-          <MessageSquare className="w-4 h-4" />
-          今日轉交對話
-        </h3>
-        <ScrollArea className="h-[500px]">
-          <div className="space-y-4 pr-4">
-            {handoffs.map(handoff => (
-              <HandoffCard 
-                key={handoff.id} 
-                handoff={handoff}
-                onLearn={handleLearn}
-              />
-            ))}
+      {handoffs.length === 0 ? (
+        <div className="flex flex-col items-center justify-center h-48 space-y-4 bg-[#18181b] rounded-xl border border-[#27272a]">
+          <MessageSquare className="w-12 h-12 text-[#52525b]" />
+          <p className="text-[#a1a1aa]">目前沒有待處理的轉交對話</p>
+        </div>
+      ) : (
+        <>
+          {/* Reason Distribution */}
+          <div className="bg-[#18181b] rounded-xl p-5 border border-[#27272a]">
+            <h3 className="text-sm font-semibold text-[#a1a1aa] uppercase tracking-wide mb-4">
+              轉交原因分佈
+            </h3>
+            <div className="space-y-3">
+              {reasonStats.map(([key, count]) => {
+                const reason = HANDOFF_REASONS[key];
+                const ReasonIcon = reason.icon;
+                const percentage = ((count / handoffs.length) * 100).toFixed(0);
+                
+                return (
+                  <div key={key} className="flex items-center gap-3">
+                    <div className={`w-8 h-8 rounded-lg ${reason.bgColor} flex items-center justify-center flex-shrink-0`}>
+                      <ReasonIcon className={`w-4 h-4 ${reason.color}`} />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-white text-sm">{reason.label}</span>
+                        <span className="text-[#a1a1aa] text-sm">{count} 則 ({percentage}%)</span>
+                      </div>
+                      <div className="h-2 bg-[#27272a] rounded-full overflow-hidden">
+                        <div 
+                          className={`h-full rounded-full ${reason.bgColor.replace('/15', '')}`}
+                          style={{ width: `${percentage}%`, backgroundColor: reason.color.replace('text-', '').includes('[') ? reason.color.match(/\[(.*?)\]/)[1] : undefined }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        </ScrollArea>
-      </div>
+          
+          {/* Handoff List */}
+          <div>
+            <h3 className="text-sm font-semibold text-[#a1a1aa] uppercase tracking-wide mb-4 flex items-center gap-2">
+              <MessageSquare className="w-4 h-4" />
+              LINE OA 轉交對話 ({handoffs.length} 則)
+            </h3>
+            <ScrollArea className="h-[500px]">
+              <div className="space-y-4 pr-4">
+                {handoffs.map(handoff => (
+                  <HandoffCard 
+                    key={handoff.id} 
+                    handoff={handoff}
+                    onLearn={handleLearn}
+                  />
+                ))}
+              </div>
+            </ScrollArea>
+          </div>
+        </>
+      )}
     </div>
   );
 };
