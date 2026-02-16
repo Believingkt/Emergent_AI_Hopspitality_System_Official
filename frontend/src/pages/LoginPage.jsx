@@ -92,6 +92,9 @@ export default function LoginPage() {
             <p className="text-lg text-white/60 mt-3">
               源自旗下 15 家旅宿品牌、年營收破億的真實經驗，<span className="text-[#00B4D8] font-medium">支持智能更新</span>，您的銷售成交率將不斷提高。
             </p>
+            <p className="text-lg text-white/60 mt-2">
+              <span className="text-[#22c55e] font-medium">無需學習新軟體</span>——管家與客服都在最熟悉的 LINE OA 介面操作。
+            </p>
           </div>
 
           {/* Stats */}
