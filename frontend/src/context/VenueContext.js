@@ -20,11 +20,14 @@ export const VenueProvider = ({ children }) => {
       const response = await axios.get(`${API_URL}/api/venues`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setVenues(response.data);
+      
+      // Manus API: { venues: [...] }
+      const venueList = response.data.venues || response.data;
+      setVenues(venueList);
       
       // Set first venue as default if none selected
-      if (response.data.length > 0 && !currentVenue) {
-        setCurrentVenue(response.data[0]);
+      if (venueList.length > 0 && !currentVenue) {
+        setCurrentVenue(venueList[0]);
       }
     } catch (error) {
       console.error('Failed to fetch venues:', error);
@@ -48,7 +51,8 @@ export const VenueProvider = ({ children }) => {
       const response = await axios.get(`${API_URL}/api/venues/${venueId}/config`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      return response.data;
+      // Manus API: { config: {...} }
+      return response.data.config || response.data;
     } catch (error) {
       console.error('Failed to fetch venue config:', error);
       return null;
@@ -62,9 +66,10 @@ export const VenueProvider = ({ children }) => {
         config,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      return { success: true, data: response.data };
+      // Manus API: { config: {...} }
+      return { success: true, data: response.data.config || response.data };
     } catch (error) {
-      return { success: false, error: error.response?.data?.detail || '更新失敗' };
+      return { success: false, error: error.response?.data?.error || '更新失敗' };
     }
   };
 
