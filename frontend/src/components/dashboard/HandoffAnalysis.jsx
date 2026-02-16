@@ -1,5 +1,4 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { Textarea } from '../ui/textarea';
@@ -12,14 +11,18 @@ import {
   HelpCircle,
   Clock,
   Lightbulb,
-  Upload,
   Send,
   CheckCircle2,
   Sparkles,
-  Image as ImageIcon,
   X,
   Loader2,
-  RefreshCw
+  RefreshCw,
+  ChevronDown,
+  ChevronUp,
+  User,
+  Bot,
+  UserCheck,
+  Edit3
 } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
@@ -39,205 +42,426 @@ const HANDOFF_REASONS = {
 
 // 根據客戶訊息內容智能判斷轉交原因
 const detectHandoffReason = (customerMessage) => {
-  const message = customerMessage.toLowerCase();
+  const message = (customerMessage || '').toLowerCase();
   
   if (message.includes('價') || message.includes('錢') || message.includes('多少') || message.includes('費用') || message.includes('划算')) {
     return 'pricing';
   }
-  if (message.includes('空房') || message.includes('有房') || message.includes('日期') || message.includes('週') || message.includes('時段') || message.includes('預約')) {
+  if (message.includes('空房') || message.includes('有房') || message.includes('日期') || message.includes('週') || message.includes('時段')) {
     return 'availability';
   }
-  if (message.includes('寵物') || message.includes('狗') || message.includes('貓') || message.includes('特殊') || message.includes('需求') || message.includes('婚禮') || message.includes('辦')) {
+  if (message.includes('寵物') || message.includes('狗') || message.includes('貓') || message.includes('特殊') || message.includes('需求') || message.includes('婚禮')) {
     return 'special';
   }
   if (message.includes('投訴') || message.includes('問題') || message.includes('異味') || message.includes('抱歉') || message.includes('不好')) {
     return 'complaint';
   }
-  if (message.includes('訂') || message.includes('預') || message.includes('怎麼') || message.includes('流程') || message.includes('匯款')) {
+  if (message.includes('訂') || message.includes('預約') || message.includes('怎麼') || message.includes('流程') || message.includes('匯款')) {
     return 'booking';
   }
   
   return 'other';
 };
 
-// 將 API 任務數據轉換為轉交對話格式
-const transformTaskToHandoff = (task) => {
-  return {
-    id: `task-${task.task_id}`,
-    timestamp: task.created_at,
-    customerMessage: task.customer_message,
-    aiResponse: task.ai_response,
-    reason: detectHandoffReason(task.customer_message),
-    customerName: task.customer_name || '未知客戶',
-    status: task.status,
-    hasLearned: false,
-  };
-};
-
-const HandoffCard = ({ handoff, onLearn }) => {
-  const [showLearnInput, setShowLearnInput] = useState(false);
-  const [learnText, setLearnText] = useState('');
-  const [uploadedImage, setUploadedImage] = useState(null);
+// 訊息氣泡組件
+const MessageBubble = ({ message, isLast }) => {
+  const { sender_type, content, timestamp } = message;
   
-  const reason = HANDOFF_REASONS[handoff.reason] || HANDOFF_REASONS.other;
-  const ReasonIcon = reason.icon;
-  
-  const handleFileUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setUploadedImage(e.target.result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-  
-  const handleSubmitLearn = () => {
-    if (!learnText.trim() && !uploadedImage) {
-      toast.error('請輸入回覆規則或上傳截圖');
-      return;
-    }
-    onLearn(handoff.id, { text: learnText, image: uploadedImage });
-    setShowLearnInput(false);
-    setLearnText('');
-    setUploadedImage(null);
-    toast.success('已提交 AI 學習請求');
-  };
-  
-  const formatTime = (timestamp) => {
-    const date = new Date(timestamp);
+  const formatTime = (ts) => {
+    const date = new Date(ts);
     return date.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
   };
   
+  // 根據 sender_type 決定樣式
+  const getMessageStyle = () => {
+    switch (sender_type) {
+      case 'customer':
+        return {
+          containerClass: 'justify-start',
+          bubbleClass: 'bg-[#1e3a5f] border-2 border-[#2d5a87] text-white rounded-2xl rounded-tl-sm',
+          avatar: (
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FF6B35] to-[#ff8c5a] flex items-center justify-center flex-shrink-0 shadow-lg">
+              <User className="w-5 h-5 text-white" />
+            </div>
+          ),
+          label: '客戶',
+          labelClass: 'text-[#FF6B35]'
+        };
+      case 'ai':
+        return {
+          containerClass: 'justify-start',
+          bubbleClass: 'bg-[#1a2f3d] border-2 border-[#00B4D8]/40 text-[#e0f7fa] rounded-2xl rounded-tl-sm',
+          avatar: (
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#00B4D8] to-[#40E0D0] flex items-center justify-center flex-shrink-0 shadow-lg">
+              <Bot className="w-5 h-5 text-white" />
+            </div>
+          ),
+          label: 'AI 小森',
+          labelClass: 'text-[#00B4D8]'
+        };
+      case 'manager':
+        return {
+          containerClass: 'justify-end',
+          bubbleClass: 'bg-[#1a3d2e] border-2 border-[#22c55e]/40 text-[#e8f5e9] rounded-2xl rounded-tr-sm',
+          avatar: (
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#22c55e] to-[#4ade80] flex items-center justify-center flex-shrink-0 shadow-lg">
+              <UserCheck className="w-5 h-5 text-white" />
+            </div>
+          ),
+          label: '管家',
+          labelClass: 'text-[#22c55e]'
+        };
+      default:
+        return {
+          containerClass: 'justify-start',
+          bubbleClass: 'bg-[#27272a] text-white rounded-2xl',
+          avatar: null,
+          label: '系統',
+          labelClass: 'text-[#a1a1aa]'
+        };
+    }
+  };
+  
+  const style = getMessageStyle();
+  const isManager = sender_type === 'manager';
+  
   return (
-    <div className="bg-[#18181b] rounded-xl border border-[#27272a] overflow-hidden hover:border-[#FF6B35]/30 transition-all duration-300">
-      {/* Header */}
-      <div className="p-4 border-b border-[#27272a] flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className={`w-8 h-8 rounded-lg ${reason.bgColor} flex items-center justify-center`}>
-            <ReasonIcon className={`w-4 h-4 ${reason.color}`} />
-          </div>
-          <div>
-            <span className="text-white font-medium">{handoff.customerName}</span>
-            <span className="text-[#71717a] text-sm ml-2">{formatTime(handoff.timestamp)}</span>
-          </div>
+    <div className={`flex ${style.containerClass} gap-3 ${isLast ? '' : 'mb-4'}`}>
+      {!isManager && style.avatar}
+      <div className={`max-w-[75%] ${isManager ? 'order-first' : ''}`}>
+        <div className={`flex items-center gap-2 mb-1 ${isManager ? 'justify-end' : ''}`}>
+          <span className={`text-xs font-semibold ${style.labelClass}`}>{style.label}</span>
+          <span className="text-[#52525b] text-xs">{formatTime(timestamp)}</span>
         </div>
-        <Badge variant="outline" className={`${reason.bgColor} ${reason.color} ${reason.borderColor}`}>
-          {reason.label}
-        </Badge>
+        <div className={`px-4 py-3 ${style.bubbleClass} shadow-md`}>
+          <p className="text-sm leading-relaxed whitespace-pre-wrap">{content}</p>
+        </div>
       </div>
+      {isManager && style.avatar}
+    </div>
+  );
+};
+
+// AI 學習確認對話框
+const AILearningDialog = ({ isOpen, onClose, onConfirm, conversations, managerResponse }) => {
+  const [learnedSummary, setLearnedSummary] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+  const [confirmed, setConfirmed] = useState(false);
+  
+  // 生成 AI 學習總結
+  useEffect(() => {
+    if (isOpen && managerResponse) {
+      // 找出客戶的問題
+      const customerMessages = conversations.filter(m => m.sender_type === 'customer');
+      const lastCustomerMessage = customerMessages[customerMessages.length - 1]?.content || '';
       
-      {/* Conversation */}
-      <div className="p-4 space-y-3">
-        {/* Customer Message */}
-        <div className="flex gap-3">
-          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[#FF6B35] to-[#00B4D8] flex items-center justify-center flex-shrink-0 mt-0.5">
-            <span className="text-white text-xs font-medium">客</span>
+      const summary = `當客戶詢問「${lastCustomerMessage.slice(0, 30)}${lastCustomerMessage.length > 30 ? '...' : ''}」時，
+應該回覆：「${managerResponse.slice(0, 100)}${managerResponse.length > 100 ? '...' : ''}」`;
+      
+      setLearnedSummary(summary);
+      setConfirmed(false);
+      setIsEditing(false);
+    }
+  }, [isOpen, managerResponse, conversations]);
+  
+  if (!isOpen) return null;
+  
+  const handleConfirm = () => {
+    if (!confirmed) {
+      setConfirmed(true);
+    } else {
+      onConfirm(learnedSummary);
+      onClose();
+    }
+  };
+  
+  return (
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+      <div className="bg-[#18181b] rounded-2xl border border-[#27272a] max-w-lg w-full shadow-2xl">
+        {/* Header */}
+        <div className="p-5 border-b border-[#27272a] flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FF6B35] to-[#00B4D8] flex items-center justify-center">
+              <Lightbulb className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h3 className="text-white font-bold">AI 學習確認</h3>
+              <p className="text-[#a1a1aa] text-sm">確認 AI 學到的回覆規則</p>
+            </div>
           </div>
-          <div className="flex-1 bg-[#27272a] p-3 rounded-lg rounded-tl-none">
-            <p className="text-white text-sm">{handoff.customerMessage}</p>
+          <button onClick={onClose} className="text-[#52525b] hover:text-white transition-colors">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        
+        {/* Content */}
+        <div className="p-5 space-y-4">
+          {!confirmed ? (
+            <>
+              <div className="bg-[#27272a]/50 rounded-xl p-4 border border-[#27272a]">
+                <div className="flex items-center gap-2 mb-3">
+                  <Sparkles className="w-4 h-4 text-[#00B4D8]" />
+                  <span className="text-[#00B4D8] text-sm font-semibold">AI 學到的內容</span>
+                </div>
+                {isEditing ? (
+                  <Textarea
+                    value={learnedSummary}
+                    onChange={(e) => setLearnedSummary(e.target.value)}
+                    className="min-h-[120px] bg-[#1a1a1a] border-[#27272a] text-white rounded-lg resize-none text-sm"
+                  />
+                ) : (
+                  <p className="text-white text-sm leading-relaxed">{learnedSummary}</p>
+                )}
+              </div>
+              
+              <div className="flex items-center gap-2 text-[#a1a1aa] text-xs">
+                <AlertCircle className="w-4 h-4" />
+                <span>AI 將會學習管家的回覆方式，未來遇到類似問題時自動應用</span>
+              </div>
+            </>
+          ) : (
+            <div className="bg-[#22c55e]/10 rounded-xl p-4 border border-[#22c55e]/30">
+              <div className="flex items-center gap-2 mb-3">
+                <CheckCircle2 className="w-5 h-5 text-[#22c55e]" />
+                <span className="text-[#22c55e] font-semibold">請確認以下學習內容正確</span>
+              </div>
+              <p className="text-white text-sm leading-relaxed">{learnedSummary}</p>
+            </div>
+          )}
+        </div>
+        
+        {/* Footer */}
+        <div className="p-5 border-t border-[#27272a] flex justify-between">
+          {!confirmed ? (
+            <>
+              <Button
+                variant="ghost"
+                onClick={() => setIsEditing(!isEditing)}
+                className="text-[#a1a1aa] hover:text-white"
+              >
+                <Edit3 className="w-4 h-4 mr-2" />
+                {isEditing ? '完成編輯' : '手動調整'}
+              </Button>
+              <Button
+                onClick={handleConfirm}
+                className="bg-[#FF6B35] hover:bg-[#E55A2B] text-white"
+              >
+                確認學習內容
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button
+                variant="ghost"
+                onClick={() => setConfirmed(false)}
+                className="text-[#a1a1aa] hover:text-white"
+              >
+                返回修改
+              </Button>
+              <Button
+                onClick={handleConfirm}
+                className="bg-[#22c55e] hover:bg-[#16a34a] text-white"
+              >
+                <CheckCircle2 className="w-4 h-4 mr-2" />
+                確認提交學習
+              </Button>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// 對話卡片組件 - 重新設計
+const ConversationCard = ({ task, token, onRefresh }) => {
+  const [expanded, setExpanded] = useState(false);
+  const [conversations, setConversations] = useState([]);
+  const [loadingConv, setLoadingConv] = useState(false);
+  const [showLearning, setShowLearning] = useState(false);
+  const [managerResponse, setManagerResponse] = useState('');
+  
+  const reason = HANDOFF_REASONS[detectHandoffReason(task.customer_message)] || HANDOFF_REASONS.other;
+  const ReasonIcon = reason.icon;
+  
+  const formatTime = (timestamp) => {
+    const date = new Date(timestamp);
+    return date.toLocaleString('zh-TW', { 
+      month: 'numeric', 
+      day: 'numeric',
+      hour: '2-digit', 
+      minute: '2-digit' 
+    });
+  };
+  
+  // 載入完整對話歷史
+  const loadConversations = async () => {
+    if (conversations.length > 0) return;
+    
+    setLoadingConv(true);
+    try {
+      const response = await axios.get(
+        `${API_URL}/api/tasks/${task.task_id}/conversations`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setConversations(response.data.messages || []);
+    } catch (err) {
+      console.error('Failed to load conversations:', err);
+      toast.error('載入對話歷史失敗');
+    } finally {
+      setLoadingConv(false);
+    }
+  };
+  
+  // 展開時載入對話
+  useEffect(() => {
+    if (expanded) {
+      loadConversations();
+    }
+  }, [expanded]);
+  
+  // 檢查是否有管家回覆
+  const hasManagerResponse = conversations.some(m => m.sender_type === 'manager');
+  
+  // 處理 AI 學習確認
+  const handleLearnConfirm = async (summary) => {
+    toast.success('AI 學習請求已提交！');
+    // TODO: 調用後端 API 提交學習
+    console.log('AI Learning:', { task_id: task.task_id, summary });
+  };
+  
+  return (
+    <div className="bg-[#0d1117] rounded-2xl border-2 border-[#27272a] overflow-hidden hover:border-[#FF6B35]/50 transition-all duration-300 shadow-xl">
+      {/* Header - 可點擊展開 */}
+      <div 
+        className="p-4 cursor-pointer hover:bg-[#161b22] transition-colors"
+        onClick={() => setExpanded(!expanded)}
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className={`w-12 h-12 rounded-xl ${reason.bgColor} flex items-center justify-center border ${reason.borderColor}`}>
+              <ReasonIcon className={`w-6 h-6 ${reason.color}`} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-white font-bold text-lg">{task.customer_name}</span>
+                <Badge variant="outline" className={`${reason.bgColor} ${reason.color} ${reason.borderColor} text-xs`}>
+                  {reason.label}
+                </Badge>
+              </div>
+              <p className="text-[#8b949e] text-sm mt-0.5">{formatTime(task.created_at)}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <Badge 
+              variant="outline" 
+              className={task.status === '已處理' 
+                ? 'bg-[#22c55e]/15 text-[#22c55e] border-[#22c55e]/30' 
+                : 'bg-amber-500/15 text-amber-400 border-amber-500/30'
+              }
+            >
+              {task.status}
+            </Badge>
+            {expanded ? (
+              <ChevronUp className="w-5 h-5 text-[#8b949e]" />
+            ) : (
+              <ChevronDown className="w-5 h-5 text-[#8b949e]" />
+            )}
           </div>
         </div>
         
-        {/* AI Response */}
-        <div className="flex gap-3">
-          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[#40E0D0] to-[#00B4D8] flex items-center justify-center flex-shrink-0 mt-0.5">
-            <Sparkles className="w-3 h-3 text-white" />
+        {/* 預覽訊息 */}
+        {!expanded && (
+          <div className="mt-3 pl-15">
+            <p className="text-[#c9d1d9] text-sm line-clamp-2 bg-[#161b22] rounded-lg p-3 border border-[#27272a]">
+              {task.customer_message}
+            </p>
           </div>
-          <div className="flex-1 bg-[#00B4D8]/10 p-3 rounded-lg rounded-tl-none border border-[#00B4D8]/30">
-            <p className="text-[#00B4D8] text-sm">{handoff.aiResponse}</p>
-          </div>
-        </div>
-      </div>
-      
-      {/* Learn Button / Input */}
-      <div className="p-4 border-t border-[#27272a]">
-        {handoff.hasLearned ? (
-          <div className="flex items-center gap-2 text-[#22c55e] text-sm">
-            <CheckCircle2 className="w-4 h-4" />
-            <span>已加入 AI 學習</span>
-          </div>
-        ) : showLearnInput ? (
-          <div className="space-y-3">
-            <Textarea
-              value={learnText}
-              onChange={(e) => setLearnText(e.target.value)}
-              placeholder="輸入希望 AI 學習的回覆規則...&#10;例如：遇到價格詢問時，先確認日期和人數，再報價"
-              className="min-h-[80px] bg-[#27272a]/50 border-[#27272a] text-white placeholder:text-[#52525b] rounded-lg resize-none text-sm"
-            />
-            
-            {/* Image Upload */}
-            <div className="flex items-center gap-2">
-              <label className="cursor-pointer">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileUpload}
-                  className="hidden"
-                />
-                <div className="flex items-center gap-2 px-3 py-2 bg-[#27272a] rounded-lg text-[#a1a1aa] hover:text-white hover:bg-[#27272a]/70 transition-colors text-sm">
-                  <ImageIcon className="w-4 h-4" />
-                  上傳對話截圖
-                </div>
-              </label>
-              
-              {uploadedImage && (
-                <div className="relative">
-                  <img src={uploadedImage} alt="uploaded" className="h-10 w-10 rounded object-cover" />
-                  <button
-                    onClick={() => setUploadedImage(null)}
-                    className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center"
-                  >
-                    <X className="w-3 h-3 text-white" />
-                  </button>
-                </div>
-              )}
-            </div>
-            
-            <div className="flex gap-2">
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => setShowLearnInput(false)}
-                className="text-[#a1a1aa] hover:text-white"
-              >
-                取消
-              </Button>
-              <Button
-                size="sm"
-                onClick={handleSubmitLearn}
-                className="bg-[#FF6B35] hover:bg-[#E55A2B] text-white"
-              >
-                <Send className="w-3 h-3 mr-1" />
-                提交學習
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => setShowLearnInput(true)}
-            className="text-[#FF6B35] hover:text-[#FF6B35]/80 hover:bg-[#FF6B35]/10 w-full"
-          >
-            <Lightbulb className="w-4 h-4 mr-2" />
-            希望 AI 學習此回答規則
-          </Button>
         )}
       </div>
+      
+      {/* 展開的對話內容 */}
+      {expanded && (
+        <div className="border-t border-[#27272a]">
+          {/* 對話歷史區 */}
+          <div className="p-5 bg-[#0d1117]">
+            <div className="flex items-center gap-2 mb-4">
+              <MessageSquare className="w-4 h-4 text-[#00B4D8]" />
+              <span className="text-[#00B4D8] text-sm font-semibold">LINE OA 完整對話</span>
+            </div>
+            
+            {loadingConv ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-6 h-6 animate-spin text-[#FF6B35]" />
+              </div>
+            ) : (
+              <ScrollArea className="max-h-[400px]">
+                <div className="space-y-1 pr-4">
+                  {conversations.map((msg, idx) => (
+                    <MessageBubble 
+                      key={msg.id} 
+                      message={msg} 
+                      isLast={idx === conversations.length - 1}
+                    />
+                  ))}
+                </div>
+              </ScrollArea>
+            )}
+          </div>
+          
+          {/* AI 學習區 */}
+          <div className="p-5 bg-[#161b22] border-t border-[#27272a]">
+            {hasManagerResponse ? (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-[#22c55e]">
+                  <CheckCircle2 className="w-5 h-5" />
+                  <span className="font-medium">管家已回覆此對話</span>
+                </div>
+                <Button
+                  onClick={() => {
+                    const mgr = conversations.find(m => m.sender_type === 'manager');
+                    setManagerResponse(mgr?.content || '');
+                    setShowLearning(true);
+                  }}
+                  className="bg-gradient-to-r from-[#FF6B35] to-[#00B4D8] hover:opacity-90 text-white"
+                >
+                  <Lightbulb className="w-4 h-4 mr-2" />
+                  讓 AI 學習此回覆
+                </Button>
+              </div>
+            ) : (
+              <div className="text-center py-4">
+                <div className="flex items-center justify-center gap-2 text-[#8b949e] mb-2">
+                  <Clock className="w-4 h-4" />
+                  <span>等待管家回覆中...</span>
+                </div>
+                <p className="text-[#52525b] text-sm">管家回覆後，您可以讓 AI 學習此回覆方式</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+      
+      {/* AI 學習對話框 */}
+      <AILearningDialog
+        isOpen={showLearning}
+        onClose={() => setShowLearning(false)}
+        onConfirm={handleLearnConfirm}
+        conversations={conversations}
+        managerResponse={managerResponse}
+      />
     </div>
   );
 };
 
 export const HandoffAnalysis = ({ venue }) => {
   const { token } = useAuth();
-  const [handoffs, setHandoffs] = useState([]);
+  const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
-  // 從 API 獲取真實對話數據
-  const fetchHandoffs = async () => {
+  // 從 API 獲取任務列表
+  const fetchTasks = async () => {
     setLoading(true);
     setError(null);
     
@@ -246,9 +470,7 @@ export const HandoffAnalysis = ({ venue }) => {
         headers: { Authorization: `Bearer ${token}` }
       });
       
-      const tasks = response.data.tasks || [];
-      const transformedHandoffs = tasks.map(transformTaskToHandoff);
-      setHandoffs(transformedHandoffs);
+      setTasks(response.data.tasks || []);
     } catch (err) {
       console.error('Failed to fetch tasks:', err);
       setError('無法載入轉交對話數據');
@@ -260,7 +482,7 @@ export const HandoffAnalysis = ({ venue }) => {
   
   useEffect(() => {
     if (token) {
-      fetchHandoffs();
+      fetchTasks();
     }
   }, [token]);
   
@@ -268,26 +490,18 @@ export const HandoffAnalysis = ({ venue }) => {
   const reasonStats = useMemo(() => {
     const stats = {};
     Object.keys(HANDOFF_REASONS).forEach(key => {
-      stats[key] = handoffs.filter(h => h.reason === key).length;
+      stats[key] = tasks.filter(t => detectHandoffReason(t.customer_message) === key).length;
     });
     return Object.entries(stats)
       .filter(([_, count]) => count > 0)
       .sort(([, a], [, b]) => b - a);
-  }, [handoffs]);
-  
-  const handleLearn = (handoffId, data) => {
-    setHandoffs(prev => prev.map(h => 
-      h.id === handoffId ? { ...h, hasLearned: true } : h
-    ));
-    // 這裡可以發送 API 請求到後端
-    console.log('Learn request:', { handoffId, data });
-  };
+  }, [tasks]);
   
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-64 space-y-4">
-        <Loader2 className="w-8 h-8 animate-spin text-[#FF6B35]" />
-        <p className="text-[#a1a1aa]">正在載入真實對話數據...</p>
+        <Loader2 className="w-10 h-10 animate-spin text-[#FF6B35]" />
+        <p className="text-[#8b949e]">正在載入 LINE OA 對話數據...</p>
       </div>
     );
   }
@@ -295,11 +509,11 @@ export const HandoffAnalysis = ({ venue }) => {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center h-64 space-y-4">
-        <AlertCircle className="w-8 h-8 text-red-400" />
+        <AlertCircle className="w-10 h-10 text-red-400" />
         <p className="text-red-400">{error}</p>
         <Button 
           variant="outline" 
-          onClick={fetchHandoffs}
+          onClick={fetchTasks}
           className="text-[#FF6B35] border-[#FF6B35] hover:bg-[#FF6B35]/10"
         >
           <RefreshCw className="w-4 h-4 mr-2" />
@@ -314,57 +528,53 @@ export const HandoffAnalysis = ({ venue }) => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-white flex items-center gap-2" style={{ fontFamily: 'Manrope, sans-serif' }}>
-            <AlertCircle className="w-5 h-5 text-[#FF6B35]" />
+          <h2 className="text-2xl font-bold text-white flex items-center gap-3" style={{ fontFamily: 'Manrope, sans-serif' }}>
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FF6B35] to-[#00B4D8] flex items-center justify-center">
+              <MessageSquare className="w-5 h-5 text-white" />
+            </div>
             轉交真人分析
           </h2>
-          <p className="text-[#a1a1aa] text-sm mt-1">來自 LINE OA 的真實對話數據</p>
+          <p className="text-[#8b949e] mt-1 ml-13">來自 LINE OA 的真實對話 · 支持 AI 學習</p>
         </div>
         <Button 
-          variant="ghost" 
+          variant="outline" 
           size="sm"
-          onClick={fetchHandoffs}
-          className="text-[#a1a1aa] hover:text-white"
+          onClick={fetchTasks}
+          className="border-[#27272a] text-[#8b949e] hover:text-white hover:border-[#FF6B35]"
         >
           <RefreshCw className="w-4 h-4 mr-2" />
           重新整理
         </Button>
       </div>
       
-      {handoffs.length === 0 ? (
-        <div className="flex flex-col items-center justify-center h-48 space-y-4 bg-[#18181b] rounded-xl border border-[#27272a]">
-          <MessageSquare className="w-12 h-12 text-[#52525b]" />
-          <p className="text-[#a1a1aa]">目前沒有待處理的轉交對話</p>
+      {tasks.length === 0 ? (
+        <div className="flex flex-col items-center justify-center h-64 space-y-4 bg-[#0d1117] rounded-2xl border-2 border-[#27272a]">
+          <MessageSquare className="w-16 h-16 text-[#27272a]" />
+          <p className="text-[#8b949e] text-lg">目前沒有待處理的轉交對話</p>
         </div>
       ) : (
         <>
-          {/* Reason Distribution */}
-          <div className="bg-[#18181b] rounded-xl p-5 border border-[#27272a]">
-            <h3 className="text-sm font-semibold text-[#a1a1aa] uppercase tracking-wide mb-4">
+          {/* 轉交原因分佈 */}
+          <div className="bg-[#0d1117] rounded-2xl p-5 border-2 border-[#27272a]">
+            <h3 className="text-sm font-semibold text-[#8b949e] uppercase tracking-wide mb-4 flex items-center gap-2">
+              <AlertCircle className="w-4 h-4" />
               轉交原因分佈
             </h3>
-            <div className="space-y-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               {reasonStats.map(([key, count]) => {
                 const reason = HANDOFF_REASONS[key];
                 const ReasonIcon = reason.icon;
-                const percentage = ((count / handoffs.length) * 100).toFixed(0);
+                const percentage = ((count / tasks.length) * 100).toFixed(0);
                 
                 return (
-                  <div key={key} className="flex items-center gap-3">
-                    <div className={`w-8 h-8 rounded-lg ${reason.bgColor} flex items-center justify-center flex-shrink-0`}>
-                      <ReasonIcon className={`w-4 h-4 ${reason.color}`} />
+                  <div key={key} className={`p-4 rounded-xl ${reason.bgColor} border ${reason.borderColor}`}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <ReasonIcon className={`w-5 h-5 ${reason.color}`} />
+                      <span className={`font-semibold ${reason.color}`}>{reason.label}</span>
                     </div>
-                    <div className="flex-1">
-                      <div className="flex justify-between items-center mb-1">
-                        <span className="text-white text-sm">{reason.label}</span>
-                        <span className="text-[#a1a1aa] text-sm">{count} 則 ({percentage}%)</span>
-                      </div>
-                      <div className="h-2 bg-[#27272a] rounded-full overflow-hidden">
-                        <div 
-                          className={`h-full rounded-full ${reason.bgColor.replace('/15', '')}`}
-                          style={{ width: `${percentage}%`, backgroundColor: reason.color.replace('text-', '').includes('[') ? reason.color.match(/\[(.*?)\]/)[1] : undefined }}
-                        />
-                      </div>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-2xl font-bold text-white">{count}</span>
+                      <span className="text-[#8b949e] text-sm">則 ({percentage}%)</span>
                     </div>
                   </div>
                 );
@@ -372,23 +582,22 @@ export const HandoffAnalysis = ({ venue }) => {
             </div>
           </div>
           
-          {/* Handoff List */}
+          {/* 對話列表 */}
           <div>
-            <h3 className="text-sm font-semibold text-[#a1a1aa] uppercase tracking-wide mb-4 flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-[#8b949e] uppercase tracking-wide mb-4 flex items-center gap-2">
               <MessageSquare className="w-4 h-4" />
-              LINE OA 轉交對話 ({handoffs.length} 則)
+              LINE OA 轉交對話 ({tasks.length} 則)
             </h3>
-            <ScrollArea className="h-[500px]">
-              <div className="space-y-4 pr-4">
-                {handoffs.map(handoff => (
-                  <HandoffCard 
-                    key={handoff.id} 
-                    handoff={handoff}
-                    onLearn={handleLearn}
-                  />
-                ))}
-              </div>
-            </ScrollArea>
+            <div className="space-y-4">
+              {tasks.map(task => (
+                <ConversationCard 
+                  key={task.task_id} 
+                  task={task}
+                  token={token}
+                  onRefresh={fetchTasks}
+                />
+              ))}
+            </div>
           </div>
         </>
       )}
