@@ -5,7 +5,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Card, CardContent } from '../components/ui/card';
-import { Loader2, Mail, Lock, AlertCircle, Users, MessageSquare, Zap, CheckCircle2, Sparkles } from 'lucide-react';
+import { Loader2, Mail, Lock, AlertCircle, Users, MessageSquare, Zap, CheckCircle2, Sparkles, DollarSign, TrendingUp } from 'lucide-react';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -41,7 +41,9 @@ export default function LoginPage() {
   const features = [
     { icon: Users, text: '多場域集中管理' },
     { icon: MessageSquare, text: 'LINE 智能真人切換' },
-    { icon: Zap, text: '直覺協作系統' },
+    { icon: Zap, text: 'PMS 庫存直連' },
+    { icon: DollarSign, text: '支持動態報價' },
+    { icon: TrendingUp, text: '成交率與詢問率分析' },
   ];
 
   return (
