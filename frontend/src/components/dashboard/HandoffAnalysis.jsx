@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
@@ -17,9 +17,15 @@ import {
   CheckCircle2,
   Sparkles,
   Image as ImageIcon,
-  X
+  X,
+  Loader2,
+  RefreshCw
 } from 'lucide-react';
 import { toast } from 'sonner';
+import axios from 'axios';
+import { useAuth } from '../../context/AuthContext';
+
+const API_URL = process.env.REACT_APP_BACKEND_URL || 'https://line-ai-bot-xiaosen.onrender.com';
 
 // 轉交原因類別
 const HANDOFF_REASONS = {
