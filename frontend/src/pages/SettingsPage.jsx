@@ -42,7 +42,7 @@ import {
   Shield
 } from 'lucide-react';
 
-const API_URL = process.env.REACT_APP_BACKEND_URL;
+const API_URL = process.env.REACT_APP_BACKEND_URL || 'https://line-ai-bot-xiaosen.onrender.com';
 
 const AI_MODELS = [
   { value: 'gpt-4.1-mini', label: 'GPT-4.1 Mini' },
