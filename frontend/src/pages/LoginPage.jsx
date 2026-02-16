@@ -90,7 +90,7 @@ export default function LoginPage() {
               不只是客服，是<span className="text-[#FF6B35] font-semibold">銷售 Agent</span>——從詢問、報價、<span className="text-white font-semibold">收款到完成訂房</span>，全自動成交。
             </p>
             <p className="text-lg text-white/60 mt-3">
-              源自旗下 15 家旅宿品牌、年營收破億的真實經驗，<span className="text-[#00B4D8] font-medium">每週智能更新</span>，您的 AI 越來越聰明。
+              源自旗下 15 家旅宿品牌、年營收破億的真實經驗，<span className="text-[#00B4D8] font-medium">支持智能更新</span>，您的銷售成交率將不斷提高。
             </p>
           </div>
 
