@@ -1,89 +1,532 @@
-from fastapi import FastAPI, APIRouter
-from dotenv import load_dotenv
-from starlette.middleware.cors import CORSMiddleware
-from motor.motor_asyncio import AsyncIOMotorClient
-import os
-import logging
-from pathlib import Path
-from pydantic import BaseModel, Field, ConfigDict
-from typing import List
-import uuid
-from datetime import datetime, timezone
+from fastapi import FastAPI, HTTPException, Depends, WebSocket, WebSocketDisconnect, Query
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, EmailStr
+from typing import Optional, List
+from datetime import datetime, timedelta
+import jwt
+import json
+import asyncio
 
+app = FastAPI(title="Lakeze 多場域 AI 管家協作平台 - 模擬後端")
 
-ROOT_DIR = Path(__file__).parent
-load_dotenv(ROOT_DIR / '.env')
-
-# MongoDB connection
-mongo_url = os.environ['MONGO_URL']
-client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
-
-# Create the main app without a prefix
-app = FastAPI()
-
-# Create a router with the /api prefix
-api_router = APIRouter(prefix="/api")
-
-
-# Define Models
-class StatusCheck(BaseModel):
-    model_config = ConfigDict(extra="ignore")  # Ignore MongoDB's _id field
-    
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    client_name: str
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-
-class StatusCheckCreate(BaseModel):
-    client_name: str
-
-# Add your routes to the router instead of directly to app
-@api_router.get("/")
-async def root():
-    return {"message": "Hello World"}
-
-@api_router.post("/status", response_model=StatusCheck)
-async def create_status_check(input: StatusCheckCreate):
-    status_dict = input.model_dump()
-    status_obj = StatusCheck(**status_dict)
-    
-    # Convert to dict and serialize datetime to ISO string for MongoDB
-    doc = status_obj.model_dump()
-    doc['timestamp'] = doc['timestamp'].isoformat()
-    
-    _ = await db.status_checks.insert_one(doc)
-    return status_obj
-
-@api_router.get("/status", response_model=List[StatusCheck])
-async def get_status_checks():
-    # Exclude MongoDB's _id field from the query results
-    status_checks = await db.status_checks.find({}, {"_id": 0}).to_list(1000)
-    
-    # Convert ISO string timestamps back to datetime objects
-    for check in status_checks:
-        if isinstance(check['timestamp'], str):
-            check['timestamp'] = datetime.fromisoformat(check['timestamp'])
-    
-    return status_checks
-
-# Include the router in the main app
-app.include_router(api_router)
-
+# CORS
 app.add_middleware(
     CORSMiddleware,
+    allow_origins=["*"],
     allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
+# JWT Secret
+JWT_SECRET = "lakeze-secret-key-2025"
+JWT_ALGORITHM = "HS256"
 
-@app.on_event("shutdown")
-async def shutdown_db_client():
-    client.close()
+# ============ 模擬資料 ============
+
+# 使用者資料
+USERS = {
+    "admin@lakeze.com": {
+        "id": "user_001",
+        "name": "王管理員",
+        "email": "admin@lakeze.com",
+        "password": "admin123",
+        "role": "admin"
+    },
+    "manager@lakeze.com": {
+        "id": "user_002",
+        "name": "陳管家",
+        "email": "manager@lakeze.com",
+        "password": "manager123",
+        "role": "manager"
+    },
+    "jane@lakeze.com": {
+        "id": "user_003",
+        "name": "Jane Lin",
+        "email": "jane@lakeze.com",
+        "password": "jane123",
+        "role": "manager"
+    }
+}
+
+# 場域資料
+VENUES = [
+    {"id": "venue_001", "name": "森山寫照"},
+    {"id": "venue_002", "name": "天送幸福和苑"},
+    {"id": "venue_003", "name": "湖畔雅居"}
+]
+
+VENUE_CONFIGS = {
+    "venue_001": {
+        "venue_id": "venue_001",
+        "ai_model": "gpt-4.1-mini",
+        "ai_knowledge_base_url": "https://kb.lakeze.com/senshan",
+        "greeting_message": "歡迎來到森山寫照！",
+        "handoff_keywords": ["真人", "客服", "人工"]
+    },
+    "venue_002": {
+        "venue_id": "venue_002",
+        "ai_model": "manus-1.6-max",
+        "ai_knowledge_base_url": "https://kb.lakeze.com/tiansong",
+        "greeting_message": "歡迎來到天送幸福和苑！",
+        "handoff_keywords": ["真人", "管家"]
+    },
+    "venue_003": {
+        "venue_id": "venue_003",
+        "ai_model": "gpt-4.1",
+        "ai_knowledge_base_url": "",
+        "greeting_message": "歡迎來到湖畔雅居！",
+        "handoff_keywords": ["人工服務"]
+    }
+}
+
+# 任務資料
+TASKS = [
+    {
+        "id": 101,
+        "venue_id": "venue_001",
+        "customer_name": "張小明",
+        "customer_user_id": "U1234567890abcdef",
+        "initial_message": "請問明天還有空房嗎？我想訂兩晚，需要有陽台的房間。",
+        "ai_response": "您好！關於房間預訂的詳細需求，我將為您轉接真人管家為您服務。",
+        "status": "待處理",
+        "assigned_to": None,
+        "assigned_to_name": None,
+        "notes": "",
+        "created_at": (datetime.now() - timedelta(minutes=15)).isoformat(),
+        "claimed_at": None,
+        "completed_at": None
+    },
+    {
+        "id": 102,
+        "venue_id": "venue_001",
+        "customer_name": "李美玲",
+        "customer_user_id": "U0987654321fedcba",
+        "initial_message": "我上次住的時候東西忘在房間了，可以幫我查一下嗎？",
+        "ai_response": "非常抱歉聽到這個情況！關於遺失物品的查詢，讓我為您轉接管家處理。",
+        "status": "待處理",
+        "assigned_to": None,
+        "assigned_to_name": None,
+        "notes": "",
+        "created_at": (datetime.now() - timedelta(minutes=8)).isoformat(),
+        "claimed_at": None,
+        "completed_at": None
+    },
+    {
+        "id": 103,
+        "venue_id": "venue_001",
+        "customer_name": "王大華",
+        "customer_user_id": "Uabcdef1234567890",
+        "initial_message": "請問有提供接駁服務嗎？我從台北車站過去。",
+        "ai_response": "關於接駁服務的安排，我將為您轉接管家提供詳細資訊。",
+        "status": "處理中",
+        "assigned_to": "user_002",
+        "assigned_to_name": "陳管家",
+        "notes": "客人預計下午2點抵達台北車站",
+        "created_at": (datetime.now() - timedelta(hours=1)).isoformat(),
+        "claimed_at": (datetime.now() - timedelta(minutes=45)).isoformat(),
+        "completed_at": None
+    },
+    {
+        "id": 104,
+        "venue_id": "venue_002",
+        "customer_name": "陳雅婷",
+        "customer_user_id": "Ufedcba0987654321",
+        "initial_message": "我想詢問週末的親子活動有哪些？",
+        "ai_response": "週末活動的詳細內容，讓我為您轉接管家說明。",
+        "status": "待處理",
+        "assigned_to": None,
+        "assigned_to_name": None,
+        "notes": "",
+        "created_at": (datetime.now() - timedelta(minutes=5)).isoformat(),
+        "claimed_at": None,
+        "completed_at": None
+    },
+    {
+        "id": 105,
+        "venue_id": "venue_001",
+        "customer_name": "林志偉",
+        "customer_user_id": "U5555666677778888",
+        "initial_message": "退房後可以寄放行李嗎？大概到下午5點。",
+        "ai_response": "好的，關於行李寄放服務，我將為您轉接管家協助。",
+        "status": "已完成",
+        "assigned_to": "user_003",
+        "assigned_to_name": "Jane Lin",
+        "notes": "已確認可寄放至下午6點，客人表示感謝",
+        "created_at": (datetime.now() - timedelta(hours=3)).isoformat(),
+        "claimed_at": (datetime.now() - timedelta(hours=2, minutes=50)).isoformat(),
+        "completed_at": (datetime.now() - timedelta(hours=2)).isoformat()
+    }
+]
+
+# WebSocket 連線管理
+connected_clients: List[WebSocket] = []
+
+# ============ Pydantic Models ============
+
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
+
+class LoginResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: dict
+
+class TaskUpdate(BaseModel):
+    notes: Optional[str] = None
+
+class ManagerCreate(BaseModel):
+    name: str
+    email: EmailStr
+    password: str
+    role: str = "manager"
+
+class VenueConfigUpdate(BaseModel):
+    ai_model: Optional[str] = None
+    ai_knowledge_base_url: Optional[str] = None
+    greeting_message: Optional[str] = None
+    handoff_keywords: Optional[List[str]] = None
+
+# ============ 認證相關 ============
+
+def create_token(user_id: str) -> str:
+    payload = {
+        "sub": user_id,
+        "exp": datetime.utcnow() + timedelta(hours=24)
+    }
+    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+
+def verify_token(token: str) -> Optional[dict]:
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        user_id = payload.get("sub")
+        for user in USERS.values():
+            if user["id"] == user_id:
+                return user
+        return None
+    except:
+        return None
+
+def get_current_user(authorization: str = None) -> dict:
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="未提供認證 Token")
+    
+    token = authorization.replace("Bearer ", "")
+    user = verify_token(token)
+    if not user:
+        raise HTTPException(status_code=401, detail="Token 無效或已過期")
+    return user
+
+# ============ API 端點 ============
+
+@app.get("/api/")
+def root():
+    return {"message": "Lakeze 多場域 AI 管家協作平台 API", "status": "running"}
+
+# 登入
+@app.post("/api/auth/login", response_model=LoginResponse)
+def login(request: LoginRequest):
+    user = USERS.get(request.email)
+    if not user or user["password"] != request.password:
+        raise HTTPException(status_code=401, detail="登入失敗，請檢查帳號密碼")
+    
+    token = create_token(user["id"])
+    user_data = {k: v for k, v in user.items() if k != "password"}
+    
+    return LoginResponse(access_token=token, user=user_data)
+
+# 取得當前使用者
+@app.get("/api/auth/me")
+def get_me(authorization: str = None):
+    from fastapi import Header
+    user = get_current_user(authorization)
+    return {k: v for k, v in user.items() if k != "password"}
+
+# 修正：使用 Header 取得 Authorization
+from fastapi import Header
+
+@app.get("/api/auth/me")
+def get_me(authorization: str = Header(None)):
+    user = get_current_user(authorization)
+    return {k: v for k, v in user.items() if k != "password"}
+
+# 場域列表
+@app.get("/api/venues")
+def get_venues(authorization: str = Header(None)):
+    get_current_user(authorization)
+    return VENUES
+
+# 場域設定
+@app.get("/api/venues/{venue_id}/config")
+def get_venue_config(venue_id: str, authorization: str = Header(None)):
+    get_current_user(authorization)
+    config = VENUE_CONFIGS.get(venue_id)
+    if not config:
+        raise HTTPException(status_code=404, detail="場域不存在")
+    return config
+
+@app.put("/api/venues/{venue_id}/config")
+def update_venue_config(venue_id: str, update: VenueConfigUpdate, authorization: str = Header(None)):
+    user = get_current_user(authorization)
+    if user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="權限不足")
+    
+    if venue_id not in VENUE_CONFIGS:
+        raise HTTPException(status_code=404, detail="場域不存在")
+    
+    config = VENUE_CONFIGS[venue_id]
+    if update.ai_model is not None:
+        config["ai_model"] = update.ai_model
+    if update.ai_knowledge_base_url is not None:
+        config["ai_knowledge_base_url"] = update.ai_knowledge_base_url
+    if update.greeting_message is not None:
+        config["greeting_message"] = update.greeting_message
+    if update.handoff_keywords is not None:
+        config["handoff_keywords"] = update.handoff_keywords
+    
+    return config
+
+# 任務列表
+@app.get("/api/tasks")
+def get_tasks(venue_id: Optional[str] = None, authorization: str = Header(None)):
+    get_current_user(authorization)
+    if venue_id:
+        return [t for t in TASKS if t["venue_id"] == venue_id]
+    return TASKS
+
+# 認領任務
+@app.post("/api/tasks/{task_id}/claim")
+async def claim_task(task_id: int, authorization: str = Header(None)):
+    user = get_current_user(authorization)
+    
+    task = next((t for t in TASKS if t["id"] == task_id), None)
+    if not task:
+        raise HTTPException(status_code=404, detail="任務不存在")
+    
+    if task["status"] != "待處理":
+        raise HTTPException(status_code=400, detail="此任務無法被認領")
+    
+    task["status"] = "處理中"
+    task["assigned_to"] = user["id"]
+    task["assigned_to_name"] = user["name"]
+    task["claimed_at"] = datetime.now().isoformat()
+    
+    # 廣播 WebSocket 事件
+    await broadcast_event("task_updated", {
+        "venue_id": task["venue_id"],
+        "task": task
+    })
+    await broadcast_event("activity", {
+        "type": "task_claimed",
+        "manager_name": user["name"],
+        "message": f"認領了任務 #{task_id}",
+        "venue_id": task["venue_id"],
+        "venue_name": next((v["name"] for v in VENUES if v["id"] == task["venue_id"]), ""),
+        "timestamp": datetime.now().isoformat()
+    })
+    
+    return task
+
+# 取消認領
+@app.post("/api/tasks/{task_id}/unclaim")
+async def unclaim_task(task_id: int, authorization: str = Header(None)):
+    user = get_current_user(authorization)
+    
+    task = next((t for t in TASKS if t["id"] == task_id), None)
+    if not task:
+        raise HTTPException(status_code=404, detail="任務不存在")
+    
+    if task["status"] != "處理中" or task["assigned_to"] != user["id"]:
+        raise HTTPException(status_code=400, detail="無法取消認領此任務")
+    
+    task["status"] = "待處理"
+    task["assigned_to"] = None
+    task["assigned_to_name"] = None
+    task["claimed_at"] = None
+    
+    await broadcast_event("task_updated", {
+        "venue_id": task["venue_id"],
+        "task": task
+    })
+    await broadcast_event("activity", {
+        "type": "task_unclaimed",
+        "manager_name": user["name"],
+        "message": f"取消認領了任務 #{task_id}",
+        "venue_id": task["venue_id"],
+        "venue_name": next((v["name"] for v in VENUES if v["id"] == task["venue_id"]), ""),
+        "timestamp": datetime.now().isoformat()
+    })
+    
+    return task
+
+# 完成任務
+@app.post("/api/tasks/{task_id}/complete")
+async def complete_task(task_id: int, authorization: str = Header(None)):
+    user = get_current_user(authorization)
+    
+    task = next((t for t in TASKS if t["id"] == task_id), None)
+    if not task:
+        raise HTTPException(status_code=404, detail="任務不存在")
+    
+    if task["status"] != "處理中" or task["assigned_to"] != user["id"]:
+        raise HTTPException(status_code=400, detail="無法完成此任務")
+    
+    task["status"] = "已完成"
+    task["completed_at"] = datetime.now().isoformat()
+    
+    await broadcast_event("task_updated", {
+        "venue_id": task["venue_id"],
+        "task": task
+    })
+    await broadcast_event("activity", {
+        "type": "task_completed",
+        "manager_name": user["name"],
+        "message": f"完成了任務 #{task_id}",
+        "venue_id": task["venue_id"],
+        "venue_name": next((v["name"] for v in VENUES if v["id"] == task["venue_id"]), ""),
+        "timestamp": datetime.now().isoformat()
+    })
+    
+    return task
+
+# 更新任務
+@app.put("/api/tasks/{task_id}")
+def update_task(task_id: int, update: TaskUpdate, authorization: str = Header(None)):
+    get_current_user(authorization)
+    
+    task = next((t for t in TASKS if t["id"] == task_id), None)
+    if not task:
+        raise HTTPException(status_code=404, detail="任務不存在")
+    
+    if update.notes is not None:
+        task["notes"] = update.notes
+    
+    return task
+
+# 管家列表
+@app.get("/api/managers")
+def get_managers(authorization: str = Header(None)):
+    user = get_current_user(authorization)
+    if user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="權限不足")
+    
+    return [{k: v for k, v in u.items() if k != "password"} for u in USERS.values()]
+
+# 新增管家
+@app.post("/api/managers")
+def create_manager(manager: ManagerCreate, authorization: str = Header(None)):
+    user = get_current_user(authorization)
+    if user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="權限不足")
+    
+    if manager.email in USERS:
+        raise HTTPException(status_code=400, detail="此 Email 已存在")
+    
+    new_user = {
+        "id": f"user_{len(USERS) + 1:03d}",
+        "name": manager.name,
+        "email": manager.email,
+        "password": manager.password,
+        "role": manager.role
+    }
+    USERS[manager.email] = new_user
+    
+    return {k: v for k, v in new_user.items() if k != "password"}
+
+# PMS 可用性查詢
+@app.get("/api/pms/{venue_id}/availability")
+def get_pms_availability(
+    venue_id: str, 
+    start_date: str = Query(...),
+    end_date: str = Query(...),
+    authorization: str = Header(None)
+):
+    get_current_user(authorization)
+    
+    venue = next((v for v in VENUES if v["id"] == venue_id), None)
+    if not venue:
+        raise HTTPException(status_code=404, detail="場域不存在")
+    
+    # 模擬 PMS 回應
+    return {
+        "venue_id": venue_id,
+        "venue_name": venue["name"],
+        "query_period": {
+            "start_date": start_date,
+            "end_date": end_date
+        },
+        "available_rooms": [
+            {
+                "room_type": "標準雙人房",
+                "room_code": "STD-D",
+                "available_count": 3,
+                "price_per_night": 3200
+            },
+            {
+                "room_type": "豪華景觀房",
+                "room_code": "DLX-V",
+                "available_count": 2,
+                "price_per_night": 4800
+            },
+            {
+                "room_type": "總統套房",
+                "room_code": "PRES",
+                "available_count": 1,
+                "price_per_night": 12000
+            }
+        ],
+        "note": "此為模擬資料，實際請連接 PMS 系統"
+    }
+
+# ============ WebSocket ============
+
+async def broadcast_event(event_type: str, payload: dict):
+    message = json.dumps({"type": event_type, "payload": payload})
+    disconnected = []
+    for client in connected_clients:
+        try:
+            await client.send_text(message)
+        except:
+            disconnected.append(client)
+    for client in disconnected:
+        connected_clients.remove(client)
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket, token: str = Query(None)):
+    # 驗證 Token
+    user = verify_token(token) if token else None
+    if not user:
+        await websocket.close(code=4001)
+        return
+    
+    await websocket.accept()
+    connected_clients.append(websocket)
+    
+    # 發送在線管家列表
+    online_managers = [
+        {"id": user["id"], "name": user["name"], "role": user["role"]}
+        for u in USERS.values()
+        if u["id"] == user["id"]
+    ]
+    # 模擬其他在線管家
+    for u in USERS.values():
+        if u["id"] != user["id"] and u["role"] == "manager":
+            online_managers.append({"id": u["id"], "name": u["name"], "role": u["role"]})
+            break
+    
+    await websocket.send_text(json.dumps({
+        "type": "online_managers",
+        "payload": {"managers": online_managers}
+    }))
+    
+    try:
+        while True:
+            data = await websocket.receive_text()
+            # 處理收到的訊息（如果需要）
+    except WebSocketDisconnect:
+        connected_clients.remove(websocket)
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8001)
