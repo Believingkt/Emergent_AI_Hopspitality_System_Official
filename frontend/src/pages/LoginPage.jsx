@@ -83,12 +83,12 @@ export default function LoginPage() {
               </p>
             </div>
             <h1 className="text-4xl lg:text-5xl font-bold text-white leading-tight mb-6" style={{ fontFamily: 'Manrope, sans-serif' }}>
-              AI 智能接待<br/>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FF6B35] to-[#00B4D8]">釋放您的時間創造更大價值</span>
+              AI 智能接單<br/>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FF6B35] to-[#00B4D8]">您專注更重要的事</span>
             </h1>
             <p className="text-xl text-white/70 leading-relaxed max-w-lg">
-              讓 AI 處理瑣碎的詢問與接單工作，您專注於旅宿事業的策略發展與更有價值的事務。
-              <span className="text-[#00B4D8] font-medium"> 成交率達真人 96%</span>，大幅降低人力成本。
+              源自 <span className="text-white font-semibold">10 萬筆以上成交訂單</span> 的真實接單經驗，
+              真人 × AI 協作，<span className="text-[#00B4D8] font-medium">讓成交率持續成長</span>。
             </p>
           </div>
 
@@ -140,7 +140,7 @@ export default function LoginPage() {
               alt="Lakeze 人客多 Logo"
               className="h-12 mx-auto mb-4"
             />
-            <h2 className="text-xl font-bold text-white mb-2">AI 智能接待，創造更大價值</h2>
+            <h2 className="text-xl font-bold text-white mb-2">AI 智能接單，您專注更重要的事</h2>
             <p className="text-[#a1a1aa] text-sm">10萬筆經驗訓練 · 96% 成交率</p>
           </div>
 
