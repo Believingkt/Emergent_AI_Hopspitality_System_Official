@@ -83,12 +83,12 @@ export default function LoginPage() {
               </p>
             </div>
             <h1 className="text-4xl lg:text-5xl font-bold text-white leading-tight mb-6" style={{ fontFamily: 'Manrope, sans-serif' }}>
-              讓 AI 幫你接單<br/>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FF6B35] to-[#00B4D8]">你專注成交</span>
+              AI 智能接待<br/>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FF6B35] to-[#00B4D8]">釋放您的時間創造更大價值</span>
             </h1>
             <p className="text-xl text-white/70 leading-relaxed max-w-lg">
-              源自 10 萬筆真實接單經驗，打造出不拐彎抹角的 AI 銷售 Agent。
-              <span className="text-[#00B4D8] font-medium"> 成交率達真人 96%</span>，省下 Call Center 每月人力成本。
+              讓 AI 處理瑣碎的詢問與接單工作，您專注於旅宿事業的策略發展與更有價值的事務。
+              <span className="text-[#00B4D8] font-medium"> 成交率達真人 96%</span>，大幅降低人力成本。
             </p>
           </div>
 
