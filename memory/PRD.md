@@ -96,8 +96,12 @@
 - `ManagerSchedule` - generateShiftSchedule() 產生排班（安安、立棠固定）
 
 ### 需要的 API 端點
+- ✅ `GET /api/tasks` - 任務列表
+- ✅ `GET /api/tasks/{task_id}/conversations` - 任務對話歷史
+- ✅ `GET /api/conversations/{user_id}` - 用戶對話歷史
+- `POST /api/tasks/{task_id}/reply` - 管家回覆（已有 API，前端待串接）
+- `POST /api/ai/learn` - 提交 AI 學習請求（後端待實作）
 - `GET /api/venues/{venue_id}/stats` - 場域統計數據
-- `POST /api/ai/learn` - 提交 AI 學習請求
 - `GET /api/managers/schedule` - 管家排班
 - `PUT /api/managers/schedule` - 更新排班
 
