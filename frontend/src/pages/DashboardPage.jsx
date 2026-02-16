@@ -68,17 +68,17 @@ export default function DashboardPage() {
 
   if (venueLoading) {
     return (
-      <div className="h-screen flex items-center justify-center bg-[#F5F5F0]">
+      <div className="h-screen flex items-center justify-center bg-[#09090b]">
         <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-[#3D4A2C] mx-auto mb-4" />
-          <p className="text-[#64748B]">載入場域資料中...</p>
+          <Loader2 className="w-8 h-8 animate-spin text-[#FF6B35] mx-auto mb-4" />
+          <p className="text-[#a1a1aa]">載入場域資料中...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="h-screen flex bg-[#F5F5F0]" data-testid="dashboard">
+    <div className="h-screen flex bg-[#09090b]" data-testid="dashboard">
       {/* Sidebar */}
       <Sidebar />
 
@@ -90,7 +90,7 @@ export default function DashboardPage() {
         {/* Three Column Layout */}
         <div className="flex-1 flex min-h-0">
           {/* Left Panel - Task List */}
-          <div className="w-80 border-r border-[#E2E8F0] flex-shrink-0">
+          <div className="w-80 border-r border-[#27272a] flex-shrink-0">
             <TaskList
               pendingTasks={pendingTasks}
               inProgressTasks={inProgressTasks}
@@ -114,7 +114,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Right Panel - Team Activity */}
-          <div className="w-72 border-l border-[#E2E8F0] flex-shrink-0">
+          <div className="w-72 border-l border-[#27272a] flex-shrink-0">
             <TeamActivity />
           </div>
         </div>
