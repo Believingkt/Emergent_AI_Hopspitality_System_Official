@@ -27,15 +27,15 @@ import { PMSModal } from './PMSModal';
 
 const statusConfig = {
   '待處理': { 
-    class: 'bg-amber-100 text-amber-800 border-amber-200',
+    class: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
     icon: Clock
   },
   '處理中': { 
-    class: 'bg-blue-100 text-blue-800 border-blue-200',
+    class: 'bg-[#00B4D8]/15 text-[#00B4D8] border-[#00B4D8]/30',
     icon: Loader2
   },
   '已完成': { 
-    class: 'bg-green-100 text-green-800 border-green-200',
+    class: 'bg-[#22c55e]/15 text-[#22c55e] border-[#22c55e]/30',
     icon: CheckCircle2
   }
 };
@@ -56,9 +56,9 @@ export const TaskDetail = ({
 
   if (!task) {
     return (
-      <div className="h-full flex flex-col items-center justify-center bg-white text-[#64748B]">
+      <div className="h-full flex flex-col items-center justify-center bg-[#09090b] text-[#71717a]" data-testid="task-detail-empty">
         <FileText className="w-16 h-16 mb-4 opacity-30" />
-        <p className="text-lg">請從左側選擇一個任務</p>
+        <p className="text-lg text-white/70">請從左側選擇一個任務</p>
         <p className="text-sm mt-1">查看詳細資訊和進行操作</p>
       </div>
     );
@@ -95,12 +95,12 @@ export const TaskDetail = ({
   };
 
   return (
-    <div className="h-full flex flex-col bg-white shadow-sm">
+    <div className="h-full flex flex-col bg-[#09090b]" data-testid="task-detail">
       {/* Header */}
-      <div className="p-6 border-b border-[#E2E8F0]">
+      <div className="p-6 border-b border-[#27272a]">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <h2 className="text-2xl font-bold text-[#1F2E0E]" style={{ fontFamily: 'Manrope, sans-serif' }}>
+            <h2 className="text-2xl font-bold text-white" style={{ fontFamily: 'Manrope, sans-serif' }}>
               #{task.id}
             </h2>
             <Badge variant="outline" className={`${config.class} px-3 py-1`}>
@@ -113,7 +113,7 @@ export const TaskDetail = ({
             variant="outline"
             size="sm"
             onClick={() => setPmsOpen(true)}
-            className="border-[#3D4A2C] text-[#3D4A2C] hover:bg-[#3D4A2C] hover:text-white rounded-sm"
+            className="border-[#00B4D8]/50 text-[#00B4D8] hover:bg-[#00B4D8]/20 hover:border-[#00B4D8] rounded-lg transition-all duration-300"
             data-testid="pms-availability-btn"
           >
             <Calendar className="w-4 h-4 mr-2" />
@@ -127,7 +127,7 @@ export const TaskDetail = ({
             <Button
               onClick={() => onClaim(task.id)}
               disabled={loading}
-              className="bg-[#3D4A2C] hover:bg-[#2C381E] text-white rounded-sm shadow-md"
+              className="bg-[#FF6B35] hover:bg-[#E55A2B] text-white rounded-full shadow-lg btn-glow transition-all duration-300"
               data-testid="claim-task-btn"
             >
               {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <HandMetal className="w-4 h-4 mr-2" />}
@@ -140,7 +140,7 @@ export const TaskDetail = ({
               <Button
                 onClick={() => onComplete(task.id)}
                 disabled={loading}
-                className="bg-green-600 hover:bg-green-700 text-white rounded-sm shadow-md"
+                className="bg-[#22c55e] hover:bg-[#16a34a] text-white rounded-full shadow-lg transition-all duration-300"
                 data-testid="complete-task-btn"
               >
                 {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
@@ -150,7 +150,7 @@ export const TaskDetail = ({
                 onClick={() => onUnclaim(task.id)}
                 disabled={loading}
                 variant="outline"
-                className="border-red-300 text-red-600 hover:bg-red-50 rounded-sm"
+                className="border-red-500/50 text-red-400 hover:bg-red-500/20 hover:border-red-500 rounded-full transition-all duration-300"
                 data-testid="unclaim-task-btn"
               >
                 <XCircle className="w-4 h-4 mr-2" />
@@ -160,7 +160,7 @@ export const TaskDetail = ({
           )}
           
           {task.status === '處理中' && !isOwnTask && (
-            <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-sm">
+            <div className="flex items-center gap-2 px-4 py-2 bg-[#00B4D8]/15 text-[#00B4D8] rounded-lg border border-[#00B4D8]/30">
               <User className="w-4 h-4" />
               <span>{task.assigned_to_name} 正在處理此任務</span>
             </div>
@@ -172,29 +172,29 @@ export const TaskDetail = ({
         <div className="p-6 space-y-6">
           {/* Customer Info */}
           <div className="animate-slide-in-up">
-            <h3 className="text-sm font-semibold text-[#64748B] uppercase tracking-wide mb-3 flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-[#a1a1aa] uppercase tracking-wide mb-3 flex items-center gap-2">
               <User className="w-4 h-4" />
               客戶資訊
             </h3>
-            <div className="bg-[#F5F5F0] p-4 rounded-sm space-y-3">
+            <div className="bg-[#18181b] p-4 rounded-xl border border-[#27272a] space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-[#64748B]">客戶名稱</span>
-                <span className="font-medium text-[#1F2E0E]">{task.customer_name || '未知'}</span>
+                <span className="text-[#a1a1aa]">客戶名稱</span>
+                <span className="font-medium text-white">{task.customer_name || '未知'}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-[#64748B]">User ID</span>
+                <span className="text-[#a1a1aa]">User ID</span>
                 <div className="flex items-center gap-2">
-                  <code className="text-sm bg-white px-2 py-1 rounded-sm border border-[#E2E8F0]">
+                  <code className="text-sm bg-[#27272a] px-2 py-1 rounded-lg border border-[#3f3f46] text-[#00B4D8]">
                     {task.customer_user_id || '-'}
                   </code>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7"
+                    className="h-7 w-7 text-[#a1a1aa] hover:text-white hover:bg-[#27272a]"
                     onClick={() => handleCopy(task.customer_user_id || '')}
                     data-testid="copy-user-id-btn"
                   >
-                    {copied ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
+                    {copied ? <Check className="w-3.5 h-3.5 text-[#22c55e]" /> : <Copy className="w-3.5 h-3.5" />}
                   </Button>
                 </div>
               </div>
@@ -203,67 +203,67 @@ export const TaskDetail = ({
 
           {/* Timestamps */}
           <div className="animate-slide-in-up" style={{ animationDelay: '0.1s' }}>
-            <h3 className="text-sm font-semibold text-[#64748B] uppercase tracking-wide mb-3 flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-[#a1a1aa] uppercase tracking-wide mb-3 flex items-center gap-2">
               <Clock className="w-4 h-4" />
               時間戳記
             </h3>
-            <div className="bg-[#F5F5F0] p-4 rounded-sm space-y-3">
+            <div className="bg-[#18181b] p-4 rounded-xl border border-[#27272a] space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-[#64748B]">建立時間</span>
-                <span className="font-medium text-[#1F2E0E]">{formatTime(task.created_at)}</span>
+                <span className="text-[#a1a1aa]">建立時間</span>
+                <span className="font-medium text-white">{formatTime(task.created_at)}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-[#64748B]">認領時間</span>
-                <span className="font-medium text-[#1F2E0E]">{formatTime(task.claimed_at)}</span>
+                <span className="text-[#a1a1aa]">認領時間</span>
+                <span className="font-medium text-white">{formatTime(task.claimed_at)}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-[#64748B]">完成時間</span>
-                <span className="font-medium text-[#1F2E0E]">{formatTime(task.completed_at)}</span>
+                <span className="text-[#a1a1aa]">完成時間</span>
+                <span className="font-medium text-white">{formatTime(task.completed_at)}</span>
               </div>
             </div>
           </div>
 
-          <Separator className="bg-[#E2E8F0]" />
+          <Separator className="bg-[#27272a]" />
 
           {/* Conversation History */}
           <div className="animate-slide-in-up" style={{ animationDelay: '0.2s' }}>
-            <h3 className="text-sm font-semibold text-[#64748B] uppercase tracking-wide mb-3 flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-[#a1a1aa] uppercase tracking-wide mb-3 flex items-center gap-2">
               <MessageSquare className="w-4 h-4" />
               對話歷史
             </h3>
             <div className="space-y-4">
               {/* Customer Message */}
               <div className="flex gap-3">
-                <div className="w-8 h-8 rounded-full bg-[#3D4A2C] flex items-center justify-center flex-shrink-0">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#FF6B35] to-[#00B4D8] flex items-center justify-center flex-shrink-0">
                   <User className="w-4 h-4 text-white" />
                 </div>
-                <div className="flex-1 bg-[#F5F5F0] p-4 rounded-sm rounded-tl-none">
-                  <div className="text-xs text-[#64748B] mb-1">客戶訊息</div>
-                  <p className="text-[#1F2E0E]">{task.initial_message || '無訊息內容'}</p>
+                <div className="flex-1 bg-[#18181b] p-4 rounded-xl rounded-tl-none border border-[#27272a]">
+                  <div className="text-xs text-[#a1a1aa] mb-1">客戶訊息</div>
+                  <p className="text-white">{task.initial_message || '無訊息內容'}</p>
                 </div>
               </div>
               
               {/* AI Response */}
               {task.ai_response && (
                 <div className="flex gap-3">
-                  <div className="w-8 h-8 rounded-full bg-[#D4AF37] flex items-center justify-center flex-shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#40E0D0] to-[#00B4D8] flex items-center justify-center flex-shrink-0">
                     <Bot className="w-4 h-4 text-white" />
                   </div>
-                  <div className="flex-1 bg-amber-50 p-4 rounded-sm rounded-tl-none border border-amber-100">
-                    <div className="text-xs text-amber-700 mb-1">AI 回覆（觸發轉交）</div>
-                    <p className="text-[#1F2E0E]">{task.ai_response}</p>
+                  <div className="flex-1 bg-[#00B4D8]/10 p-4 rounded-xl rounded-tl-none border border-[#00B4D8]/30">
+                    <div className="text-xs text-[#00B4D8] mb-1">AI 回覆（觸發轉交）</div>
+                    <p className="text-white">{task.ai_response}</p>
                   </div>
                 </div>
               )}
             </div>
           </div>
 
-          <Separator className="bg-[#E2E8F0]" />
+          <Separator className="bg-[#27272a]" />
 
           {/* Manager Notes */}
           <div className="animate-slide-in-up" style={{ animationDelay: '0.3s' }}>
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold text-[#64748B] uppercase tracking-wide flex items-center gap-2">
+              <h3 className="text-sm font-semibold text-[#a1a1aa] uppercase tracking-wide flex items-center gap-2">
                 <FileText className="w-4 h-4" />
                 管家備註
               </h3>
@@ -272,7 +272,7 @@ export const TaskDetail = ({
                 size="sm"
                 onClick={handleSaveNotes}
                 disabled={saving || notes === task.notes}
-                className="border-[#3D4A2C] text-[#3D4A2C] hover:bg-[#3D4A2C] hover:text-white rounded-sm"
+                className="border-[#FF6B35]/50 text-[#FF6B35] hover:bg-[#FF6B35]/20 hover:border-[#FF6B35] rounded-lg transition-all duration-300"
                 data-testid="save-notes-btn"
               >
                 {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
@@ -283,7 +283,7 @@ export const TaskDetail = ({
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="在此輸入處理備註..."
-              className="min-h-[120px] bg-white border-[#E2E8F0] focus:border-[#3D4A2C] focus:ring-[#3D4A2C] rounded-sm resize-none"
+              className="min-h-[120px] bg-[#18181b] border-[#27272a] text-white placeholder:text-[#52525b] focus:border-[#FF6B35] focus:ring-[#FF6B35] rounded-xl resize-none"
               data-testid="task-notes-textarea"
             />
           </div>
@@ -291,19 +291,19 @@ export const TaskDetail = ({
           {/* Assigned Manager */}
           {task.assigned_to && (
             <div className="animate-slide-in-up" style={{ animationDelay: '0.4s' }}>
-              <h3 className="text-sm font-semibold text-[#64748B] uppercase tracking-wide mb-3 flex items-center gap-2">
+              <h3 className="text-sm font-semibold text-[#a1a1aa] uppercase tracking-wide mb-3 flex items-center gap-2">
                 <User className="w-4 h-4" />
                 指派管家
               </h3>
-              <div className="flex items-center gap-3 bg-[#F5F5F0] p-4 rounded-sm">
-                <div className="w-10 h-10 rounded-full bg-[#3D4A2C] flex items-center justify-center">
+              <div className="flex items-center gap-3 bg-[#18181b] p-4 rounded-xl border border-[#27272a]">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FF6B35] to-[#00B4D8] flex items-center justify-center">
                   <span className="text-white font-medium">
                     {task.assigned_to_name?.charAt(0) || '?'}
                   </span>
                 </div>
                 <div>
-                  <div className="font-medium text-[#1F2E0E]">{task.assigned_to_name}</div>
-                  <div className="text-sm text-[#64748B]">
+                  <div className="font-medium text-white">{task.assigned_to_name}</div>
+                  <div className="text-sm text-[#a1a1aa]">
                     {task.claimed_at && `認領於 ${formatTime(task.claimed_at)}`}
                   </div>
                 </div>
