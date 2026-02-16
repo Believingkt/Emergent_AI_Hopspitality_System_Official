@@ -82,9 +82,9 @@ export default function LoginPage() {
                 AI × 真人協作
               </p>
             </div>
-            <h1 className="text-4xl lg:text-5xl font-bold text-white leading-tight mb-6" style={{ fontFamily: 'Manrope, sans-serif' }}>
-              AI 智能接單<br/>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FF6B35] to-[#00B4D8] mt-2 block">您專心經營品牌</span>
+            <h1 className="text-4xl lg:text-5xl font-bold text-white leading-tight mb-8" style={{ fontFamily: 'Manrope, sans-serif' }}>
+              AI 智能接單
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FF6B35] to-[#00B4D8] mt-3 block">您專心經營品牌</span>
             </h1>
             <p className="text-xl text-white/70 leading-relaxed max-w-lg">
               源自<span className="text-white font-semibold">旗下 15 家旅宿品牌</span>、<span className="text-white font-semibold">年營收破億</span>累積而成的真實接單經驗。
