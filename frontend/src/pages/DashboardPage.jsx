@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Sidebar } from '../components/layout/Sidebar';
 import { Header } from '../components/layout/Header';
 import { TaskList } from '../components/dashboard/TaskList';
@@ -24,6 +24,11 @@ export default function DashboardPage() {
 
   const [selectedTask, setSelectedTask] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
+
+  // Clear selected task when venue changes
+  useEffect(() => {
+    setSelectedTask(null);
+  }, [currentVenue?.id]);
 
   const handleClaim = async (taskId) => {
     setActionLoading(true);
