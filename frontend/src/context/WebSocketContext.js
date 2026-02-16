@@ -1,103 +1,114 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import { io } from 'socket.io-client';
 import { useAuth } from './AuthContext';
 
 const WebSocketContext = createContext(null);
 
-const WS_URL = process.env.REACT_APP_WS_URL || 'wss://line-ai-bot-xiaosen.onrender.com/ws';
+const SOCKET_URL = process.env.REACT_APP_BACKEND_URL || 'https://line-ai-bot-xiaosen.onrender.com';
 
 export const WebSocketProvider = ({ children }) => {
   const { token, isAuthenticated } = useAuth();
   const [connected, setConnected] = useState(false);
+  const [authenticated, setAuthenticated] = useState(false);
   const [onlineManagers, setOnlineManagers] = useState([]);
   const [activities, setActivities] = useState([]);
-  const wsRef = useRef(null);
+  const socketRef = useRef(null);
   const listenersRef = useRef(new Map());
-  const reconnectTimeoutRef = useRef(null);
 
   const connect = useCallback(() => {
-    if (!token || !WS_URL || wsRef.current?.readyState === WebSocket.OPEN) return;
+    if (!token || socketRef.current?.connected) return;
 
     try {
-      // Manus WebSocket: 連接後發送 auth 訊息
-      const ws = new WebSocket(WS_URL);
-      
-      ws.onopen = () => {
-        console.log('WebSocket connected, sending auth...');
-        // Send auth message after connection
-        ws.send(JSON.stringify({
-          type: 'auth',
-          token: token
-        }));
+      // Connect using Socket.IO
+      const socket = io(SOCKET_URL, {
+        transports: ['websocket', 'polling'],
+        autoConnect: true
+      });
+
+      socket.on('connect', () => {
+        console.log('Socket.IO connected, sending auth...');
         setConnected(true);
-      };
+        
+        // Send auth message after connection
+        socket.emit('auth', { token });
+      });
 
-      ws.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          
-          // Manus API: { event: "task_created", data: {...} }
-          const eventType = data.event || data.type;
-          const payload = data.data || data.payload;
+      socket.on('auth_success', (data) => {
+        console.log('Socket.IO auth success:', data);
+        setAuthenticated(true);
+      });
 
-          // Handle built-in events
-          if (eventType === 'online_managers') {
-            setOnlineManagers(payload?.managers || []);
-          } else if (eventType === 'activity') {
-            setActivities(prev => [payload, ...prev].slice(0, 50));
-          } else if (eventType === 'task_created' || eventType === 'task_updated') {
-            // Convert to activity format
-            const activity = {
-              type: eventType,
-              manager_name: payload?.assigned_manager || payload?.task?.assigned_manager || '',
-              message: eventType === 'task_created' 
-                ? `新任務 #${payload?.task_id || payload?.task?.task_id}` 
-                : `更新了任務 #${payload?.task?.task_id}`,
-              venue_id: payload?.venue_id,
-              timestamp: new Date().toISOString()
-            };
-            setActivities(prev => [activity, ...prev].slice(0, 50));
-          }
+      socket.on('auth_failed', (data) => {
+        console.error('Socket.IO auth failed:', data);
+        setAuthenticated(false);
+      });
 
-          // Notify listeners
-          const listeners = listenersRef.current.get(eventType) || [];
-          listeners.forEach(callback => callback(payload));
-        } catch (e) {
-          console.error('Failed to parse WebSocket message:', e);
-        }
-      };
+      // Listen for task events
+      socket.on('task_created', (data) => {
+        console.log('New task created:', data);
+        
+        // Add to activities
+        const activity = {
+          type: 'task_created',
+          manager_name: '',
+          message: `新任務 #${data?.task?.id || data?.id || '?'}`,
+          venue_id: data?.task?.venue_id || data?.venue_id,
+          timestamp: new Date().toISOString()
+        };
+        setActivities(prev => [activity, ...prev].slice(0, 50));
 
-      ws.onclose = () => {
-        console.log('WebSocket disconnected');
+        // Notify listeners
+        const listeners = listenersRef.current.get('task_created') || [];
+        listeners.forEach(callback => callback(data));
+      });
+
+      socket.on('task_updated', (data) => {
+        console.log('Task updated:', data);
+        
+        // Add to activities
+        const activity = {
+          type: 'task_updated',
+          manager_name: data?.task?.assigned_manager || '',
+          message: `任務 #${data?.task?.id || data?.id || '?'} 已更新`,
+          venue_id: data?.task?.venue_id || data?.venue_id,
+          timestamp: new Date().toISOString()
+        };
+        setActivities(prev => [activity, ...prev].slice(0, 50));
+
+        // Notify listeners
+        const listeners = listenersRef.current.get('task_updated') || [];
+        listeners.forEach(callback => callback(data));
+      });
+
+      socket.on('online_managers', (data) => {
+        console.log('Online managers:', data);
+        setOnlineManagers(data?.managers || []);
+      });
+
+      socket.on('disconnect', () => {
+        console.log('Socket.IO disconnected');
         setConnected(false);
-        wsRef.current = null;
+        setAuthenticated(false);
+      });
 
-        // Reconnect after 3 seconds
-        if (isAuthenticated) {
-          reconnectTimeoutRef.current = setTimeout(() => {
-            connect();
-          }, 3000);
-        }
-      };
+      socket.on('connect_error', (error) => {
+        console.error('Socket.IO connection error:', error);
+        setConnected(false);
+      });
 
-      ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
-      };
-
-      wsRef.current = ws;
+      socketRef.current = socket;
     } catch (error) {
-      console.error('Failed to connect WebSocket:', error);
+      console.error('Failed to connect Socket.IO:', error);
     }
-  }, [token, isAuthenticated]);
+  }, [token]);
 
   const disconnect = useCallback(() => {
-    if (reconnectTimeoutRef.current) {
-      clearTimeout(reconnectTimeoutRef.current);
-    }
-    if (wsRef.current) {
-      wsRef.current.close();
-      wsRef.current = null;
+    if (socketRef.current) {
+      socketRef.current.disconnect();
+      socketRef.current = null;
     }
     setConnected(false);
+    setAuthenticated(false);
     setOnlineManagers([]);
     setActivities([]);
   }, []);
@@ -132,6 +143,7 @@ export const WebSocketProvider = ({ children }) => {
 
   const value = {
     connected,
+    authenticated,
     onlineManagers,
     activities,
     subscribe,
