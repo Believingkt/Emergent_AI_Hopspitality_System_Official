@@ -87,10 +87,10 @@ export default function LoginPage() {
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FF6B35] to-[#00B4D8] mt-3 block">您專心經營品牌</span>
             </h1>
             <p className="text-xl text-white/70 leading-relaxed max-w-lg">
-              源自<span className="text-white font-semibold">旗下 15 家旅宿品牌</span>、<span className="text-white font-semibold">年營收破億</span>累積而成的真實接單經驗。
+              不只是客服，是<span className="text-[#FF6B35] font-semibold">銷售 Agent</span>——從詢問、報價、<span className="text-white font-semibold">收款到完成訂房</span>，全自動成交。
             </p>
             <p className="text-lg text-white/60 mt-3">
-              <span className="text-[#00B4D8] font-medium">每週智能更新</span>，真人 × AI 協作，讓您的 AI 越來越聰明。
+              源自旗下 15 家旅宿品牌、年營收破億的真實經驗，<span className="text-[#00B4D8] font-medium">每週智能更新</span>，您的 AI 越來越聰明。
             </p>
           </div>
 
