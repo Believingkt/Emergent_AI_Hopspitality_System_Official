@@ -73,7 +73,9 @@ export default function SettingsPage() {
       const response = await axios.get(`${API_URL}/api/managers`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setManagers(response.data);
+      // Manus API: { managers: [...] }
+      const managerList = response.data.managers || response.data;
+      setManagers(managerList);
     } catch (error) {
       console.error('Failed to fetch managers:', error);
       toast.error('無法載入管家列表');
