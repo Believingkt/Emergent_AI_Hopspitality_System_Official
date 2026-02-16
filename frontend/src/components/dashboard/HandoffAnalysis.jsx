@@ -37,34 +37,41 @@ const HANDOFF_REASONS = {
   other: { label: '其他', icon: MessageSquare, color: 'text-[#a1a1aa]', bgColor: 'bg-[#27272a]', borderColor: 'border-[#27272a]' },
 };
 
-// 模擬轉交對話數據
-const generateMockHandoffs = () => {
-  const reasons = Object.keys(HANDOFF_REASONS);
-  const handoffs = [];
+// 根據客戶訊息內容智能判斷轉交原因
+const detectHandoffReason = (customerMessage) => {
+  const message = customerMessage.toLowerCase();
   
-  const mockMessages = [
-    { customer: '請問週六晚上還有空房嗎？想要山景房', reason: 'availability', aiResponse: '我幫您查詢一下，請稍候...' },
-    { customer: '你們的雙人房一晚多少錢？含早餐嗎？', reason: 'pricing', aiResponse: '關於價格的詳細資訊，我請專人為您說明' },
-    { customer: '我想帶寵物入住，可以嗎？需要加錢嗎？', reason: 'special', aiResponse: '寵物入住的相關規定，讓我請管家為您詳細說明' },
-    { customer: '上次入住房間有異味，這次能換房嗎？', reason: 'complaint', aiResponse: '非常抱歉造成您的困擾，我馬上請管家為您處理' },
-    { customer: '想預約下個月的假日，怎麼訂比較划算？', reason: 'booking', aiResponse: '讓我請專人為您推薦最適合的方案' },
-    { customer: '你們有提供接駁服務嗎？從火車站', reason: 'other', aiResponse: '關於接駁服務，請讓我轉給管家為您安排' },
-  ];
-  
-  for (let i = 0; i < 8; i++) {
-    const mock = mockMessages[i % mockMessages.length];
-    handoffs.push({
-      id: `handoff-${i + 1}`,
-      timestamp: new Date(Date.now() - Math.random() * 3600000 * 4).toISOString(),
-      customerMessage: mock.customer,
-      aiResponse: mock.aiResponse,
-      reason: mock.reason,
-      customerName: ['王小明', '李美玲', '陳大華', '林小芬', '張先生', '黃太太'][i % 6],
-      hasLearned: Math.random() > 0.7,
-    });
+  if (message.includes('價') || message.includes('錢') || message.includes('多少') || message.includes('費用') || message.includes('划算')) {
+    return 'pricing';
+  }
+  if (message.includes('空房') || message.includes('有房') || message.includes('日期') || message.includes('週') || message.includes('時段') || message.includes('預約')) {
+    return 'availability';
+  }
+  if (message.includes('寵物') || message.includes('狗') || message.includes('貓') || message.includes('特殊') || message.includes('需求') || message.includes('婚禮') || message.includes('辦')) {
+    return 'special';
+  }
+  if (message.includes('投訴') || message.includes('問題') || message.includes('異味') || message.includes('抱歉') || message.includes('不好')) {
+    return 'complaint';
+  }
+  if (message.includes('訂') || message.includes('預') || message.includes('怎麼') || message.includes('流程') || message.includes('匯款')) {
+    return 'booking';
   }
   
-  return handoffs;
+  return 'other';
+};
+
+// 將 API 任務數據轉換為轉交對話格式
+const transformTaskToHandoff = (task) => {
+  return {
+    id: `task-${task.task_id}`,
+    timestamp: task.created_at,
+    customerMessage: task.customer_message,
+    aiResponse: task.ai_response,
+    reason: detectHandoffReason(task.customer_message),
+    customerName: task.customer_name || '未知客戶',
+    status: task.status,
+    hasLearned: false,
+  };
 };
 
 const HandoffCard = ({ handoff, onLearn }) => {
