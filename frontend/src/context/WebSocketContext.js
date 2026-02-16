@@ -19,17 +19,25 @@ export const WebSocketProvider = ({ children }) => {
     if (!token || socketRef.current?.connected) return;
 
     try {
-      // Connect using Socket.IO
+      console.log('Connecting to Socket.IO:', SOCKET_URL);
+      
+      // Connect using Socket.IO with polling first, then upgrade
       const socket = io(SOCKET_URL, {
-        transports: ['websocket', 'polling'],
-        autoConnect: true
+        transports: ['polling', 'websocket'],
+        upgrade: true,
+        rememberUpgrade: true,
+        autoConnect: true,
+        reconnection: true,
+        reconnectionAttempts: 5,
+        reconnectionDelay: 1000
       });
 
       socket.on('connect', () => {
-        console.log('Socket.IO connected, sending auth...');
+        console.log('Socket.IO connected! ID:', socket.id);
         setConnected(true);
         
         // Send auth message after connection
+        console.log('Sending auth with token...');
         socket.emit('auth', { token });
       });
 
@@ -47,7 +55,6 @@ export const WebSocketProvider = ({ children }) => {
       socket.on('task_created', (data) => {
         console.log('New task created:', data);
         
-        // Add to activities
         const activity = {
           type: 'task_created',
           manager_name: '',
@@ -57,7 +64,6 @@ export const WebSocketProvider = ({ children }) => {
         };
         setActivities(prev => [activity, ...prev].slice(0, 50));
 
-        // Notify listeners
         const listeners = listenersRef.current.get('task_created') || [];
         listeners.forEach(callback => callback(data));
       });
@@ -65,7 +71,6 @@ export const WebSocketProvider = ({ children }) => {
       socket.on('task_updated', (data) => {
         console.log('Task updated:', data);
         
-        // Add to activities
         const activity = {
           type: 'task_updated',
           manager_name: data?.task?.assigned_manager || '',
@@ -75,7 +80,6 @@ export const WebSocketProvider = ({ children }) => {
         };
         setActivities(prev => [activity, ...prev].slice(0, 50));
 
-        // Notify listeners
         const listeners = listenersRef.current.get('task_updated') || [];
         listeners.forEach(callback => callback(data));
       });
@@ -85,15 +89,14 @@ export const WebSocketProvider = ({ children }) => {
         setOnlineManagers(data?.managers || []);
       });
 
-      socket.on('disconnect', () => {
-        console.log('Socket.IO disconnected');
+      socket.on('disconnect', (reason) => {
+        console.log('Socket.IO disconnected:', reason);
         setConnected(false);
         setAuthenticated(false);
       });
 
       socket.on('connect_error', (error) => {
-        console.error('Socket.IO connection error:', error);
-        setConnected(false);
+        console.error('Socket.IO connection error:', error.message);
       });
 
       socketRef.current = socket;
@@ -118,7 +121,6 @@ export const WebSocketProvider = ({ children }) => {
     listeners.push(callback);
     listenersRef.current.set(eventType, listeners);
 
-    // Return unsubscribe function
     return () => {
       const updatedListeners = listenersRef.current.get(eventType) || [];
       const index = updatedListeners.indexOf(callback);
