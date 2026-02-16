@@ -22,9 +22,9 @@ export const Header = ({ title }) => {
   };
 
   return (
-    <header className="h-16 bg-white border-b border-[#E2E8F0] px-6 flex items-center justify-between shadow-sm">
+    <header className="h-16 glass-header px-6 flex items-center justify-between sticky top-0 z-50" data-testid="header">
       <div className="flex items-center gap-4">
-        <h1 className="text-xl font-semibold text-[#1F2E0E]" style={{ fontFamily: 'Manrope, sans-serif' }}>
+        <h1 className="text-xl font-semibold text-white" style={{ fontFamily: 'Manrope, sans-serif' }}>
           {title}
         </h1>
       </div>
@@ -33,12 +33,12 @@ export const Header = ({ title }) => {
         {/* Connection Status */}
         <div className="flex items-center gap-2">
           {connected ? (
-            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 gap-1.5">
+            <Badge variant="outline" className="bg-[#22c55e]/15 text-[#22c55e] border-[#22c55e]/30 gap-1.5">
               <Wifi className="w-3 h-3" />
               <span className="text-xs">即時連線</span>
             </Badge>
           ) : (
-            <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 gap-1.5">
+            <Badge variant="outline" className="bg-red-500/15 text-red-400 border-red-500/30 gap-1.5">
               <WifiOff className="w-3 h-3" />
               <span className="text-xs">離線</span>
             </Badge>
@@ -47,23 +47,23 @@ export const Header = ({ title }) => {
 
         {/* Venue Selector */}
         <div className="flex items-center gap-2">
-          <Building2 className="w-4 h-4 text-[#64748B]" />
+          <Building2 className="w-4 h-4 text-[#a1a1aa]" />
           <Select
             value={currentVenue?.id || ''}
             onValueChange={handleVenueChange}
           >
             <SelectTrigger 
-              className="w-[200px] bg-white border-[#E2E8F0] focus:ring-[#3D4A2C] rounded-sm"
+              className="w-[200px] bg-[#27272a]/50 border-[#27272a] text-white focus:ring-[#FF6B35] focus:border-[#FF6B35] rounded-lg"
               data-testid="venue-selector"
             >
               <SelectValue placeholder="選擇場域" />
             </SelectTrigger>
-            <SelectContent className="bg-white border-[#E2E8F0] rounded-sm">
+            <SelectContent className="bg-[#18181b] border-[#27272a] rounded-lg">
               {venues.map((venue) => (
                 <SelectItem 
                   key={venue.id} 
                   value={venue.id}
-                  className="cursor-pointer hover:bg-[#F5F5F0]"
+                  className="cursor-pointer text-white hover:bg-[#27272a] focus:bg-[#27272a] focus:text-white"
                   data-testid={`venue-option-${venue.id}`}
                 >
                   {venue.name}

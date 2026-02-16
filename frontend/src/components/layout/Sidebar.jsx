@@ -29,17 +29,17 @@ export const Sidebar = () => {
   const isActive = (path) => location.pathname === path;
 
   return (
-    <div className="h-screen w-16 bg-[#3D4A2C] flex flex-col items-center py-4 shadow-xl">
+    <div className="h-screen w-16 bg-[#18181b] flex flex-col items-center py-4 border-r border-[#27272a]" data-testid="sidebar">
       {/* Logo */}
       <div className="mb-6">
         <img 
-          src="https://customer-assets.emergentagent.com/job_e6d9fa16-06bf-4039-ab22-a2ae293b4fd7/artifacts/g3viyuio_%E7%B6%B2%E9%A0%81logo.png"
-          alt="Lakeze"
+          src="https://customer-assets.emergentagent.com/job_430b19cf-7dc2-4179-a7b4-72c8b0096192/artifacts/k9ookbrh_%E4%BA%BA%E5%AE%A2%E5%A4%9Alogo%20%281%29.png"
+          alt="Lakeze 人客多"
           className="w-10 h-10 object-contain"
         />
       </div>
 
-      <Separator className="w-8 bg-white/20 mb-4" />
+      <Separator className="w-8 bg-[#27272a] mb-4" />
 
       {/* Navigation */}
       <nav className="flex-1 flex flex-col gap-2">
@@ -51,17 +51,17 @@ export const Sidebar = () => {
                   variant="ghost"
                   size="icon"
                   onClick={() => navigate(item.path)}
-                  className={`w-10 h-10 rounded-sm transition-all duration-200 ${
+                  className={`w-10 h-10 rounded-lg transition-all duration-300 ${
                     isActive(item.path)
-                      ? 'bg-white/20 text-[#D4AF37]'
-                      : 'text-white/70 hover:bg-white/10 hover:text-white'
+                      ? 'bg-[#FF6B35]/20 text-[#FF6B35] shadow-[0_0_10px_rgba(255,107,53,0.2)]'
+                      : 'text-[#a1a1aa] hover:bg-[#27272a] hover:text-white'
                   }`}
                   data-testid={`nav-${item.label}`}
                 >
                   <item.icon className="w-5 h-5" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="right" className="bg-[#1F2E0E] text-white border-0">
+              <TooltipContent side="right" className="bg-[#27272a] text-white border-[#3f3f46]">
                 {item.label}
               </TooltipContent>
             </Tooltip>
@@ -71,20 +71,20 @@ export const Sidebar = () => {
 
       {/* User & Logout */}
       <div className="flex flex-col items-center gap-2">
-        <Separator className="w-8 bg-white/20 mb-2" />
+        <Separator className="w-8 bg-[#27272a] mb-2" />
         
         <TooltipProvider delayDuration={0}>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Avatar className="w-8 h-8 bg-[#D4AF37] cursor-default">
-                <AvatarFallback className="bg-[#D4AF37] text-white text-xs font-medium">
+              <Avatar className="w-8 h-8 bg-gradient-to-br from-[#FF6B35] to-[#00B4D8] cursor-default">
+                <AvatarFallback className="bg-transparent text-white text-xs font-medium">
                   {user?.name?.charAt(0) || <User className="w-4 h-4" />}
                 </AvatarFallback>
               </Avatar>
             </TooltipTrigger>
-            <TooltipContent side="right" className="bg-[#1F2E0E] text-white border-0">
+            <TooltipContent side="right" className="bg-[#27272a] text-white border-[#3f3f46]">
               <div className="text-sm font-medium">{user?.name}</div>
-              <div className="text-xs text-white/70">{user?.email}</div>
+              <div className="text-xs text-[#a1a1aa]">{user?.email}</div>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
@@ -96,13 +96,13 @@ export const Sidebar = () => {
                 variant="ghost"
                 size="icon"
                 onClick={handleLogout}
-                className="w-10 h-10 text-white/70 hover:bg-red-500/20 hover:text-red-300 rounded-sm transition-all duration-200"
+                className="w-10 h-10 text-[#a1a1aa] hover:bg-red-500/20 hover:text-red-400 rounded-lg transition-all duration-300"
                 data-testid="logout-btn"
               >
                 <LogOut className="w-5 h-5" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent side="right" className="bg-[#1F2E0E] text-white border-0">
+            <TooltipContent side="right" className="bg-[#27272a] text-white border-[#3f3f46]">
               登出
             </TooltipContent>
           </Tooltip>
