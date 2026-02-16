@@ -23,12 +23,14 @@ export default function LoginPage() {
     const result = await login(email, password);
     
     if (result.success) {
-      navigate('/dashboard');
+      // Small delay to ensure state is updated before navigation
+      setTimeout(() => {
+        navigate('/dashboard', { replace: true });
+      }, 100);
     } else {
       setError(result.error);
+      setLoading(false);
     }
-    
-    setLoading(false);
   };
 
   return (
