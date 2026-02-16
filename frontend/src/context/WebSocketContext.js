@@ -18,27 +18,48 @@ export const WebSocketProvider = ({ children }) => {
     if (!token || !WS_URL || wsRef.current?.readyState === WebSocket.OPEN) return;
 
     try {
-      const ws = new WebSocket(`${WS_URL}?token=${token}`);
+      // Manus WebSocket: 連接後發送 auth 訊息
+      const ws = new WebSocket(WS_URL);
       
       ws.onopen = () => {
-        console.log('WebSocket connected');
+        console.log('WebSocket connected, sending auth...');
+        // Send auth message after connection
+        ws.send(JSON.stringify({
+          type: 'auth',
+          token: token
+        }));
         setConnected(true);
       };
 
       ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          const { type, payload } = data;
+          
+          // Manus API: { event: "task_created", data: {...} }
+          const eventType = data.event || data.type;
+          const payload = data.data || data.payload;
 
           // Handle built-in events
-          if (type === 'online_managers') {
-            setOnlineManagers(payload.managers || []);
-          } else if (type === 'activity') {
+          if (eventType === 'online_managers') {
+            setOnlineManagers(payload?.managers || []);
+          } else if (eventType === 'activity') {
             setActivities(prev => [payload, ...prev].slice(0, 50));
+          } else if (eventType === 'task_created' || eventType === 'task_updated') {
+            // Convert to activity format
+            const activity = {
+              type: eventType,
+              manager_name: payload?.assigned_manager || payload?.task?.assigned_manager || '',
+              message: eventType === 'task_created' 
+                ? `新任務 #${payload?.task_id || payload?.task?.task_id}` 
+                : `更新了任務 #${payload?.task?.task_id}`,
+              venue_id: payload?.venue_id,
+              timestamp: new Date().toISOString()
+            };
+            setActivities(prev => [activity, ...prev].slice(0, 50));
           }
 
           // Notify listeners
-          const listeners = listenersRef.current.get(type) || [];
+          const listeners = listenersRef.current.get(eventType) || [];
           listeners.forEach(callback => callback(payload));
         } catch (e) {
           console.error('Failed to parse WebSocket message:', e);
