@@ -140,7 +140,7 @@ export default function LoginPage() {
               alt="Lakeze 人客多 Logo"
               className="h-12 mx-auto mb-4"
             />
-            <h2 className="text-xl font-bold text-white mb-2">AI × 真人協作平台</h2>
+            <h2 className="text-xl font-bold text-white mb-2">AI 智能接待，創造更大價值</h2>
             <p className="text-[#a1a1aa] text-sm">10萬筆經驗訓練 · 96% 成交率</p>
           </div>
 
