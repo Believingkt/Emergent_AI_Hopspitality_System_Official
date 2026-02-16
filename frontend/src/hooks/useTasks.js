@@ -6,6 +6,26 @@ import { useWebSocket } from '../context/WebSocketContext';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL || 'https://line-ai-bot-xiaosen.onrender.com';
 
+// Helper to normalize task from Manus API format
+const normalizeTask = (task) => {
+  if (!task) return null;
+  return {
+    id: task.task_id || task.id,
+    venue_id: task.venue_id,
+    customer_name: task.customer_name,
+    customer_user_id: task.customer_user_id,
+    initial_message: task.customer_message || task.initial_message,
+    ai_response: task.ai_response,
+    status: task.status,
+    assigned_to: task.assigned_manager || task.assigned_to,
+    assigned_to_name: task.assigned_manager || task.assigned_to_name,
+    notes: task.notes || '',
+    created_at: task.created_at,
+    claimed_at: task.claimed_at,
+    completed_at: task.completed_at
+  };
+};
+
 export const useTasks = () => {
   const { token } = useAuth();
   const { currentVenue } = useVenue();
@@ -26,7 +46,11 @@ export const useTasks = () => {
         headers: { Authorization: `Bearer ${token}` },
         params: { venue_id: currentVenue.id }
       });
-      setTasks(response.data);
+      
+      // Manus API: { tasks: [...] }
+      const taskList = response.data.tasks || response.data;
+      const normalizedTasks = taskList.map(normalizeTask);
+      setTasks(normalizedTasks);
     } catch (err) {
       console.error('Failed to fetch tasks:', err);
       setError('無法載入任務列表');
@@ -39,14 +63,19 @@ export const useTasks = () => {
   useEffect(() => {
     const unsubscribeCreated = subscribe('task_created', (payload) => {
       if (payload.venue_id === currentVenue?.id) {
-        setTasks(prev => [payload.task, ...prev]);
+        const newTask = normalizeTask(payload.task || payload);
+        if (newTask) {
+          setTasks(prev => [newTask, ...prev]);
+        }
       }
     });
 
     const unsubscribeUpdated = subscribe('task_updated', (payload) => {
-      if (payload.venue_id === currentVenue?.id) {
+      const taskData = payload.task || payload;
+      if (taskData) {
+        const normalizedTask = normalizeTask(taskData);
         setTasks(prev => prev.map(t => 
-          t.id === payload.task.id ? payload.task : t
+          t.id === normalizedTask.id ? normalizedTask : t
         ));
       }
     });
@@ -68,10 +97,12 @@ export const useTasks = () => {
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setTasks(prev => prev.map(t => t.id === taskId ? response.data : t));
-      return { success: true, data: response.data };
+      // Manus API: { task: {...} }
+      const updatedTask = normalizeTask(response.data.task || response.data);
+      setTasks(prev => prev.map(t => t.id === taskId ? updatedTask : t));
+      return { success: true, data: updatedTask };
     } catch (err) {
-      return { success: false, error: err.response?.data?.detail || '認領失敗' };
+      return { success: false, error: err.response?.data?.error || '認領失敗' };
     }
   };
 
@@ -82,10 +113,12 @@ export const useTasks = () => {
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setTasks(prev => prev.map(t => t.id === taskId ? response.data : t));
-      return { success: true, data: response.data };
+      // Manus API: { task: {...} }
+      const updatedTask = normalizeTask(response.data.task || response.data);
+      setTasks(prev => prev.map(t => t.id === taskId ? updatedTask : t));
+      return { success: true, data: updatedTask };
     } catch (err) {
-      return { success: false, error: err.response?.data?.detail || '取消認領失敗' };
+      return { success: false, error: err.response?.data?.error || '取消認領失敗' };
     }
   };
 
@@ -96,10 +129,12 @@ export const useTasks = () => {
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setTasks(prev => prev.map(t => t.id === taskId ? response.data : t));
-      return { success: true, data: response.data };
+      // Manus API: { task: {...} }
+      const updatedTask = normalizeTask(response.data.task || response.data);
+      setTasks(prev => prev.map(t => t.id === taskId ? updatedTask : t));
+      return { success: true, data: updatedTask };
     } catch (err) {
-      return { success: false, error: err.response?.data?.detail || '完成任務失敗' };
+      return { success: false, error: err.response?.data?.error || '完成任務失敗' };
     }
   };
 
@@ -110,10 +145,12 @@ export const useTasks = () => {
         { notes },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setTasks(prev => prev.map(t => t.id === taskId ? response.data : t));
-      return { success: true, data: response.data };
+      // Manus API: { task: {...} }
+      const updatedTask = normalizeTask(response.data.task || response.data);
+      setTasks(prev => prev.map(t => t.id === taskId ? { ...t, notes } : t));
+      return { success: true, data: updatedTask };
     } catch (err) {
-      return { success: false, error: err.response?.data?.detail || '更新備註失敗' };
+      return { success: false, error: err.response?.data?.error || '更新備註失敗' };
     }
   };
 
@@ -122,6 +159,7 @@ export const useTasks = () => {
   const inProgressTasks = tasks.filter(t => t.status === '處理中');
   const completedTasks = tasks.filter(t => {
     if (t.status !== '已完成') return false;
+    if (!t.completed_at) return true;
     const completedAt = new Date(t.completed_at);
     const now = new Date();
     const hoursDiff = (now - completedAt) / (1000 * 60 * 60);
