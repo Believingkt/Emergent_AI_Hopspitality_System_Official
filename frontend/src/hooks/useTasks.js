@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useVenue } from '../context/VenueContext';
 import { useWebSocket } from '../context/WebSocketContext';
 
-const API_URL = process.env.REACT_APP_BACKEND_URL;
+const API_URL = process.env.REACT_APP_BACKEND_URL || 'https://line-ai-bot-xiaosen.onrender.com';
 
 export const useTasks = () => {
   const { token } = useAuth();
