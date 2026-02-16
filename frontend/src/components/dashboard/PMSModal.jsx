@@ -33,20 +33,22 @@ export const PMSModal = ({ open, onClose, venueId }) => {
     setResult(null);
 
     try {
+      // Manus API: check_in, check_out, guests
       const response = await axios.get(
         `${API_URL}/api/pms/${venueId}/availability`,
         {
           headers: { Authorization: `Bearer ${token}` },
           params: {
-            start_date: format(startDate, 'yyyy-MM-dd'),
-            end_date: format(endDate, 'yyyy-MM-dd')
+            check_in: format(startDate, 'yyyy-MM-dd'),
+            check_out: format(endDate, 'yyyy-MM-dd'),
+            guests: 2
           }
         }
       );
       setResult(response.data);
     } catch (err) {
       console.error('PMS query failed:', err);
-      setError(err.response?.data?.detail || '查詢失敗，請稍後再試');
+      setError(err.response?.data?.error || '查詢失敗，請稍後再試');
     } finally {
       setLoading(false);
     }
