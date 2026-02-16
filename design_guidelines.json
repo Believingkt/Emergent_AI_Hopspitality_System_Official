@@ -1,0 +1,150 @@
+{
+  "brand_identity": {
+    "name": "Lakeze Prestige",
+    "description": "Multi-Venue AI Butler Collaboration Platform",
+    "emotional_tone": "Calm, Professional, Trustworthy, Prestige, Efficient",
+    "design_archetype": "Deep Forest Luxury",
+    "theme_mode": "hybrid"
+  },
+  "typography": {
+    "font_family": {
+      "headings": "Manrope, sans-serif",
+      "body": "Public Sans, sans-serif",
+      "brand": "Playfair Display, serif",
+      "mono": "JetBrains Mono, monospace"
+    },
+    "scale": {
+      "h1": "text-4xl font-bold tracking-tight",
+      "h2": "text-3xl font-semibold tracking-tight",
+      "h3": "text-2xl font-semibold",
+      "body": "text-base font-normal leading-relaxed",
+      "small": "text-sm font-medium tracking-wide text-muted-foreground",
+      "label": "text-xs font-bold uppercase tracking-[0.1em] text-muted-foreground"
+    },
+    "imports": [
+      "@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Playfair+Display:wght@600;700&family=Public+Sans:wght@400;500;600&display=swap');"
+    ]
+  },
+  "colors": {
+    "palette": {
+      "primary": {
+        "DEFAULT": "#3D4A2C",
+        "foreground": "#FFFFFF",
+        "50": "#F4F6F2",
+        "100": "#E6EADF",
+        "200": "#CCD5BF",
+        "300": "#B3BF9F",
+        "400": "#99A97F",
+        "500": "#809360",
+        "600": "#667D40",
+        "700": "#4D6720",
+        "800": "#3D4A2C",
+        "900": "#1F2E0E"
+      },
+      "secondary": {
+        "DEFAULT": "#F5F5F0",
+        "foreground": "#3D4A2C",
+        "dark": "#EBEBE6"
+      },
+      "accent": {
+        "DEFAULT": "#D4AF37",
+        "foreground": "#FFFFFF",
+        "hover": "#C5A028"
+      },
+      "neutral": {
+        "DEFAULT": "#F5F5F0",
+        "surface": "#FFFFFF",
+        "border": "#E2E8F0"
+      },
+      "status": {
+        "success": "#4CAF50",
+        "warning": "#F59E0B",
+        "error": "#EF4444",
+        "info": "#3B82F6"
+      }
+    },
+    "usage": {
+      "sidebar_bg": "bg-[#3D4A2C]",
+      "sidebar_text": "text-white/90",
+      "sidebar_active": "bg-white/10 text-[#D4AF37]",
+      "body_bg": "bg-[#F5F5F0]",
+      "card_bg": "bg-white",
+      "text_primary": "text-[#1F2E0E]",
+      "text_secondary": "text-[#64748B]",
+      "border_subtle": "border-[#E2E8F0]"
+    }
+  },
+  "layout_strategies": {
+    "dashboard_grid": "grid grid-cols-12 gap-6 h-screen overflow-hidden",
+    "three_column": {
+      "left_panel": "col-span-3 border-r border-border/40 bg-white/50 backdrop-blur-sm",
+      "main_panel": "col-span-6 bg-white shadow-sm border-x border-border/40",
+      "right_panel": "col-span-3 bg-white/50 backdrop-blur-sm border-l border-border/40"
+    },
+    "spacing": {
+      "page_padding": "p-6 md:p-8",
+      "card_padding": "p-6",
+      "section_gap": "gap-8"
+    }
+  },
+  "component_styles": {
+    "buttons": {
+      "primary": "bg-[#3D4A2C] text-white hover:bg-[#2C381E] shadow-md rounded-sm px-6 py-2 transition-all duration-200",
+      "secondary": "bg-[#F5F5F0] text-[#3D4A2C] hover:bg-[#EBEBE6] border border-[#3D4A2C]/10 rounded-sm px-6 py-2",
+      "ghost": "hover:bg-[#3D4A2C]/5 text-[#3D4A2C] rounded-sm"
+    },
+    "cards": {
+      "base": "bg-white border border-border/50 shadow-sm rounded-sm hover:shadow-md transition-shadow duration-200",
+      "flat": "bg-transparent border border-border/60 rounded-sm"
+    },
+    "inputs": {
+      "base": "bg-white border-border/80 focus:ring-1 focus:ring-[#3D4A2C] focus:border-[#3D4A2C] rounded-sm"
+    },
+    "status_badge": {
+      "base": "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium",
+      "success": "bg-green-100 text-green-800",
+      "warning": "bg-yellow-100 text-yellow-800",
+      "error": "bg-red-100 text-red-800"
+    }
+  },
+  "image_assets": {
+    "login_background": "https://images.unsplash.com/photo-1749788873243-65087660f55c?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA2ODl8MHwxfHNlYXJjaHw0fHxsdXh1cnklMjBob3RlbCUyMGxvYmJ5JTIwZGFyayUyMGdyZWVuJTIwaW50ZXJpb3J8ZW58MHx8fHwxNzcxMjEwNzIzfDA&ixlib=rb-4.1.0&q=85",
+    "logo_placeholder": "https://images.unsplash.com/photo-1660058550844-02d4eaa79667?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMjV8MHwxfHNlYXJjaHw0fHxhYnN0cmFjdCUyMG9yYW5nZSUyMGJsdWUlMjBsb2dvJTIwaWNvbnxlbnwwfHx8fDE3NzEyMTA3MjV8MA&ixlib=rb-4.1.0&q=85",
+    "users": [
+      "https://images.unsplash.com/photo-1740153204804-200310378f2f?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxOTJ8MHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjBob3RlbCUyMGNvbmNpZXJnZSUyMHBvcnRyYWl0JTIwc21pbGluZ3xlbnwwfHx8fDE3NzEyMTA3MjR8MA&ixlib=rb-4.1.0&q=85",
+      "https://images.unsplash.com/photo-1724063738993-734e857d3afe?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxOTJ8MHwxfHNlYXJjaHwzfHxwcm9mZXNzaW9uYWwlMjBob3RlbCUyMGNvbmNpZXJnZSUyMHBvcnRyYWl0JTIwc21pbGluZ3xlbnwwfHx8fDE3NzEyMTA3MjR8MA&ixlib=rb-4.1.0&q=85",
+      "https://images.unsplash.com/photo-1675186914580-94356f7c012c?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxOTJ8MHwxfHNlYXJjaHw0fHxwcm9mZXNzaW9uYWwlMjBob3RlbCUyMGNvbmNpZXJnZSUyMHBvcnRyYWl0JTIwc21pbGluZ3xlbnwwfHx8fDE3NzEyMTA3MjR8MA&ixlib=rb-4.1.0&q=85"
+    ],
+    "venues": [
+      "https://images.unsplash.com/photo-1765439178218-e54dcbb64bcb?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA2MjJ8MHwxfHNlYXJjaHwyfHxtb2Rlcm4lMjBsdXh1cnklMjBob3RlbCUyMGV4dGVyaW9yJTIwbmlnaHR8ZW58MHx8fHwxNzcxMTM4MTQ3fDA&ixlib=rb-4.1.0&q=85",
+      "https://images.unsplash.com/photo-1770028711694-456745837ede?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA2MjJ8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjBsdXh1cnklMjBob3RlbCUyMGV4dGVyaW9yJTIwbmlnaHR8ZW58MHx8fHwxNzcxMTM4MTQ3fDA&ixlib=rb-4.1.0&q=85"
+    ]
+  },
+  "instructions_to_main_agent": [
+    "INSTALL_DEPENDENCIES: npm install lucide-react @radix-ui/react-avatar @radix-ui/react-separator @radix-ui/react-scroll-area @radix-ui/react-tabs date-fns",
+    "THEME_SETUP: Configure tailwind.config.js to add the custom colors (#3D4A2C as primary, #F5F5F0 as background).",
+    "LAYOUT_RULE: Implement the '3-Column Layout' for the dashboard using a Grid or Flexbox. Ensure the Middle Column (Task Details) is the widest.",
+    "SIDEBAR_RULE: The sidebar must be #3D4A2C (Deep Olive) with White text. Active items should use the Accent Gold color or a lighter Green tint.",
+    "TYPOGRAPHY_RULE: Import 'Manrope' and 'Public Sans' in index.css. Use Manrope for all Headings and Public Sans for Body text.",
+    "COMPONENT_RULE: Use 'Card' components from Shadcn but remove the default rounded-xl and use rounded-sm for a sharper, more premium look.",
+    "DATA_TESTID: All interactive elements (buttons, inputs, list items) MUST have a 'data-testid' attribute (e.g., 'task-list-item-0', 'login-submit-btn')."
+  ],
+  "universal_guidelines": [
+    "Dark colors look good when used independently without gradients. DO NOT use dark colors as gradients",
+    "Don't make generic centered layouts, simplistic gradients, and uniform styling.",
+    "Create depth through layered design elements with z-index hierarchy",
+    "Use glass-morphism effects with backdrop filters (12-24px blur) sparingly",
+    "You MUST NOT apply universal transition. Eg: transition: all. This results in breaking transforms. Always add transitions for specific interactive elements like button, input excluding transforms",
+    "You MUST NOT center align the app container, ie do not add .App { text-align: center; } in the css file. This disrupts the human natural reading flow of text",
+    "Always use modern button styles like pill-shaped, or sharp button with interaction animations & color relevant to the app style",
+    "NEVER: use AI assistant Emoji characters like 🤖🧠💭💡🔮🎯📚🎭🎬🎪🎉🎊🎁🎀🎂🍰🎈🎨🎰💰💵💳🏦💎🪙💸🤑📊📈📉💹🔢🏆🥇 etc for icons.",
+    "Every interaction needs micro-animations - hover states, transitions, parallax effects, and entrance animations. Static = dead.",
+    "Use 2-3x more spacing than feels comfortable. Cramped designs look cheap.",
+    "Subtle grain textures, noise overlays, custom cursors, selection states, and loading animations: separates good from extraordinary.",
+    "Main agent relies on these image URLs. Missing categories (especially sponsor logos) = main agent will use placeholder text which is FORBIDDEN",
+    "Prioritize using pre-existing components from src/components/ui when applicable",
+    "Components MUST use named exports (export const ComponentName = ...)",
+    "Pages MUST use default exports (export default function PageName() {...})",
+    "Use 'sonner' for toasts"
+  ]
+}
