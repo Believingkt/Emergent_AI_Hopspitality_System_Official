@@ -25,6 +25,22 @@ const generateChannelData = () => ({
       growth: 18.5,
       description: '新念計畫 + LINE 官方整合'
     },
+    { 
+      name: '其他', 
+      icon: Users,
+      orders: 10, 
+      revenue: 189000, 
+      inquiries: 45,
+      conversionRate: 22.2,
+      color: '#8B5CF6',
+      growth: 5.2,
+      description: 'OTA、親友介紹、電話詢問等',
+      subChannels: [
+        { name: 'OTA 平台', orders: 4, revenue: 76000 },
+        { name: '親友介紹', orders: 4, revenue: 80000 },
+        { name: '電話詢問', orders: 2, revenue: 33000 },
+      ]
+    },
   ],
   newVsReturning: {
     newCustomers: 31,
@@ -32,8 +48,8 @@ const generateChannelData = () => ({
     newPercentage: 66,
     returningPercentage: 34,
   },
-  totalOrders: 37,
-  totalRevenue: 703000,
+  totalOrders: 47,
+  totalRevenue: 892000,
 });
 
 // 渠道卡片
