@@ -139,7 +139,12 @@
 
 ### 模擬數據（MOCKED）
 目前以下功能使用模擬數據，需要後端 API 支援才能顯示真實數據：
-- `VenueStats` - generateMockStats() 產生隨機統計
+- `PerformanceDashboard` - generateMockData() 產生業績指標和銷售漏斗
+- `RoomStatusDashboard` - generateRoomData() 產生房況預測
+- `AIPerformanceDashboard` - generateAIPerformanceData() 產生 AI 效能數據
+- `ROIDashboard` - generateROIData() 產生 ROI 分析數據
+- `ChannelAnalysisDashboard` - generateChannelData() 產生渠道分析數據
+- `AlertsAndAnalysisDashboard` - generateAlerts() / generateLostReasons() 產生預警和未成交分析
 - `ManagerSchedule` - generateShiftSchedule() 產生排班（安安、立棠固定）
 
 ### 需要的 API 端點
