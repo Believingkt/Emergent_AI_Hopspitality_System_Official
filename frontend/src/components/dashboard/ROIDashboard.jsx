@@ -11,21 +11,23 @@ import {
 } from 'lucide-react';
 
 // 模擬 ROI 數據
+// 台灣基本薪資 27,470 + 勞健保約 4,500 = 約 32,000/月
 const generateROIData = () => ({
   monthlyFee: 25000,           // 月費
   totalRevenue: 892000,        // AI 帶來的營收
   ordersCount: 47,             // 訂單數
   costPerOrder: 532,           // 每筆訂單成本
   roi: 3468,                   // ROI 百分比
-  humanCostSaved: 45000,       // 節省人力成本
-  equivalentStaff: 1.5,        // 相當於幾個客服人員
-  avgHumanSalary: 30000,       // 人工客服月薪
+  humanMonthlyCost: 32000,     // 台灣基本薪資 + 勞健保
+  humanCostSavedMonthly: 39000, // 每月節省人力成本（1.2位 x 32000）
+  equivalentStaff: 1.2,        // 相當於幾個客服人員
   aiWorkHours: 720,            // AI 工作時數（24x30）
   humanWorkHours: 176,         // 人工 8 小時 x 22 天
 });
 
 export const ROIDashboard = () => {
   const data = useMemo(() => generateROIData(), []);
+  const per100Return = ((data.totalRevenue / data.monthlyFee) * 100).toFixed(0);
   
   return (
     <div className="bg-[#0d1117] rounded-2xl p-6 border-2 border-[#27272a]">
@@ -58,8 +60,9 @@ export const ROIDashboard = () => {
           </div>
           
           <div className="text-right">
-            <p className="text-[#8b949e] text-sm">每 $1 投入獲得</p>
-            <p className="text-3xl font-bold text-white">${(data.totalRevenue / data.monthlyFee).toFixed(1)}</p>
+            <p className="text-[#8b949e] text-sm">每 $100 投入人客多 AI 智能接單</p>
+            <p className="text-3xl font-bold text-white">${per100Return}</p>
+            <p className="text-xs text-[#52525b]">回報金額</p>
           </div>
         </div>
       </div>
@@ -86,10 +89,10 @@ export const ROIDashboard = () => {
         <div className="bg-[#1a1f26] rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
             <PiggyBank className="w-4 h-4 text-[#22c55e]" />
-            <span className="text-[#8b949e] text-sm">節省人力成本</span>
+            <span className="text-[#8b949e] text-sm">每月節省人力</span>
           </div>
-          <p className="text-xl font-bold text-[#22c55e]">${data.humanCostSaved.toLocaleString()}</p>
-          <p className="text-xs text-[#52525b]">vs 聘請真人客服</p>
+          <p className="text-xl font-bold text-[#22c55e]">${data.humanCostSavedMonthly.toLocaleString()}</p>
+          <p className="text-xs text-[#52525b]">基本薪資+勞健保估算</p>
         </div>
         
         <div className="bg-[#1a1f26] rounded-xl p-4">
@@ -98,7 +101,7 @@ export const ROIDashboard = () => {
             <span className="text-[#8b949e] text-sm">相當於</span>
           </div>
           <p className="text-xl font-bold text-white">{data.equivalentStaff} 位</p>
-          <p className="text-xs text-[#52525b]">全職客服人員</p>
+          <p className="text-xs text-[#52525b]">全職客服人員/月</p>
         </div>
       </div>
       
