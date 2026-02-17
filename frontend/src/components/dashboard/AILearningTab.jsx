@@ -24,12 +24,13 @@ import {
   MessageCircle,
   Send,
   LayoutGrid,
-  ChevronDown,
   Clock,
   Undo2,
   Lock,
   Zap,
-  Bot
+  Bot,
+  Users,
+  UserPlus
 } from 'lucide-react';
 import {
   Tabs,
