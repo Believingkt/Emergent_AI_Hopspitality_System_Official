@@ -671,33 +671,99 @@ export const AILearningTab = () => {
             </div>
           </div>
 
-          {/* Rich Menu Collaboration */}
+          {/* 圖文選單設定 - 工程師協助設定 */}
           <div className="bg-[#0d1117] rounded-2xl p-5 border-2 border-[#27272a]">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#8B5CF6]/15 flex items-center justify-center">
-                  <LayoutGrid className="w-5 h-5 text-[#8B5CF6]" />
-                </div>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-[#8B5CF6]/15 flex items-center justify-center">
+                <LayoutGrid className="w-5 h-5 text-[#8B5CF6]" />
+              </div>
+              <div>
+                <h3 className="text-base font-semibold text-white">圖文選單設定</h3>
+                <p className="text-sm text-[#8b949e]">讓 AI 與 LINE OA 圖文選單協作</p>
+              </div>
+            </div>
+            
+            {/* 警告提示 */}
+            <div className="mb-4 p-3 bg-amber-500/10 rounded-lg border border-amber-500/20">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" />
                 <div>
-                  <h3 className="text-base font-semibold text-white">與圖文選單協作</h3>
-                  <p className="text-sm text-[#8b949e]">
-                    啟動後，AI 將可以得知用戶點過哪些按鈕，並將此作為記憶繼續互動
+                  <p className="text-sm text-amber-400 font-medium">請勿自行操作</p>
+                  <p className="text-xs text-[#8b949e] mt-1">
+                    此功能需要由我們的工程師協助設定。請將您的 LINE OA 管理員權限授予我們的工程師，以確保系統正常運作。
                   </p>
                 </div>
               </div>
-              <Switch 
-                checked={richMenuEnabled}
-                onCheckedChange={setRichMenuEnabled}
-                className="data-[state=checked]:bg-[#8B5CF6]"
-              />
             </div>
-            {richMenuEnabled && (
-              <div className="mt-3 p-3 bg-[#8B5CF6]/10 rounded-lg border border-[#8B5CF6]/20">
-                <p className="text-xs text-[#8B5CF6]">
-                  已啟用 · AI 會記住用戶點擊的選單項目，提供更連貫的對話體驗
+            
+            {/* LINE Channel Access Token */}
+            <div className="mb-4">
+              <label className="text-sm text-[#8b949e] mb-2 block">LINE Channel Access Token</label>
+              <div className="flex gap-2">
+                <Input 
+                  type="password"
+                  placeholder="由工程師設定"
+                  disabled
+                  className="bg-[#1a1f26] border-[#27272a] text-[#52525b] flex-1"
+                />
+                <Button 
+                  disabled
+                  className="bg-[#27272a] text-[#52525b] cursor-not-allowed"
+                >
+                  <Lock className="w-4 h-4 mr-1" />
+                  儲存
+                </Button>
+              </div>
+              <p className="text-xs text-[#52525b] mt-1">此欄位由工程師協助填寫</p>
+            </div>
+            
+            {/* 同步按鈕 */}
+            <div className="mb-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-white">從 LINE 同步圖文選單</p>
+                  <p className="text-xs text-[#52525b]">同步後，AI 將可識別圖文選單的按鈕</p>
+                </div>
+                <Button 
+                  disabled
+                  className="bg-[#27272a] text-[#52525b] cursor-not-allowed"
+                >
+                  <RefreshCw className="w-4 h-4 mr-1" />
+                  從 LINE 同步
+                </Button>
+              </div>
+            </div>
+            
+            {/* 已同步的關鍵字（模擬已設定的狀態） */}
+            <div className="p-4 bg-[#1a1f26] rounded-lg">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-[#22c55e]" />
+                  <span className="text-sm text-white">已同步關鍵字</span>
+                </div>
+                <Badge className="bg-[#22c55e]/15 text-[#22c55e] border-0 text-xs">
+                  3 個
+                </Badge>
+              </div>
+              <div className="flex flex-wrap gap-2 mb-3">
+                <Badge className="bg-[#27272a] text-[#8b949e] border-0">我想訂房</Badge>
+                <Badge className="bg-[#27272a] text-[#8b949e] border-0">查看房價</Badge>
+                <Badge className="bg-[#27272a] text-[#8b949e] border-0">查看設施</Badge>
+              </div>
+              <p className="text-xs text-[#52525b]">
+                最後同步：2026-02-17 10:30 · 當用戶點擊這些按鈕時，AI 將不會重複回覆
+              </p>
+            </div>
+            
+            {/* 聯繫工程師 */}
+            <div className="mt-4 p-3 bg-[#8B5CF6]/10 rounded-lg border border-[#8B5CF6]/20">
+              <div className="flex items-center gap-2">
+                <Bot className="w-4 h-4 text-[#8B5CF6]" />
+                <p className="text-sm text-[#8B5CF6]">
+                  需要設定圖文選單？請聯繫我們的工程師協助。
                 </p>
               </div>
-            )}
+            </div>
           </div>
 
           {/* Learned Rules Summary */}
