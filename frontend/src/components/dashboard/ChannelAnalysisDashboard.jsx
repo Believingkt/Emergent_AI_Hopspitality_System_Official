@@ -4,13 +4,11 @@ import { Progress } from '../ui/progress';
 import { 
   Share2,
   MessageCircle,
-  Globe,
-  Instagram,
-  Smartphone,
   Users,
   RefreshCw,
   TrendingUp,
-  UserPlus
+  UserPlus,
+  Bot
 } from 'lucide-react';
 
 // 模擬渠道數據
