@@ -4,6 +4,7 @@ import { Header } from '../components/layout/Header';
 import { PerformanceDashboard } from '../components/dashboard/PerformanceDashboard';
 import { HandoffAnalysis } from '../components/dashboard/HandoffAnalysis';
 import { ManagerSchedule } from '../components/dashboard/ManagerSchedule';
+import { AILearningTab } from '../components/dashboard/AILearningTab';
 import { useVenue } from '../context/VenueContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { ScrollArea } from '../components/ui/scroll-area';
@@ -13,7 +14,8 @@ import {
   MessageSquareWarning, 
   Users,
   Building2,
-  Menu
+  Menu,
+  Brain
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '../components/ui/sheet';
