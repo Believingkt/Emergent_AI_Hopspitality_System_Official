@@ -114,7 +114,12 @@ export default function DashboardPage() {
 
               {/* Handoff Analysis Tab */}
               <TabsContent value="handoffs" className="mt-6">
-                <HandoffAnalysis venue={currentVenue} />
+                <HandoffAnalysis venue={currentVenue} autoRefresh={true} refreshInterval={300000} />
+              </TabsContent>
+
+              {/* AI Learning Tab */}
+              <TabsContent value="ai-learning" className="mt-6">
+                <AILearningTab />
               </TabsContent>
 
               {/* Team Tab */}
