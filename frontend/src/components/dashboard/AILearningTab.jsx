@@ -673,7 +673,7 @@ export const AILearningTab = () => {
               </div>
               <div>
                 <h3 className="text-base font-semibold text-white">版本歷史</h3>
-                <p className="text-xs text-[#8b949e]">查看或回滾到之前的版本</p>
+                <p className="text-xs text-[#8b949e]">基礎版僅支援回滾至上一個版本</p>
               </div>
             </div>
 
@@ -693,6 +693,9 @@ export const AILearningTab = () => {
                       {version.isCurrent && (
                         <Badge className="bg-[#22c55e]/15 text-[#22c55e] border-0 text-xs">目前</Badge>
                       )}
+                      {version.canRollback && (
+                        <Badge className="bg-[#00B4D8]/15 text-[#00B4D8] border-0 text-xs">可回滾</Badge>
+                      )}
                       {version.requiresUpgrade && (
                         <Badge className="bg-amber-500/15 text-amber-400 border-0 text-xs">
                           <Lock className="w-3 h-3 mr-1" />
@@ -707,14 +710,17 @@ export const AILearningTab = () => {
                           size="sm" 
                           variant="ghost"
                           onClick={() => handleRollback(version)}
+                          disabled={!version.canRollback && !version.requiresUpgrade}
                           className={`h-7 px-2 text-xs ${
-                            version.requiresUpgrade 
-                              ? 'text-[#52525b] hover:text-amber-400' 
-                              : 'text-[#8b949e] hover:text-[#FF6B35]'
+                            version.canRollback 
+                              ? 'text-[#00B4D8] hover:text-[#00B4D8] hover:bg-[#00B4D8]/10' 
+                              : version.requiresUpgrade
+                                ? 'text-amber-400 hover:text-amber-400 hover:bg-amber-400/10'
+                                : 'text-[#3f3f46] cursor-not-allowed'
                           }`}
                         >
                           <Undo2 className="w-3 h-3 mr-1" />
-                          回滾
+                          {version.requiresUpgrade ? '升級回滾' : '回滾'}
                         </Button>
                       )}
                     </div>
@@ -722,6 +728,17 @@ export const AILearningTab = () => {
                   <p className="text-xs text-[#8b949e]">{version.summary}</p>
                 </div>
               ))}
+            </div>
+            
+            {/* 升級提示 */}
+            <div className="mt-4 p-3 bg-amber-500/10 rounded-lg border border-amber-500/20">
+              <div className="flex items-start gap-2">
+                <Zap className="w-4 h-4 text-amber-400 mt-0.5" />
+                <div>
+                  <p className="text-sm text-amber-400 font-medium">升級至專業版</p>
+                  <p className="text-xs text-[#8b949e]">可回滾至任意歷史版本，並享有更多進階功能</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
