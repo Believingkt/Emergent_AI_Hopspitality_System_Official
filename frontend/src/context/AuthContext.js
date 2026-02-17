@@ -50,6 +50,12 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const fetchCurrentUser = useCallback(async () => {
+    // 預覽模式跳過驗證
+    if (isPreviewMode()) {
+      setLoading(false);
+      return;
+    }
+    
     if (!token) {
       setLoading(false);
       return;
