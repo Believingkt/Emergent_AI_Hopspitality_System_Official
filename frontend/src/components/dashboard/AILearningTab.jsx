@@ -261,87 +261,137 @@ export const AILearningTab = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header with Venue Selector */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div>
-            <h2 className="text-2xl font-bold text-white flex items-center gap-3" style={{ fontFamily: 'Manrope, sans-serif' }}>
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FF6B35] to-[#00B4D8] flex items-center justify-center">
-                <Brain className="w-5 h-5 text-white" />
-              </div>
-              AI 學習中心
-            </h2>
-            <p className="text-[#8b949e] mt-1 ml-13">上傳資料、輸入規則，優化您的 AI 銷售風格</p>
-          </div>
-        </div>
-        
-        {/* Venue Selector */}
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 text-[#8b949e]">
-            <Building2 className="w-4 h-4" />
-            <span className="text-sm">當前場域：</span>
-          </div>
-          <Select value={currentVenue} onValueChange={setCurrentVenue}>
-            <SelectTrigger className="w-[180px] bg-[#1a1f26] border-[#27272a] text-white">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="bg-[#18181b] border-[#27272a]">
-              {VENUES.map(venue => (
-                <SelectItem 
-                  key={venue.id} 
-                  value={venue.id}
-                  className="text-white hover:bg-[#27272a] focus:bg-[#27272a] focus:text-white"
-                >
-                  <div className="flex items-center gap-2">
-                    {venue.name}
-                    {venue.id === currentVenue && (
-                      <Badge className="bg-[#FF6B35]/15 text-[#FF6B35] border-0 text-xs">目前</Badge>
-                    )}
+      {/* Venue Header - 大型場域顯示區 */}
+      <div className="bg-gradient-to-r from-[#1a1f26] to-[#0d1117] rounded-2xl p-6 border-2 border-[#27272a]">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+          {/* 場域 LOGO 和名稱 */}
+          <div className="flex items-center gap-5">
+            {/* LOGO 上傳區 */}
+            <div 
+              onClick={() => logoInputRef.current?.click()}
+              className="relative w-20 h-20 rounded-2xl bg-[#27272a] border-2 border-dashed border-[#3f3f46] flex items-center justify-center cursor-pointer hover:border-[#FF6B35] transition-colors group overflow-hidden"
+            >
+              <input 
+                ref={logoInputRef}
+                type="file" 
+                accept="image/*"
+                onChange={handleLogoUpload}
+                className="hidden"
+              />
+              {currentLogo ? (
+                <>
+                  <img src={currentLogo} alt={currentVenueData?.name} className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <Upload className="w-6 h-6 text-white" />
                   </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+                </>
+              ) : (
+                <div className="text-center">
+                  <Building2 className="w-8 h-8 text-[#52525b] mx-auto mb-1" />
+                  <span className="text-[10px] text-[#52525b]">上傳 LOGO</span>
+                </div>
+              )}
+            </div>
+            
+            {/* 場域名稱和說明 */}
+            <div>
+              <div className="flex items-center gap-3 mb-1">
+                <h1 className="text-2xl font-bold text-white">{currentVenueData?.name}</h1>
+                <Badge className="bg-[#FF6B35]/15 text-[#FF6B35] border-0">目前場域</Badge>
+              </div>
+              <p className="text-[#8b949e] text-sm">正在管理此場域的 AI 學習內容</p>
+              <div className="flex items-center gap-4 mt-2">
+                <div className="flex items-center gap-1.5 text-xs text-[#52525b]">
+                  <Bot className="w-3.5 h-3.5" />
+                  <span>客服模型 {currentVersion?.version}</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-xs text-[#52525b]">
+                  <Clock className="w-3.5 h-3.5" />
+                  <span>已學習 {LEARNED_RULES_SUMMARY.totalRules} 條規則</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* 場域切換選擇器 */}
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-[#8b949e]">切換場域：</span>
+            <Select value={currentVenue} onValueChange={setCurrentVenue}>
+              <SelectTrigger className="w-[180px] bg-[#27272a] border-[#3f3f46] text-white">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-[#18181b] border-[#27272a]">
+                {VENUES.map(venue => (
+                  <SelectItem 
+                    key={venue.id} 
+                    value={venue.id}
+                    className="text-white hover:bg-[#27272a] focus:bg-[#27272a] focus:text-white"
+                  >
+                    <div className="flex items-center gap-2">
+                      {venueLogos[venue.id] ? (
+                        <img src={venueLogos[venue.id]} alt={venue.name} className="w-5 h-5 rounded object-cover" />
+                      ) : (
+                        <Building2 className="w-4 h-4 text-[#52525b]" />
+                      )}
+                      {venue.name}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 
+      {/* AI 學習中心標題 */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-bold text-white flex items-center gap-3" style={{ fontFamily: 'Manrope, sans-serif' }}>
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#FF6B35] to-[#00B4D8] flex items-center justify-center">
+              <Brain className="w-5 h-5 text-white" />
+            </div>
+            AI 學習中心
+          </h2>
+          <p className="text-[#8b949e] mt-1 text-sm">上傳資料、輸入規則，優化您的 AI 銷售風格</p>
+        </div>
+        
+        {pendingCount > 0 && (
+          <Button 
+            onClick={handleSubmitLearning}
+            disabled={isProcessing}
+            className="bg-[#FF6B35] hover:bg-[#E55A2B] text-white"
+          >
+            {isProcessing ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                處理中...
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-4 h-4 mr-2" />
+                開始學習 ({pendingCount} 項)
+              </>
+            )}
+          </Button>
+        )}
+      </div>
+
       {/* Current Version Banner */}
-      <div className="bg-gradient-to-r from-[#FF6B35]/10 to-[#00B4D8]/10 rounded-2xl p-4 border border-[#FF6B35]/20">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-[#FF6B35]/20 flex items-center justify-center">
-              <Bot className="w-6 h-6 text-[#FF6B35]" />
+      <div className="bg-gradient-to-r from-[#FF6B35]/10 to-[#00B4D8]/10 rounded-xl p-4 border border-[#FF6B35]/20">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-[#FF6B35]/20 flex items-center justify-center">
+              <Bot className="w-5 h-5 text-[#FF6B35]" />
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-white font-semibold">客服模型 {currentVersion?.version}</span>
-                <Badge className="bg-[#22c55e]/15 text-[#22c55e] border-0">目前版本</Badge>
+                <Badge className="bg-[#22c55e]/15 text-[#22c55e] border-0 text-xs">目前版本</Badge>
               </div>
-              <p className="text-sm text-[#8b949e]">
-                生效日期：{currentVersion?.date} · 已學習 {LEARNED_RULES_SUMMARY.totalRules} 條規則
+              <p className="text-xs text-[#8b949e]">
+                生效日期：{currentVersion?.date} · {currentVersion?.summary}
               </p>
             </div>
-          </div>
-          <div className="flex items-center gap-2">
-            {pendingCount > 0 && (
-              <Button 
-                onClick={handleSubmitLearning}
-                disabled={isProcessing}
-                className="bg-[#FF6B35] hover:bg-[#E55A2B] text-white"
-              >
-                {isProcessing ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    處理中...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-4 h-4 mr-2" />
-                    開始學習 ({pendingCount} 項)
-                  </>
-                )}
-              </Button>
-            )}
           </div>
         </div>
       </div>
