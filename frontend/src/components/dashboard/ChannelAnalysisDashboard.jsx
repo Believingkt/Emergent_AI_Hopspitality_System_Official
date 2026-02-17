@@ -8,7 +8,8 @@ import {
   RefreshCw,
   TrendingUp,
   UserPlus,
-  Bot
+  Bot,
+  ChevronDown
 } from 'lucide-react';
 
 // 模擬渠道數據
