@@ -60,7 +60,7 @@ const ChannelCard = ({ channel, totalOrders, totalRevenue }) => {
   const revenuePercentage = ((channel.revenue / totalRevenue) * 100).toFixed(1);
   
   return (
-    <div className="bg-[#1a1f26] rounded-xl p-4 hover:bg-[#1e242c] transition-colors">
+    <div className="bg-[#1a1f26] rounded-xl p-4 hover:bg-[#1e242c] transition-colors mb-3">
       <div className="flex items-center gap-3 mb-4">
         <div 
           className="w-10 h-10 rounded-lg flex items-center justify-center"
@@ -70,7 +70,21 @@ const ChannelCard = ({ channel, totalOrders, totalRevenue }) => {
         </div>
         <div className="flex-1">
           <h4 className="text-white font-medium">{channel.name}</h4>
-          <div className="flex items-center gap-1">
+          {channel.description && (
+            <p className="text-xs text-[#52525b]">{channel.description}</p>
+          )}
+        </div>
+        <div className="text-right">
+          <Badge 
+            className="border-0"
+            style={{ 
+              backgroundColor: `${channel.color}20`,
+              color: channel.color
+            }}
+          >
+            {channel.conversionRate}% 轉換
+          </Badge>
+          <div className="flex items-center gap-1 mt-1 justify-end">
             {channel.growth >= 0 ? (
               <TrendingUp className="w-3 h-3 text-[#22c55e]" />
             ) : (
@@ -81,15 +95,6 @@ const ChannelCard = ({ channel, totalOrders, totalRevenue }) => {
             </span>
           </div>
         </div>
-        <Badge 
-          className="border-0"
-          style={{ 
-            backgroundColor: `${channel.color}20`,
-            color: channel.color
-          }}
-        >
-          {channel.conversionRate}% 轉換
-        </Badge>
       </div>
       
       <div className="space-y-3">
@@ -119,9 +124,26 @@ const ChannelCard = ({ channel, totalOrders, totalRevenue }) => {
           </div>
         </div>
         
-        <div className="pt-2 border-t border-[#27272a] text-xs text-[#8b949e]">
-          詢問數：{channel.inquiries} 則
-        </div>
+        {/* 子渠道明細 */}
+        {channel.subChannels && (
+          <div className="pt-3 border-t border-[#27272a]">
+            <p className="text-xs text-[#52525b] mb-2">渠道明細：</p>
+            <div className="space-y-1.5">
+              {channel.subChannels.map((sub, idx) => (
+                <div key={idx} className="flex items-center justify-between text-xs">
+                  <span className="text-[#8b949e]">{sub.name}</span>
+                  <span className="text-[#8b949e]">{sub.orders} 筆 · ${sub.revenue.toLocaleString()}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        
+        {!channel.subChannels && (
+          <div className="pt-2 border-t border-[#27272a] text-xs text-[#8b949e]">
+            詢問數：{channel.inquiries} 則
+          </div>
+        )}
       </div>
     </div>
   );
