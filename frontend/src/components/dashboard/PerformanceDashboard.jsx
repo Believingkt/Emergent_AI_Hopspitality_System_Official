@@ -449,6 +449,21 @@ export const PerformanceDashboard = ({ venue }) => {
         </div>
       </div>
       
+      {/* 房況即時看板 */}
+      <RoomStatusDashboard />
+      
+      {/* AI 效能 & ROI */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <AIPerformanceDashboard />
+        <ROIDashboard />
+      </div>
+      
+      {/* 客戶來源分析 */}
+      <ChannelAnalysisDashboard />
+      
+      {/* 預警系統 & 未成交分析 */}
+      <AlertsAndAnalysisDashboard />
+      
       {/* 服務方案 */}
       <div className="bg-gradient-to-r from-[#FF6B35]/10 to-[#00B4D8]/10 rounded-2xl p-6 border border-[#FF6B35]/20">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
