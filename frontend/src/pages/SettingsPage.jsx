@@ -45,10 +45,9 @@ import {
 const API_URL = process.env.REACT_APP_BACKEND_URL || 'https://line-ai-bot-xiaosen.onrender.com';
 
 const AI_MODELS = [
-  { value: 'gpt-4.1-mini', label: 'GPT-4.1 Mini' },
-  { value: 'gpt-4.1', label: 'GPT-4.1' },
-  { value: 'manus-1.6-max', label: 'Manus 1.6 Max' },
-  { value: 'manus-1.6', label: 'Manus 1.6' },
+  { value: 'T1', label: 'T1 - 接單導向（預設）', description: '專注於銷售成交，積極引導客戶下訂' },
+  { value: 'T2', label: 'T2 - 客服導向', description: '側重客戶服務，耐心解答問題' },
+  { value: 'T3', label: 'T3 - 平衡模式', description: '兼顧銷售與服務的平衡策略' },
 ];
 
 export default function SettingsPage() {
