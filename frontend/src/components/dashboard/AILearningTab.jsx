@@ -134,6 +134,7 @@ const simulateAIResponse = (question) => {
 
 export const AILearningTab = () => {
   const [currentVenue, setCurrentVenue] = useState('senshan');
+  const [venueLogos, setVenueLogos] = useState({});
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [urls, setUrls] = useState([]);
   const [newUrl, setNewUrl] = useState('');
@@ -146,9 +147,11 @@ export const AILearningTab = () => {
   const [chatMessages, setChatMessages] = useState([]);
   const [isTyping, setIsTyping] = useState(false);
   const fileInputRef = useRef(null);
+  const logoInputRef = useRef(null);
 
   const currentVenueData = VENUES.find(v => v.id === currentVenue);
   const currentVersion = VERSION_HISTORY.find(v => v.isCurrent);
+  const currentLogo = venueLogos[currentVenue];
 
   // 模擬已學習的內容
   const learnedContent = [
