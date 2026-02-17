@@ -17,44 +17,15 @@ import {
 const generateChannelData = () => ({
   channels: [
     { 
-      name: '新念計畫', 
-      icon: Instagram,
-      orders: 22, 
-      revenue: 418000, 
-      inquiries: 156,
-      conversionRate: 14.1,
-      color: '#E1306C',
-      growth: 25.3
-    },
-    { 
-      name: 'LINE 官方', 
+      name: '人客多 AI 智能接單系統', 
       icon: MessageCircle,
-      orders: 15, 
-      revenue: 285000, 
-      inquiries: 98,
-      conversionRate: 15.3,
-      color: '#22c55e',
-      growth: 8.2
-    },
-    { 
-      name: '官網', 
-      icon: Globe,
-      orders: 7, 
-      revenue: 133000, 
-      inquiries: 78,
-      conversionRate: 9.0,
-      color: '#00B4D8',
-      growth: -2.1
-    },
-    { 
-      name: 'OTA 平台', 
-      icon: Smartphone,
-      orders: 3, 
-      revenue: 56000, 
-      inquiries: 35,
-      conversionRate: 8.6,
+      orders: 37, 
+      revenue: 703000, 
+      inquiries: 254,
+      conversionRate: 14.6,
       color: '#FF6B35',
-      growth: 5.5
+      growth: 18.5,
+      description: '新念計畫 + LINE 官方整合'
     },
   ],
   newVsReturning: {
@@ -63,8 +34,8 @@ const generateChannelData = () => ({
     newPercentage: 66,
     returningPercentage: 34,
   },
-  totalOrders: 47,
-  totalRevenue: 892000,
+  totalOrders: 37,
+  totalRevenue: 703000,
 });
 
 // 渠道卡片
