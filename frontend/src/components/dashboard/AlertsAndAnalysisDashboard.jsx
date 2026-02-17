@@ -192,13 +192,13 @@ export const AlertsAndAnalysisDashboard = () => {
       
       {/* 未成交分析 */}
       <div className="bg-[#0d1117] rounded-2xl p-6 border-2 border-[#27272a]">
-        <div className="flex items-center gap-3 mb-6">
+        <div className="flex items-center gap-3 mb-4">
           <div className="w-10 h-10 rounded-xl bg-red-500/15 flex items-center justify-center">
             <MessageSquareX className="w-5 h-5 text-red-400" />
           </div>
           <div>
             <h3 className="text-lg font-semibold text-white">未成交分析</h3>
-            <p className="text-sm text-[#8b949e]">了解客戶流失原因</p>
+            <p className="text-sm text-[#8b949e]">數據來源：LINE OA 對話分析</p>
           </div>
         </div>
         
@@ -222,7 +222,7 @@ export const AlertsAndAnalysisDashboard = () => {
         </div>
         
         {/* 熱門問題 */}
-        <div className="bg-[#1a1f26] rounded-xl p-4">
+        <div className="bg-[#1a1f26] rounded-xl p-4 mb-4">
           <h4 className="text-sm font-medium text-white mb-3">客戶最常詢問</h4>
           <div className="space-y-2">
             {lostData.topQuestions.slice(0, 5).map((item, idx) => (
@@ -236,11 +236,23 @@ export const AlertsAndAnalysisDashboard = () => {
           </div>
         </div>
         
-        {/* 可挽回提示 */}
-        <div className="mt-4 p-3 bg-[#22c55e]/10 rounded-lg border border-[#22c55e]/20">
-          <p className="text-sm text-[#22c55e]">
-            💡 預估有 <span className="font-bold">{lostData.couldBeConverted}</span> 位客戶可透過優惠或跟進挽回
-          </p>
+        {/* AI 建議 */}
+        <div className="bg-[#00B4D8]/10 rounded-xl p-4 mb-4 border border-[#00B4D8]/20">
+          <div className="flex items-center gap-2 mb-2">
+            <Brain className="w-4 h-4 text-[#00B4D8]" />
+            <h4 className="text-sm font-medium text-[#00B4D8]">AI 建議</h4>
+          </div>
+          <ul className="text-sm text-[#c9d1d9] space-y-1">
+            <li>• 針對「價格考慮」客戶，可提供限時優惠或分期方案</li>
+            <li>• 「日期沒空房」佔比高，建議加強淡季促銷活動</li>
+            <li>• 預估有 <span className="font-bold text-[#22c55e]">{lostData.couldBeConverted}</span> 位客戶可透過跟進挽回</li>
+          </ul>
+        </div>
+        
+        {/* AI 警示 */}
+        <div className="flex items-center gap-2 text-xs text-[#52525b]">
+          <AlertTriangle className="w-3 h-3" />
+          <span>AI 分析僅供參考，請自行判斷實際情況</span>
         </div>
       </div>
     </div>
