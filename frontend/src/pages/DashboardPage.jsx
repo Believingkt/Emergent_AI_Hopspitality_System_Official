@@ -99,17 +99,7 @@ export default function DashboardPage() {
 
               {/* Overview Tab */}
               <TabsContent value="overview" className="mt-6">
-                <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-                  {/* Main Stats - Takes 2 columns */}
-                  <div className="xl:col-span-2">
-                    <VenueStats venue={currentVenue} />
-                  </div>
-                  
-                  {/* Manager Schedule - Takes 1 column */}
-                  <div className="xl:col-span-1">
-                    <ManagerSchedule venueName={currentVenue?.name || '森山寫照'} />
-                  </div>
-                </div>
+                <PerformanceDashboard venue={currentVenue} />
               </TabsContent>
 
               {/* Handoff Analysis Tab */}
