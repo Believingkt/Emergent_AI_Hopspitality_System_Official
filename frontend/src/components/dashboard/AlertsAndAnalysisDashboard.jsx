@@ -10,7 +10,8 @@ import {
   CheckCircle2,
   X,
   ChevronRight,
-  Clock
+  Clock,
+  Brain
 } from 'lucide-react';
 
 // 模擬預警數據
