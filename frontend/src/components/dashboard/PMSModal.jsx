@@ -15,7 +15,7 @@ import { Label } from '../ui/label';
 import { ScrollArea } from '../ui/scroll-area';
 import { Calendar as CalendarIcon, Loader2, Search, AlertCircle } from 'lucide-react';
 
-const API_URL = process.env.REACT_APP_BACKEND_URL || 'https://line-ai-bot-xiaosen.onrender.com';
+const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 export const PMSModal = ({ open, onClose, venueId }) => {
   const { token } = useAuth();

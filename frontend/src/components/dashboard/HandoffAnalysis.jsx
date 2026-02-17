@@ -28,7 +28,7 @@ import { toast } from 'sonner';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 
-const API_URL = process.env.REACT_APP_BACKEND_URL || 'https://line-ai-bot-xiaosen.onrender.com';
+const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 // 轉交原因類別
 const HANDOFF_REASONS = {
