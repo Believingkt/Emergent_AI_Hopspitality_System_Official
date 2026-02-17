@@ -411,46 +411,6 @@ export const PerformanceDashboard = ({ venue }) => {
         </div>
       </div>
       
-      {/* 平台比較 */}
-      <div className="bg-[#0d1117] rounded-2xl p-6 border-2 border-[#27272a]">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h3 className="text-lg font-semibold text-white">與全平台比較</h3>
-            <p className="text-sm text-[#8b949e]">您的表現 vs Lakeze 人客多全平台平均</p>
-          </div>
-          <Badge variant="outline" className="border-[#22c55e]/30 text-[#22c55e] bg-[#22c55e]/10">
-            表現優於平均
-          </Badge>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <ComparisonCard 
-            label="成交率"
-            yourValue={data.currentMonth.conversionRate}
-            avgValue={data.platformAvg.conversionRate}
-            unit="%"
-            better={true}
-          />
-          <ComparisonCard 
-            label="客單價"
-            yourValue={data.currentMonth.avgOrderValue}
-            avgValue={data.platformAvg.avgOrderValue}
-            unit="元"
-            better={true}
-          />
-          <ComparisonCard 
-            label="平均回覆時間"
-            yourValue={2.8}
-            avgValue={data.platformAvg.responseTime}
-            unit="分鐘"
-            better={false}
-          />
-        </div>
-      </div>
-      
-      {/* 房況即時看板 */}
-      <RoomStatusDashboard />
-      
       {/* AI 效能 & ROI */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <AIPerformanceDashboard />
