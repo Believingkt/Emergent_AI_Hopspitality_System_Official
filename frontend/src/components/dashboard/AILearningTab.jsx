@@ -758,10 +758,22 @@ export const AILearningTab = () => {
                 </div>
               </div>
             </div>
+            
+            {/* 角色說明 */}
+            <div className="p-3 border-b border-[#27272a] bg-[#FF6B35]/10">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-full bg-[#FF6B35] flex items-center justify-center">
+                  <Users className="w-3 h-3 text-white" />
+                </div>
+                <p className="text-xs text-[#FF6B35]">
+                  <span className="font-semibold">您正在扮演客戶</span> · 輸入客戶可能會問的問題來測試 AI 回覆
+                </p>
+              </div>
+            </div>
 
             {/* Preset Questions */}
             <div className="p-3 border-b border-[#27272a] bg-[#1a1f26]/50">
-              <p className="text-xs text-[#8b949e] mb-2">快速測試：</p>
+              <p className="text-xs text-[#8b949e] mb-2">常見客戶問題：</p>
               <div className="flex flex-wrap gap-1.5">
                 {PRESET_QUESTIONS.slice(0, 4).map((q, idx) => (
                   <button
@@ -778,10 +790,37 @@ export const AILearningTab = () => {
             {/* Chat Messages */}
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {chatMessages.length === 0 ? (
-                <div className="h-full flex flex-col items-center justify-center text-center">
-                  <Bot className="w-12 h-12 text-[#27272a] mb-3" />
-                  <p className="text-[#52525b] text-sm">輸入問題測試 AI 回覆</p>
-                  <p className="text-[#3f3f46] text-xs mt-1">或點擊上方快速測試按鈕</p>
+                <div className="h-full flex flex-col items-center justify-center text-center px-4">
+                  {/* 模擬客戶加入場景 */}
+                  <div className="w-16 h-16 rounded-full bg-[#22c55e]/15 flex items-center justify-center mb-4">
+                    <UserPlus className="w-8 h-8 text-[#22c55e]" />
+                  </div>
+                  <p className="text-white text-sm font-medium mb-2">模擬：客戶剛加入 LINE</p>
+                  <p className="text-[#8b949e] text-xs mb-4">
+                    想像您是一位剛加入 LINE 官方帳號的客戶，<br/>
+                    正準備詢問第一個問題
+                  </p>
+                  <div className="w-full max-w-[200px] space-y-2">
+                    <p className="text-[#52525b] text-xs mb-2">試試這些開場白：</p>
+                    <button
+                      onClick={() => handleSendTestMessage('你好')}
+                      className="w-full text-xs px-3 py-2 rounded-lg bg-[#27272a] text-[#8b949e] hover:bg-[#FF6B35]/20 hover:text-[#FF6B35] transition-colors"
+                    >
+                      "你好"
+                    </button>
+                    <button
+                      onClick={() => handleSendTestMessage('請問還有空房嗎？')}
+                      className="w-full text-xs px-3 py-2 rounded-lg bg-[#27272a] text-[#8b949e] hover:bg-[#FF6B35]/20 hover:text-[#FF6B35] transition-colors"
+                    >
+                      "請問還有空房嗎？"
+                    </button>
+                    <button
+                      onClick={() => handleSendTestMessage('我想訂房')}
+                      className="w-full text-xs px-3 py-2 rounded-lg bg-[#27272a] text-[#8b949e] hover:bg-[#FF6B35]/20 hover:text-[#FF6B35] transition-colors"
+                    >
+                      "我想訂房"
+                    </button>
+                  </div>
                 </div>
               ) : (
                 chatMessages.map((msg, idx) => (
@@ -816,9 +855,10 @@ export const AILearningTab = () => {
 
             {/* Chat Input */}
             <div className="p-3 border-t border-[#27272a]">
+              <p className="text-xs text-[#52525b] mb-2 text-center">以客戶身份輸入問題</p>
               <div className="flex gap-2">
                 <Input 
-                  placeholder="輸入問題測試..."
+                  placeholder="扮演客戶：輸入您的問題..."
                   value={testInput}
                   onChange={(e) => setTestInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSendTestMessage()}
