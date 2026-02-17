@@ -547,7 +547,17 @@ export const HandoffAnalysis = ({ venue, autoRefresh = false, refreshInterval = 
             </div>
             轉交真人分析
           </h2>
-          <p className="text-[#8b949e] mt-1 ml-13">來自 LINE OA 的真實對話 · 支持 AI 學習</p>
+          <p className="text-[#8b949e] mt-1 ml-13">
+            來自 LINE OA 的真實對話 · 支持 AI 學習
+            {lastUpdated && (
+              <span className="ml-2 text-[#52525b]">
+                · 最後更新：{lastUpdated.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })}
+              </span>
+            )}
+            {autoRefresh && (
+              <span className="ml-2 text-[#22c55e]">· 每 5 分鐘自動更新</span>
+            )}
+          </p>
         </div>
         <Button 
           variant="outline" 
