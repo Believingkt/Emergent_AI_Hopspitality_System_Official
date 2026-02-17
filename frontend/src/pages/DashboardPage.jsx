@@ -113,34 +113,6 @@ export default function DashboardPage() {
               <TabsContent value="ai-learning" className="mt-6">
                 <AILearningTab />
               </TabsContent>
-
-              {/* Team Tab */}
-              <TabsContent value="team" className="mt-6">
-                <ManagerSchedule venueName={currentVenue?.name || '森山寫照'} />
-                
-                {/* Additional Team Info */}
-                <div className="mt-6 bg-[#18181b] rounded-xl p-6 border border-[#27272a]">
-                  <h3 className="text-lg font-semibold text-white mb-4">團隊績效</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="text-center p-4 bg-[#27272a]/50 rounded-lg">
-                      <div className="text-2xl font-bold text-[#22c55e]">96%</div>
-                      <div className="text-sm text-[#a1a1aa]">回覆及時率</div>
-                    </div>
-                    <div className="text-center p-4 bg-[#27272a]/50 rounded-lg">
-                      <div className="text-2xl font-bold text-[#00B4D8]">4.8</div>
-                      <div className="text-sm text-[#a1a1aa]">平均評分</div>
-                    </div>
-                    <div className="text-center p-4 bg-[#27272a]/50 rounded-lg">
-                      <div className="text-2xl font-bold text-[#FF6B35]">28</div>
-                      <div className="text-sm text-[#a1a1aa]">本月成交</div>
-                    </div>
-                    <div className="text-center p-4 bg-[#27272a]/50 rounded-lg">
-                      <div className="text-2xl font-bold text-amber-400">3.2</div>
-                      <div className="text-sm text-[#a1a1aa]">分鐘平均回覆</div>
-                    </div>
-                  </div>
-                </div>
-              </TabsContent>
             </Tabs>
           </div>
         </ScrollArea>
