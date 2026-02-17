@@ -5,10 +5,22 @@ const AuthContext = createContext(null);
 
 const API_URL = process.env.REACT_APP_BACKEND_URL || 'https://line-ai-bot-xiaosen.onrender.com';
 
+// 開發預覽模式：URL 加上 ?preview=true 可跳過登入
+const isPreviewMode = () => {
+  const params = new URLSearchParams(window.location.search);
+  return params.get('preview') === 'true';
+};
+
+const PREVIEW_USER = {
+  email: 'kenneth@lakeze.com',
+  name: 'Kenneth (Preview)',
+  role: 'admin'
+};
+
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('token'));
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(isPreviewMode() ? PREVIEW_USER : null);
+  const [token, setToken] = useState(isPreviewMode() ? 'preview-token' : localStorage.getItem('token'));
+  const [loading, setLoading] = useState(!isPreviewMode());
 
   const login = async (email, password) => {
     try {
