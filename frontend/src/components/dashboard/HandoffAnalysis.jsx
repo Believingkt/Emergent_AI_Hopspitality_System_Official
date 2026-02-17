@@ -454,15 +454,66 @@ const ConversationCard = ({ task, token, onRefresh }) => {
   );
 };
 
+// 檢查是否為預覽模式
+const isPreviewMode = () => {
+  const params = new URLSearchParams(window.location.search);
+  return params.get('preview') === 'true';
+};
+
+// 預覽模式的模擬數據
+const PREVIEW_TASKS = [
+  {
+    task_id: 'preview-1',
+    customer_name: 'Kenneth 天鈴',
+    customer_message: '請問 3/15-3/17 還有空房嗎？兩大一小',
+    status: 'pending',
+    created_at: new Date(Date.now() - 3600000 * 2).toISOString(),
+    venue_name: '森山寫照'
+  },
+  {
+    task_id: 'preview-2',
+    customer_name: 'Lionel',
+    customer_message: '價格可以優惠嗎？我們有 4 個人',
+    status: 'pending',
+    created_at: new Date(Date.now() - 3600000 * 5).toISOString(),
+    venue_name: '森山寫照'
+  },
+  {
+    task_id: 'preview-3',
+    customer_name: '小美',
+    customer_message: '可以帶寵物嗎？我們有一隻小狗',
+    status: 'completed',
+    created_at: new Date(Date.now() - 3600000 * 8).toISOString(),
+    venue_name: '森山寫照'
+  },
+  {
+    task_id: 'preview-4',
+    customer_name: '王先生',
+    customer_message: '預約流程是什麼？需要先付訂金嗎？',
+    status: 'pending',
+    created_at: new Date(Date.now() - 3600000 * 12).toISOString(),
+    venue_name: '森山寫照'
+  },
+];
+
 export const HandoffAnalysis = ({ venue, autoRefresh = false, refreshInterval = 300000 }) => {
   const { token } = useAuth();
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
+  const previewMode = isPreviewMode();
   
   // 從 API 獲取任務列表
   const fetchTasks = async () => {
+    // 預覽模式使用模擬數據
+    if (previewMode) {
+      setTasks(PREVIEW_TASKS);
+      setLastUpdated(new Date());
+      setLoading(false);
+      return;
+    }
+    
     setLoading(true);
     setError(null);
     
@@ -483,21 +534,21 @@ export const HandoffAnalysis = ({ venue, autoRefresh = false, refreshInterval = 
   };
   
   useEffect(() => {
-    if (token) {
+    if (token || previewMode) {
       fetchTasks();
     }
-  }, [token]);
+  }, [token, previewMode]);
   
   // 自動更新（每 5 分鐘）
   useEffect(() => {
-    if (!autoRefresh || !token) return;
+    if (!autoRefresh || (!token && !previewMode)) return;
     
     const interval = setInterval(() => {
       fetchTasks();
     }, refreshInterval);
     
     return () => clearInterval(interval);
-  }, [autoRefresh, refreshInterval, token]);
+  }, [autoRefresh, refreshInterval, token, previewMode]);
   
   // 計算各原因的數量
   const reasonStats = useMemo(() => {
