@@ -4,7 +4,7 @@ import { useAuth } from './AuthContext';
 
 const VenueContext = createContext(null);
 
-const API_URL = process.env.REACT_APP_BACKEND_URL || 'https://line-ai-bot-xiaosen.onrender.com';
+const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 export const VenueProvider = ({ children }) => {
   const { token, isAuthenticated } = useAuth();

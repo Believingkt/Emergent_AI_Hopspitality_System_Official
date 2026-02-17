@@ -4,7 +4,7 @@ import { useAuth } from './AuthContext';
 
 const WebSocketContext = createContext(null);
 
-const SOCKET_URL = process.env.REACT_APP_BACKEND_URL || 'https://line-ai-bot-xiaosen.onrender.com';
+const SOCKET_URL = process.env.REACT_APP_BACKEND_URL;
 
 export const WebSocketProvider = ({ children }) => {
   const { token, isAuthenticated } = useAuth();

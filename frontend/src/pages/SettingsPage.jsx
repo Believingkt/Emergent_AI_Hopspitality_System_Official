@@ -42,7 +42,7 @@ import {
   Shield
 } from 'lucide-react';
 
-const API_URL = process.env.REACT_APP_BACKEND_URL || 'https://line-ai-bot-xiaosen.onrender.com';
+const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 const AI_MODELS = [
   { value: 'T1', label: 'T1 - 接單導向（預設）', description: '專注於銷售成交，積極引導客戶下訂' },

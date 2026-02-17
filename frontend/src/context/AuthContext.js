@@ -3,7 +3,7 @@ import axios from 'axios';
 
 const AuthContext = createContext(null);
 
-const API_URL = process.env.REACT_APP_BACKEND_URL || 'https://line-ai-bot-xiaosen.onrender.com';
+const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 // 開發預覽模式：URL 加上 ?preview=true 可跳過登入
 const isPreviewMode = () => {
