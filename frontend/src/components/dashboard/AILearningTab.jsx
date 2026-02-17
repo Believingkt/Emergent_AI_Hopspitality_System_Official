@@ -53,9 +53,9 @@ import {
 
 // 模擬場域數據
 const VENUES = [
-  { id: 'senshan', name: '森山寫照', isActive: true },
-  { id: 'lakeze', name: '湖澤會館', isActive: false },
-  { id: 'mountain', name: '山林小屋', isActive: false },
+  { id: 'senshan', name: '森山寫照', logo: null, isActive: true },
+  { id: 'lakeze', name: '湖澤會館', logo: null, isActive: false },
+  { id: 'mountain', name: '山林小屋', logo: null, isActive: false },
 ];
 
 // 模擬版本歷史
@@ -65,21 +65,25 @@ const VERSION_HISTORY = [
     date: '2026-02-17', 
     isCurrent: true,
     summary: '新增價格優惠回覆規則、強化日期查詢邏輯、優化寵物政策說明',
-    changes: ['學習了 3 個新規則', '更新了報價流程', '改進了問候語']
+    changes: ['學習了 3 個新規則', '更新了報價流程', '改進了問候語'],
+    canRollback: false
   },
   { 
     version: 'v3.1', 
     date: '2026-02-10', 
     isCurrent: false,
     summary: '加入淡季促銷話術、更新房型介紹',
-    changes: ['學習了 5 個新規則', '新增房型資訊']
+    changes: ['學習了 5 個新規則', '新增房型資訊'],
+    canRollback: true // 基礎版只能回滾上一個版本
   },
   { 
     version: 'v3.0', 
     date: '2026-02-01', 
     isCurrent: false,
     summary: '基礎版本，包含標準接單流程',
-    changes: ['初始化模型', '建立基礎對話流程']
+    changes: ['初始化模型', '建立基礎對話流程'],
+    canRollback: false,
+    requiresUpgrade: true
   },
   { 
     version: 'v2.9', 
@@ -87,6 +91,7 @@ const VERSION_HISTORY = [
     isCurrent: false,
     summary: '舊版本',
     changes: [],
+    canRollback: false,
     requiresUpgrade: true
   },
 ];
