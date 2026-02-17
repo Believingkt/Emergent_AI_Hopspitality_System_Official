@@ -36,8 +36,7 @@ import {
   TooltipTrigger,
 } from "../ui/tooltip";
 
-// 引入新組件
-import { RoomStatusDashboard } from './RoomStatusDashboard';
+// 引入組件
 import { AIPerformanceDashboard } from './AIPerformanceDashboard';
 import { ROIDashboard } from './ROIDashboard';
 import { ChannelAnalysisDashboard } from './ChannelAnalysisDashboard';
