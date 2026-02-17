@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Sidebar } from '../components/layout/Sidebar';
 import { Header } from '../components/layout/Header';
-import { VenueStats } from '../components/dashboard/VenueStats';
+import { PerformanceDashboard } from '../components/dashboard/PerformanceDashboard';
 import { HandoffAnalysis } from '../components/dashboard/HandoffAnalysis';
 import { ManagerSchedule } from '../components/dashboard/ManagerSchedule';
 import { useVenue } from '../context/VenueContext';
