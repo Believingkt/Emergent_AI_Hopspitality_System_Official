@@ -1,96 +1,110 @@
 <analysis>original_problem_statement:
-最初，用戶要求建立一個「多場域 AI 管家協作平台」。專案演變為一個純前端應用，連接到用戶提供的外部 API ()。近期，用戶要求將儀表板升級為一個**運營管理中心**，並陸續提出詳細的指標需求。
+最初，用戶要求建立一個「多場域 AI 管家協作平台」。專案演變為一個純前端應用，連接到用戶提供的外部 API ()。
 
-最新的請求是在現有儀表板基礎上，增加更多針對旅宿業經營者關心的核心指標，包括：
-1.  **訂單來源分析**：區分來自不同渠道（官網、OTA、KOL 等）的訂單。
-2.  **未來房況預測**：以日曆形式展示未來一段時間（7天、雙週、一個月等）的入住率。
-3.  **顧客評論分析**：顯示好評/負評數量及情感分析。
-4.  **員工績效排行榜**：展示客服人員的成交率和處理時長。
+近期，用戶提出了一系列大規模的儀表板升級需求，旨在將其轉變為一個**運營管理中心**，並根據旅宿業的特定需求進行了多次迭代。
 
-此外，用戶還要求：
--   將儀表板上所有使用模擬數據的組件（特別是「新念計畫」銷售漏斗和新的運營指標）對接真實的後端 API（包括 PMS 系統和 Meta API）。
--   實作 AI 學習管家回覆的完整流程。
--   不斷迭代優化登入頁的文案，以精準傳達「AI 銷售代理」的核心價值。
+主要需求包括：
+-   **儀表板重構**：移除「與全平台比較」、「房況即時看板」和「預警系統」等組件。
+-   **核心指標優化**：保留「AI 效能分析」和「ROI 與成本效益」，並根據用戶反饋調整計算和文案。
+-   **渠道分析合併**：將「新念計畫」和「LINE 官方」合併為「人客多 AI 智能接單系統」，並新增「其他」來源。
+-   **未成交分析深化**：修改為分析來自 LINE OA 的對話，找出未成交原因並由 AI 提供具體建議。
+-   **新增 AI 學習中心**：一個獨立的頁面，用於：
+    -   管理不同場域的 AI 學習內容，支持上傳 LOGO。
+    -   上傳 PDF、輸入網址或自訂規則來優化 AI。
+    -   顯示 AI 模型版本歷史，並提供回滾到上一個版本的功能（進階版可回滾更多）。
+    -   提供一個測試對話框，讓用戶扮演客戶來測試 AI 回覆。
+    -   提供 AI 銷售模型選擇（T1 預設，T2 專業版）。
+-   **功能優化**：轉交分析頁面需每 5 分鐘自動更新。
+-   **開發便利性**：提供一個可以跳過登入頁面直接預覽儀表板的方式。
+-   **最終目標**：將儀表板上所有使用模擬數據的組件對接真實的後端 API（PMS 系統、Meta API 等）。
 
 **User's preferred language**: 繁體中文 (Traditional Chinese)
 
 **what currently exists?**
-一個純 React 前端應用程式，採用深色主題設計，並連接到一個外部後端 API 進行身份驗證和數據獲取。
+一個純 React 前端應用程式，採用深色主題設計，並透過  文件配置連接到外部後端 API。
 
-目前已完成：
--   一個全面的**運營儀表板** ()，其中包含多個新組件，用於展示核心指標、營收趨勢、銷售漏斗、訂單來源、房況預測、評論分析和員工績效。**所有這些新組件目前都使用模擬數據**。
--   **轉交分析** () 功能已成功對接真實 API ()，可顯示來自 LINE OA 的完整對話歷史。
--   **登入頁** () 的文案經過多次迭代，以強調產品的「AI 銷售代理」定位。
--   **網站預覽圖** (OG Image) 已設定為用戶提供的首頁截圖。
+**當前狀態**:
+-   一個大規模重構後的**綜合運營儀表板**，所有變更均已根據用戶的詳細需求完成，但**所有數據仍為模擬數據**。
+-   **移除的組件**：「與全平台比較」、「房況即時看板」、「預警系統」和「當班管家」分頁。
+-   **修改的組件**：
+    -   ：更新了 ROI 計算基準和新增了人力成本節省估算。
+    -   ：合併了主要渠道並新增「其他」分類。
+    -   ：轉型為「未成交分析」，提供更深入的 AI 建議。
+-   **新增的「AI 學習」分頁** ()：實現了場域管理、LOGO 上傳、版本歷史與回滾、測試對話框及 AI 模型選擇（T1/T2）等複雜功能。
+-   **轉交分析** ()：加入了 5 分鐘自動刷新機制，並在預覽模式下顯示模擬數據。
+-   **預覽模式**：已在  中實現，可透過在 URL 添加  參數來跳過登入，方便 UI 驗證。
 
 **Last working item**:
-    - Last item agent was working: 正在實作一個大規模的儀表板功能擴充，根據用戶需求新增了四個新的指標組件：, , , 。Agent 已經將這些新組件整合到主儀表板頁面，並剛截圖準備驗證上半部分的 UI。
-    - Status: IN PROGRESS
-    - Agent Testing Done: N
-    - Which testing method agent to use? frontend testing agent. 這是一次包含多個新組件的大型功能開發，需要進行全面的前端測試來驗證 UI 顯示和交互是否正常（即使是使用模擬數據）。
+    - Last item agent was working: 根據用戶在訊息 #191 和 #229 中的詳細要求，完成了一次大規模的儀表板 UI 和功能 overhaul。這包括修改 ROI、客戶來源、未成交分析，移除預警系統，並大幅增強 AI 學習頁面的測試對話框和模型選擇功能。所有請求的功能都已在前端使用模擬數據實現。
+    - Status: USER VERIFICATION PENDING
+    - Agent Testing Done: Y (透過多張截圖對每一項修改進行了視覺驗證)
+    - Which testing method agent to use? frontend testing agent. 由於涉及大量組件的修改和新增，建議執行一次全面的前端回歸測試，以確保所有交互和顯示都符合預期。
     - User Testing Done: N
 
 **All Pending/In progress Issue list**:
   - Issue 1: (P0) 環境  變數會被自動重置
-     - Description:  文件中的  變數會被平台頻繁地重置為不正確的內部預覽 URL，導致所有對外部 API 的請求失敗（特別是登入）。這是一個反覆出現的環境問題。
-     - Attempted fixes: Agent 多次手動將其改回正確的外部 API URL 。
-     - Next debug checklist: 在執行任何需要 API 的操作（如登入、測試）之前，先使用  或  檢查  檔案的內容。如果再次發生 API 相關錯誤，這應該是第一個排查點。
-     - Why fix this issue and what will be achieved with the fix?: 這是導致功能無法使用的關鍵阻礙，解決後才能正常開發和測試。
+     - Description:  文件中的  會被平台頻繁地重置為不正確的內部預覽 URL，導致所有對外部 API 的請求（尤其是登入）失敗。
+     - Attempted fixes: 在本次會話中多次手動修正該文件。
+     - Next debug checklist: 在執行任何需要 API 的操作（如登入、測試）之前，先使用 REACT_APP_BACKEND_URL=https://booking-analytics-5.preview.emergentagent.com 檢查該變數。如果 API 請求失敗，這應是第一個排查點。
+     - Why fix this issue and what will be achieved with the fix?: 這是導致應用無法正常使用的關鍵阻礙。解決後才能進行需要真實登入的功能測試和開發。
      - Status:  IN PROGRESS (Recurring environmental issue)
      - Is recurring issue? Y
      - Should Test frontend/backend/both after fix? N/A (環境問題)
      - Blocked on other issue: No
 
 **In progress Task List**:
-  - Task 1: (P0) 完成並驗證新的「綜合運營儀表板」
-     - Where to resume: Agent 剛截圖驗證了儀表板頂部（訊息 277）。下一步是滾動頁面，截圖並驗證 、、、 等新組件是否正確渲染其模擬數據。
-     - What will be achieved with this? 將實現用戶所要求的 MVP 儀表板的完整 UI，為後續對接真實數據做準備。
-     - Status:  IN PROGRESS
+  - Task 1: (P0) 等待用戶驗證已完成的儀表板大規模重構
+     - Where to resume: Agent 已提供免登入預覽網址。下一步是等待用戶對已實作的所有變更進行確認和反饋。
+     - What will be achieved with this? 確認前端 UI 和模擬功能符合用戶的最終需求，為後續對接真實數據奠定基礎。
+     - Status:  USER VERIFICATION PENDING
      - Should Test frontend/backend/both after fix? Frontend
-     - Blocked on something: 可能被  阻礙。
+     - Blocked on something: No
 
 **Upcoming and Future Tasks**
 - **Upcoming Tasks**:
-    - **(P0) 對接真實數據源**: 將儀表板上所有使用模擬數據的組件連接到真實 API。這需要與用戶合作，獲取 PMS 系統、Meta 廣告 API 的端點和數據格式。
-        - 涉及檔案: , , , 等。
-    - **(P1) 實作 AI 學習流程**: 在  中完成「讓 AI 學習此回覆」的完整 UI 流程，包括讓用戶確認和手動調整 AI 的學習總結。後端需要一個  端點來儲存學習結果。
-    - **(P2) 實現房況預測的時間範圍選擇**: 在  組件中加入 UI 元素，讓用戶可以選擇查看未來 7 天、雙週、一個月等多種時間範圍的房況。
+    - **(P0) 對接真實數據源**: 將儀表板上所有使用模擬數據的組件 (,  等) 連接到真實的後端 API。這是下一個最重要且最龐大的任務。
+    - **(P1) 實作 AI 學習後端邏輯**: 為  中的功能開發對應的後端 API，包括：
+        - 文件上傳 (PDF)
+        - 網址內容抓取
+        - 自訂規則儲存
+        - AI 模型版本回滾
+        - AI 銷售模型 (T1/T2) 切換
+    - **(P2) 實作「讓 AI 學習此回覆」完整流程**: 在  中完成 UI 流程，並對接後端  端點。
 - **Future Tasks**:
-    - **(P2) 刪除已棄用的後端目錄**: 清理專案結構，刪除  目錄。
+    - **(P2) 清理專案**: 刪除已棄用的  目錄。
+    - **(P3) 實作圖文選單協作功能**: 根據用戶在訊息 #241 中提供但隨後在 #248 中暫緩的文件，實現「與圖文選單協作」的後端邏輯和設定介面。
 
 **Completed work in this session**
-- **運營儀表板 MVP UI 實作**:
-  - 創建了一個全新的儀表板 ，並使用模擬數據實現了以下組件：
-    -  (訂單來源分析)
-    -  (未來房況預測)
-    -  (顧客評論分析)
-    -  (員工績效排行)
-- **轉交分析功能升級**:
-  - 成功對接真實 API ()，在  中顯示了來自 LINE OA 的真實且完整的對話歷史。
-  - 重新設計了對話顯示 UI，使其更接近 LINE 的風格。
-- **登入頁文案優化**:
-  - 根據用戶反饋，多次迭代和修改了  的主標題和副標語，最終確定了強調「銷售 Agent」、「全自動成交」和「無需學習新軟體」的核心文案。
-- **網站預覽圖 (OG Image) 設定**:
-  - 為  添加了 Open Graph meta 標籤，並將預覽圖設定為用戶提供的首頁截圖。
-- **部署指導與問題排查**:
-  - 提供了將應用部署到自訂子網域  的詳細步驟。
-  - 解決了因 LINE 緩存導致 OG 預覽圖未更新的問題。
-  - 反覆診斷並修復了因  文件被重置而導致的登入失敗問題。
+- **儀表板大規模重構**:
+  - 根據用戶的多次詳細反饋，對儀表板進行了全面的修改。
+  - **移除了組件**：「與全平台比較」、「房況即時看板」、「預警系統」、「當班管家」分頁。
+  - **修改了組件**： (ROI 文案)、 (渠道合併)、 (轉型為未成交分析)。
+- **AI 學習中心 () 功能實現**:
+  - 實現了場域切換、LOGO 上傳、模型版本歷史與回滾（區分基礎版/專業版）、互動式測試對話框、AI 銷售模型選擇（T1/T2）等所有前端 UI 和交互。
+- **功能優化與開發工具**:
+  - 為  加入了 5 分鐘自動刷新機制。
+  - 創建了免登入預覽模式 ()，極大地方便了 UI 的迭代和驗證。
+  - 在預覽模式下為  填充了模擬數據，以解決無真實 token 無法顯示內容的問題。
+- **環境問題處理**:
+  - 多次診斷並臨時修復了因  文件被平台重置而導致的登入失敗問題。
 
 **Earlier issues found/mentioned but not fixed**
    - None.
 
 **Known issue recurrence from previous fork**
-  - N/A
+  - **Issue recurrence in previous fork**:  文件中的  會被平台自動重置。
+  - **Recurrence count**: This issue occurred multiple times in the current session (e.g., messages #8, #43, #54).
+  - **Status**: NOT RESOLVED (This is an external platform issue, the workaround is manual correction).
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
 - **Frontend**: React, Tailwind CSS, shadcn/ui, Recharts
-- **State Management**: React Context API
-- **Authentication**: JWT token-based authentication (外部 API)
-- **Development Strategy**: 使用模擬數據優先構建複雜 UI，待 UI/UX 確認後再進行數據對接。
+- **State Management**: React Context API, , 
+- **Conditional Rendering**: 使用  實現基於 URL 參數 () 的預覽模式。
+- **Asynchronous Operations**: 使用  和  實現數據自動刷新。
+- **Development Strategy**: 模擬數據優先 (Mock Data First)。所有前端功能都先用模擬數據實現和驗證，待用戶確認後再進入真實數據對接階段。
 
 **key DB schema**
   - N/A. 前端不直接與數據庫交互。
@@ -99,70 +113,73 @@
   - None.
 
 **All files of reference**
--  (新的儀表板核心)
--  (儀表板頁面)
--  (登入頁)
--  (轉交分析)
--  (OG 標籤)
--  (API URL 配置，極其重要)
-- 用戶提供的 API 文件: 
+-  (本次開發的核心，包含了大量新功能)
+-  (儀表板主佈局)
+-  (頁面 Tabs 管理)
+-  (預覽模式邏輯)
+-  (自動刷新邏輯)
+- 
+- 
+- 
+-  (需要持續關注的環境文件)
 
 **Areas that need refactoring**:
--  目錄應被刪除。
--  下的所有新組件目前使用硬編碼的模擬數據，未來需要重構成為可接收 props 或自行 fetch 數據的組件。
+- **數據獲取邏輯**: 目前所有新組件都使用硬編碼的模擬數據。下一步需要將這些組件重構成可接收 props 或自行 fetch 真實數據的模式。
+- **專案結構**:  目錄應被刪除以保持專案整潔。
 
 **key api endpoints**
-- 
-- 
-- 
-- 
--  (已對接)
--  (待辦)
-- **(Future)** Meta API (用於「新念計畫」漏斗數據)
-- **(Future)** PMS API (用於營收和房況數據)
+- **Existing**:
+    - 
+    - 
+- **To be created (for new features)**:
+    -  (for PDF/files)
+    - 
+    - 
+    - 
+    - 
 
 **Critical Info for New Agent**
-- **語言是關鍵**: 所有與用戶的溝通都必須使用 **繁體中文 (Traditional Chinese)**。
-- **重複出現的 .env 問題**:  文件中的  會被平台自動重置，導致登入和 API 調用失敗。如果遇到這類問題，**第一步就是檢查並修正這個文件**。
-- **儀表板是模擬數據**: 目前整個「綜合運營儀表板」都是用模擬數據搭建的。當前的任務是完成並驗證 UI，但接下來的主要任務是將其對接到真實的數據源。
-- **外部 API 依賴**: 應用程式 100% 依賴位於  的外部 API。
+- **語言**: 所有與用戶的溝通都必須使用 **繁體中文 (Traditional Chinese)**。
+- **.env 環境問題**:  文件中的  會被平台自動重置。如果遇到登入或 API 調用失敗，**第一步就是檢查並修正這個文件**。這是最常見的故障點。
+- **預覽模式**: 使用 URL  可以跳過登入直接查看儀表板，這是目前驗證 UI 變更最快的方式。
+- **數據狀態**: 目前整個儀表板（除了登入後  的部分）都是用模擬數據搭建的。當前任務是等待用戶對 UI 的確認，之後的核心工作就是對接真實數據。
+- **暫緩的任務**: 用戶曾要求開發「圖文選單協作」功能，但隨後明確表示「先不用做這一步」。在用戶再次提出前，請勿主動開發此功能。
 
 **documents and test reports created in this job**
--  (已更新)
 - 
-- 上傳的用戶 API 文件和 OG 圖片位於 。
+- 
+-  (用戶上傳，但相關任務已暫緩)
 
 **Last 10 User Messages and any pending HUMAN messages**
-10. **User**: 要求為旅宿業經營者設計更多關心的指標。
-9.  **Agent**: 思考並提出了一系列新指標，包括訂單來源、房況預測、評論分析和員工績效。
-8.  **User**: 批准了所有建議，並要求房況預測功能支持多種時間範圍選擇。
-7.  **Agent**: 開始創建新指標的 UI 組件。
-6.  **User**: 報告登入失敗。
-5.  **Agent**: 診斷並修復了因  文件被重置導致的登入問題。
-4.  **User**: 要求再次提供登入帳號密碼。
-3.  **Agent**: 提供了登入憑證。
-2.  **User**: 說 沒了 我要開始部署在 manager.lakeze.co。
-1.  **User**: (Latest) 詢問 Re-deploy 功能的位置在哪。
+1.  **用戶 (最新)**: 關於圖文選單功能，表示「先不用做這一步」。(任務已暫緩)
+2.  **用戶**: 上傳了圖文選單的開發文件，要求製作一個由工程師設定的欄位。
+3.  **用戶**: 要求在 AI 學習頁面新增 T1/T2 模型選擇，T2 為專業版功能。(已完成)
+4.  **用戶**: 要求修改 ROI 計算、新增人力成本、客戶來源加入「其他」、移除預警系統、深化未成交分析、並優化測試對話框的引導。(已完成)
+5.  **用戶**: 要求移除「當班管家」、增強場域顯示（大標題+LOGO）、並限制基礎版的回滾次數。(已完成)
+6.  **用戶**: 要求對 AI 學習中心進行大規模升級：場域分頁、版本歷史、回滾按鈕、測試對話框、「與圖文選單協作」開關。(已完成)
+7.  **用戶**: 反饋轉交分析在預覽時沒有數據。(已修復，為預覽模式加入模擬數據)
+8.  **用戶**: 提供了免登入預覽網址後，發來了完整的修改清單。（這是觸發後續所有修改的起點）
+9.  **用戶**: 要求提供一個可以跳過登入頁面直接查看後台的方法。(已完成，實現了  模式)
+10. **用戶**: 反饋儀表板 UI，提出第一批修改意見（移除組件、合併渠道等）。(已完成)
 
 **Project Health Check:**
-- **Broken**: 登入功能會因  文件被平台自動重置而間歇性中斷。
-- **Mocked**:  及其所有新的子組件 (, , , ) 中的數據均為硬編碼的模擬數據。
+- **Broken**: 登入流程因  文件會被平台自動重置而處於不穩定狀態。
+- **Mocked**: 整個儀表板的所有新功能和數據指標（、 等）完全基於模擬數據。
 
 **3rd Party Integrations**
-- **External Backend API**: 位於  的自定義 FastAPI 應用。
-- **Socket.IO**: 用於與外部後端進行實時通信。
+- **External Backend API**:  上的自定義 FastAPI 應用。
 - **(Future) Meta API**: 用於獲取廣告投放數據。
 - **(Future) PMS API**: 用於獲取預訂、營收和入住率數據。
 
 **Testing status**
-  - Testing agent used after significant changes: YES (用於轉交分析的真實數據對接)
+  - Testing agent used after significant changes: YES (在本次會話前期用於驗證儀表板的初始版本)
   - Troubleshoot agent used after agent stuck in loop: NO
   - Test files created: []
-  - Known regressions: 登入功能會因  環境問題而回歸到失效狀態。
+  - Known regressions: 登入功能會因  環境問題而反覆失效。
 
 **Credentials to test flow:**
 - **Email**: 
 - **Password**: 
 
 **What agent forgot to execute**
-Agent 沒有忘記執行任務。目前正處於一個大型功能開發的中途。低優先級的清理任務（如刪除 ）被合理地推遲了。</analysis>
+Agent 準確地執行了用戶的所有請求。在用戶要求暫緩「圖文選單」功能後，Agent 也正確地撤銷了相關修改。沒有遺忘的任務。</analysis>
