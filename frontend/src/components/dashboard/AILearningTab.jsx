@@ -229,11 +229,29 @@ export const AILearningTab = () => {
 
   const handleRollback = (version) => {
     if (version.requiresUpgrade) {
-      alert('此版本需要升級服務才能回滾，請聯繫客服了解升級方案。');
+      alert('基礎版僅支援回滾至上一個版本。如需回滾到更早的版本，請升級至專業版。');
+      return;
+    }
+    if (!version.canRollback) {
+      alert('此版本無法回滾。基礎版僅支援回滾至上一個版本。');
       return;
     }
     if (confirm(`確定要回滾到 ${version.version} 嗎？這將會覆蓋目前的設定。`)) {
       alert(`已回滾到 ${version.version}`);
+    }
+  };
+
+  const handleLogoUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setVenueLogos(prev => ({
+          ...prev,
+          [currentVenue]: reader.result
+        }));
+      };
+      reader.readAsDataURL(file);
     }
   };
 
