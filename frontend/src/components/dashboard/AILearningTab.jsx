@@ -144,6 +144,7 @@ export const AILearningTab = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [richMenuEnabled, setRichMenuEnabled] = useState(true);
+  const [selectedModel, setSelectedModel] = useState('T1');
   const [testInput, setTestInput] = useState('');
   const [chatMessages, setChatMessages] = useState([]);
   const [isTyping, setIsTyping] = useState(false);
