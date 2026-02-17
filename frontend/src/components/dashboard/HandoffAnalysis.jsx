@@ -454,11 +454,12 @@ const ConversationCard = ({ task, token, onRefresh }) => {
   );
 };
 
-export const HandoffAnalysis = ({ venue }) => {
+export const HandoffAnalysis = ({ venue, autoRefresh = false, refreshInterval = 300000 }) => {
   const { token } = useAuth();
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [lastUpdated, setLastUpdated] = useState(null);
   
   // 從 API 獲取任務列表
   const fetchTasks = async () => {
@@ -471,6 +472,7 @@ export const HandoffAnalysis = ({ venue }) => {
       });
       
       setTasks(response.data.tasks || []);
+      setLastUpdated(new Date());
     } catch (err) {
       console.error('Failed to fetch tasks:', err);
       setError('無法載入轉交對話數據');
@@ -485,6 +487,17 @@ export const HandoffAnalysis = ({ venue }) => {
       fetchTasks();
     }
   }, [token]);
+  
+  // 自動更新（每 5 分鐘）
+  useEffect(() => {
+    if (!autoRefresh || !token) return;
+    
+    const interval = setInterval(() => {
+      fetchTasks();
+    }, refreshInterval);
+    
+    return () => clearInterval(interval);
+  }, [autoRefresh, refreshInterval, token]);
   
   // 計算各原因的數量
   const reasonStats = useMemo(() => {
