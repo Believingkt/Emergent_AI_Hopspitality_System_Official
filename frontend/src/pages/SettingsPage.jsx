@@ -261,10 +261,10 @@ export default function SettingsPage() {
                           <div className="space-y-2">
                             <Label className="flex items-center gap-2 text-white">
                               <Bot className="w-4 h-4 text-[#00B4D8]" />
-                              AI 模型
+                              AI 銷售風格
                             </Label>
                             <Select
-                              value={venueConfig.ai_model || ''}
+                              value={venueConfig.ai_model || 'T1'}
                               onValueChange={(value) => 
                                 setVenueConfig({ ...venueConfig, ai_model: value })
                               }
@@ -273,16 +273,20 @@ export default function SettingsPage() {
                                 className="bg-[#27272a]/50 border-[#27272a] text-white rounded-lg"
                                 data-testid="ai-model-select"
                               >
-                                <SelectValue placeholder="選擇 AI 模型" />
+                                <SelectValue placeholder="選擇 AI 風格" />
                               </SelectTrigger>
                               <SelectContent className="bg-[#18181b] border-[#27272a] rounded-lg">
                                 {AI_MODELS.map((model) => (
                                   <SelectItem key={model.value} value={model.value} className="text-white hover:bg-[#27272a] focus:bg-[#27272a] focus:text-white">
-                                    {model.label}
+                                    <div>
+                                      <div className="font-medium">{model.label}</div>
+                                      <div className="text-xs text-[#8b949e]">{model.description}</div>
+                                    </div>
                                   </SelectItem>
                                 ))}
                               </SelectContent>
                             </Select>
+                            <p className="text-xs text-[#52525b]">選擇 AI 與客戶互動的風格策略</p>
                           </div>
 
                           {/* Knowledge Base URL */}
