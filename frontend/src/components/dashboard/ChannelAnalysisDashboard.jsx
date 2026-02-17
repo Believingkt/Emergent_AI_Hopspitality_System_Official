@@ -137,7 +137,8 @@ export const ChannelAnalysisDashboard = () => {
       </div>
       
       {/* 渠道卡片 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+      {/* 主要渠道卡片 */}
+      <div className="mb-6">
         {data.channels.map((channel, idx) => (
           <ChannelCard 
             key={idx} 
