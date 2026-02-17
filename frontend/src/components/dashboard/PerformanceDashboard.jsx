@@ -36,6 +36,13 @@ import {
   TooltipTrigger,
 } from "../ui/tooltip";
 
+// 引入新組件
+import { RoomStatusDashboard } from './RoomStatusDashboard';
+import { AIPerformanceDashboard } from './AIPerformanceDashboard';
+import { ROIDashboard } from './ROIDashboard';
+import { ChannelAnalysisDashboard } from './ChannelAnalysisDashboard';
+import { AlertsAndAnalysisDashboard } from './AlertsAndAnalysisDashboard';
+
 // 模擬數據 - 未來會從 PMS API 獲取
 const generateMockData = () => {
   // 本月數據
