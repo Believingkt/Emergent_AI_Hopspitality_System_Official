@@ -97,14 +97,6 @@ export default function DashboardPage() {
                   <Brain className="w-4 h-4" />
                   <span className="hidden sm:inline">AI 學習</span>
                 </TabsTrigger>
-                <TabsTrigger 
-                  value="team"
-                  className="data-[state=active]:bg-[#FF6B35] data-[state=active]:text-white text-[#a1a1aa] rounded-lg px-4 transition-all duration-300 flex items-center gap-2"
-                  data-testid="tab-team"
-                >
-                  <Users className="w-4 h-4" />
-                  <span className="hidden sm:inline">當班管家</span>
-                </TabsTrigger>
               </TabsList>
 
               {/* Overview Tab */}
