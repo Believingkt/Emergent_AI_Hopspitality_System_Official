@@ -947,7 +947,7 @@ export const AILearningTab = () => {
               </div>
             </TabsContent>
 
-            {/* 自訂規則 */}
+            {/* 貼上文字 */}
             <TabsContent value="rules" className="mt-4">
               <div className="bg-[#0d1117] rounded-2xl p-5 border-2 border-[#27272a]">
                 <div className="flex items-center gap-3 mb-4">
@@ -955,46 +955,49 @@ export const AILearningTab = () => {
                     <PenLine className="w-4 h-4 text-[#22c55e]" />
                   </div>
                   <div>
-                    <h3 className="text-base font-semibold text-white">自訂規則</h3>
-                    <p className="text-xs text-[#8b949e]">直接告訴 AI 特定的回覆規則</p>
+                    <h3 className="text-base font-semibold text-white">貼上文字</h3>
+                    <p className="text-xs text-[#8b949e]">貼上 LINE 對話、房型說明等，AI 會自動萃取知識</p>
                   </div>
                 </div>
 
-                <div className="mb-4">
+                <div className="space-y-4">
                   <Textarea 
-                    placeholder="例如：當客戶詢問價格時，先確認入住日期和人數..."
-                    value={newRule}
-                    onChange={(e) => setNewRule(e.target.value)}
-                    className="bg-[#1a1f26] border-[#27272a] text-white min-h-[80px] mb-2"
+                    placeholder="貼上 LINE 對話紀錄、房型介紹、價格資訊等...
+
+範例：
+客人：請問你們有提供早餐嗎？
+管家：有的喔！我們提供豐盛的在地風味早餐..."
+                    value={textContent}
+                    onChange={(e) => setTextContent(e.target.value)}
+                    className="bg-[#1a1f26] border-[#27272a] text-white min-h-[200px]"
+                    disabled={isProcessing}
                   />
-                  <Button onClick={handleAddRule} className="bg-[#22c55e] hover:bg-[#16a34a] text-white">
-                    <Plus className="w-4 h-4 mr-1" />
-                    新增規則
+                  
+                  {extractProgress && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Loader2 className="w-4 h-4 animate-spin text-[#FF6B35]" />
+                      <span className="text-[#FF6B35]">{extractProgress}</span>
+                    </div>
+                  )}
+                  
+                  <Button 
+                    onClick={handleExtractText} 
+                    disabled={isProcessing || !textContent.trim()}
+                    className="bg-[#22c55e] hover:bg-[#16a34a] text-white w-full"
+                  >
+                    {isProcessing ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        AI 正在萃取...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-4 h-4 mr-2" />
+                        開始 AI 學習
+                      </>
+                    )}
                   </Button>
                 </div>
-
-                {rules.length > 0 && (
-                  <div className="space-y-2">
-                    {rules.map((item, idx) => (
-                      <div key={idx} className="flex items-start justify-between bg-[#1a1f26] rounded-lg p-2.5">
-                        <div className="flex items-start gap-2 flex-1">
-                          <BookOpen className="w-4 h-4 text-[#22c55e] mt-0.5 flex-shrink-0" />
-                          <span className="text-white text-sm">{item.rule}</span>
-                        </div>
-                        <div className="flex items-center gap-2 ml-2">
-                          {item.status === 'learned' ? (
-                            <Badge className="bg-[#22c55e]/15 text-[#22c55e] border-0 text-xs">已學習</Badge>
-                          ) : (
-                            <Badge className="bg-amber-500/15 text-amber-400 border-0 text-xs">待處理</Badge>
-                          )}
-                          <button onClick={() => handleRemoveRule(idx)} className="text-[#52525b] hover:text-red-400">
-                            <X className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
               </div>
             </TabsContent>
           </Tabs>
