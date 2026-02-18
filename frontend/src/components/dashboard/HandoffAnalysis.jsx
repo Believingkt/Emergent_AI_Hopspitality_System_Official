@@ -820,6 +820,10 @@ export const HandoffAnalysis = ({ venue, autoRefresh = false, refreshInterval = 
     );
   }
   
+  // 分類任務
+  const paymentTasks = tasks.filter(t => t.customer_stage === 'payment');
+  const questionTasks = tasks.filter(t => t.customer_stage !== 'payment');
+  
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -860,64 +864,99 @@ export const HandoffAnalysis = ({ venue, autoRefresh = false, refreshInterval = 
           <p className="text-[#8b949e] text-lg">目前沒有待處理的轉交對話</p>
         </div>
       ) : (
-        <>
-          {/* 區塊一：待確認匯款 */}
-          {(() => {
-            const paymentTasks = tasks.filter(t => t.customer_stage === 'payment');
-            if (paymentTasks.length === 0) return null;
-            return (
-              <div className="bg-[#22c55e]/5 rounded-2xl p-5 border-2 border-[#22c55e]/30">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-xl bg-[#22c55e]/20 flex items-center justify-center">
-                    <DollarSign className="w-5 h-5 text-[#22c55e]" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-[#22c55e]">待確認匯款</h3>
-                    <p className="text-[#8b949e] text-sm">
-                      客戶已完成匯款，請核對後確認收到訂金
-                    </p>
-                  </div>
-                  <Badge className="ml-auto bg-[#22c55e] text-white text-lg px-3 py-1">
-                    {paymentTasks.length}
-                  </Badge>
+        <Tabs defaultValue="payment" className="w-full">
+          {/* Tab 切換按鈕 */}
+          <TabsList className="bg-transparent border-0 p-0 gap-4 w-full justify-start mb-6">
+            {/* 待確認匯款 Tab */}
+            <TabsTrigger 
+              value="payment"
+              className="relative data-[state=active]:bg-transparent bg-transparent border-0 p-0 flex-shrink-0"
+            >
+              <div className="flex items-center gap-3 px-6 py-4 rounded-2xl border-2 transition-all duration-300 data-[state=active]:border-[#22c55e] data-[state=active]:bg-[#22c55e]/10 border-[#27272a] bg-[#0d1117] hover:border-[#22c55e]/50">
+                <div className="w-12 h-12 rounded-xl bg-[#22c55e]/20 flex items-center justify-center">
+                  <DollarSign className="w-6 h-6 text-[#22c55e]" />
                 </div>
-                <div className="space-y-4">
-                  {paymentTasks.map(task => (
-                    <ConversationCard 
-                      key={task.task_id} 
-                      task={task}
-                      token={token}
-                      onRefresh={fetchTasks}
-                      isPaymentSection={true}
-                    />
-                  ))}
+                <div className="text-left">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg font-bold text-[#22c55e]">待確認匯款</span>
+                    <span className="bg-[#22c55e] text-white text-sm font-bold px-2.5 py-0.5 rounded-full">
+                      {paymentTasks.length}
+                    </span>
+                  </div>
+                  <p className="text-[#8b949e] text-sm">客戶已匯款，請確認訂金</p>
                 </div>
               </div>
-            );
-          })()}
-          
-          {/* 區塊二：待回覆問題 */}
-          {(() => {
-            const questionTasks = tasks.filter(t => t.customer_stage !== 'payment');
-            if (questionTasks.length === 0) return null;
-            return (
-              <div className="bg-[#0d1117] rounded-2xl p-5 border-2 border-[#27272a]">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-xl bg-[#FF6B35]/15 flex items-center justify-center">
-                    <MessageSquare className="w-5 h-5 text-[#FF6B35]" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-white">待回覆問題</h3>
-                    <p className="text-[#8b949e] text-sm">
-                      客戶詢問需要管家協助回覆
-                    </p>
-                  </div>
-                  <Badge className="ml-auto bg-[#FF6B35] text-white text-lg px-3 py-1">
-                    {questionTasks.length}
-                  </Badge>
+            </TabsTrigger>
+            
+            {/* 待回覆問題 Tab */}
+            <TabsTrigger 
+              value="questions"
+              className="relative data-[state=active]:bg-transparent bg-transparent border-0 p-0 flex-shrink-0"
+            >
+              <div className="flex items-center gap-3 px-6 py-4 rounded-2xl border-2 transition-all duration-300 data-[state=active]:border-[#FF6B35] data-[state=active]:bg-[#FF6B35]/10 border-[#27272a] bg-[#0d1117] hover:border-[#FF6B35]/50">
+                <div className="w-12 h-12 rounded-xl bg-[#FF6B35]/15 flex items-center justify-center">
+                  <MessageSquare className="w-6 h-6 text-[#FF6B35]" />
                 </div>
-                <div className="space-y-4">
-                  {questionTasks.map(task => (
+                <div className="text-left">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg font-bold text-[#FF6B35]">待回覆問題</span>
+                    <span className="bg-[#FF6B35] text-white text-sm font-bold px-2.5 py-0.5 rounded-full">
+                      {questionTasks.length}
+                    </span>
+                  </div>
+                  <p className="text-[#8b949e] text-sm">客戶詢問需要協助回覆</p>
+                </div>
+              </div>
+            </TabsTrigger>
+          </TabsList>
+
+          {/* 待確認匯款內容 */}
+          <TabsContent value="payment" className="mt-0">
+            {paymentTasks.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-48 space-y-4 bg-[#22c55e]/5 rounded-2xl border-2 border-[#22c55e]/30">
+                <CheckCircle2 className="w-12 h-12 text-[#22c55e]/50" />
+                <p className="text-[#22c55e] text-lg">目前沒有待確認的匯款</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {paymentTasks.map(task => (
+                  <ConversationCard 
+                    key={task.task_id} 
+                    task={task}
+                    token={token}
+                    onRefresh={fetchTasks}
+                    isPaymentSection={true}
+                  />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* 待回覆問題內容 */}
+          <TabsContent value="questions" className="mt-0">
+            {questionTasks.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-48 space-y-4 bg-[#0d1117] rounded-2xl border-2 border-[#27272a]">
+                <MessageSquare className="w-12 h-12 text-[#27272a]" />
+                <p className="text-[#8b949e] text-lg">目前沒有待回覆的問題</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {questionTasks.map(task => (
+                  <ConversationCard 
+                    key={task.task_id} 
+                    task={task}
+                    token={token}
+                    onRefresh={fetchTasks}
+                  />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
+      )}
+    </div>
+  );
+};
                     <ConversationCard 
                       key={task.task_id} 
                       task={task}
