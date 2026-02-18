@@ -32,6 +32,7 @@ const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 // 轉交原因類別
 const HANDOFF_REASONS = {
+  payment: { label: '待確認匯款', icon: DollarSign, color: 'text-[#22c55e]', bgColor: 'bg-[#22c55e]/15', borderColor: 'border-[#22c55e]/30' },
   pricing: { label: '價格詢問', icon: DollarSign, color: 'text-[#22c55e]', bgColor: 'bg-[#22c55e]/15', borderColor: 'border-[#22c55e]/30' },
   availability: { label: '房間/時段確認', icon: Calendar, color: 'text-[#00B4D8]', bgColor: 'bg-[#00B4D8]/15', borderColor: 'border-[#00B4D8]/30' },
   special: { label: '特殊需求', icon: HelpCircle, color: 'text-[#FF6B35]', bgColor: 'bg-[#FF6B35]/15', borderColor: 'border-[#FF6B35]/30' },
