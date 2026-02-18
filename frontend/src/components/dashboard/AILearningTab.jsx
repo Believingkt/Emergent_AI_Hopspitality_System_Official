@@ -1270,6 +1270,174 @@ export const AILearningTab = () => {
         <AlertTriangle className="w-3 h-3" />
         <span>AI 學習後的效果可能需要數小時才會完全反映在對話中</span>
       </div>
+
+      {/* 批次審核 Modal */}
+      {showBatchReview && currentBatch && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+          <div className="bg-[#0d1117] border border-[#27272a] rounded-2xl w-full max-w-4xl max-h-[85vh] overflow-hidden shadow-2xl">
+            {/* Modal Header */}
+            <div className="p-4 border-b border-[#27272a] flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#FF6B35]/15 flex items-center justify-center">
+                  <Sparkles className="w-5 h-5 text-[#FF6B35]" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-white">AI 萃取結果審核</h3>
+                  <p className="text-xs text-[#8b949e]">
+                    共萃取 {batchKnowledge.length} 條知識 · 
+                    <span className="text-amber-400 ml-1">
+                      {batchKnowledge.filter(k => k.status === 'draft').length} 待審核
+                    </span>
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {batchKnowledge.filter(k => k.status === 'draft').length > 0 && (
+                  <Button
+                    onClick={() => handleApproveAll(currentBatch.id)}
+                    className="bg-[#22c55e] hover:bg-[#16a34a] text-white"
+                  >
+                    <CheckCircle2 className="w-4 h-4 mr-2" />
+                    全部確認
+                  </Button>
+                )}
+                <button 
+                  onClick={() => { setShowBatchReview(false); setCurrentBatch(null); }}
+                  className="text-[#8b949e] hover:text-white p-2"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+            
+            {/* Modal Body */}
+            <div className="p-4 overflow-y-auto max-h-[calc(85vh-120px)] space-y-3">
+              {isLoadingBatch ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-8 h-8 animate-spin text-[#FF6B35]" />
+                </div>
+              ) : batchKnowledge.length === 0 ? (
+                <div className="text-center py-12 text-[#8b949e]">
+                  <BookOpen className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                  <p>此批次沒有萃取到任何知識</p>
+                </div>
+              ) : (
+                batchKnowledge.map((item, idx) => (
+                  <KnowledgeReviewCard
+                    key={item.id || idx}
+                    item={item}
+                    onApprove={() => handleApproveKnowledge(item.id)}
+                    onReject={() => handleRejectKnowledge(item.id)}
+                    onUpdate={(updates) => handleUpdateKnowledge(item.id, updates)}
+                  />
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// 知識審核卡片組件
+const KnowledgeReviewCard = ({ item, onApprove, onReject, onUpdate }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedTitle, setEditedTitle] = useState(item.title || '');
+  const [editedContent, setEditedContent] = useState(item.content || '');
+  const [editedCategory, setEditedCategory] = useState(item.category || '');
+
+  const handleSave = () => {
+    onUpdate({ title: editedTitle, content: editedContent, category: editedCategory });
+    setIsEditing(false);
+  };
+
+  const getStatusBadge = () => {
+    switch (item.status) {
+      case 'approved':
+        return <Badge className="bg-[#22c55e]/15 text-[#22c55e] border-0 text-xs"><CheckCircle2 className="w-3 h-3 mr-1" />已確認</Badge>;
+      case 'rejected':
+        return <Badge className="bg-red-500/15 text-red-400 border-0 text-xs"><X className="w-3 h-3 mr-1" />已拒絕</Badge>;
+      default:
+        return <Badge className="bg-amber-500/15 text-amber-400 border-0 text-xs"><Clock className="w-3 h-3 mr-1" />待審核</Badge>;
+    }
+  };
+
+  return (
+    <div className={`p-4 rounded-xl border-2 transition-all ${
+      item.status === 'approved' ? 'bg-[#22c55e]/5 border-[#22c55e]/30' :
+      item.status === 'rejected' ? 'bg-red-500/5 border-red-500/30 opacity-60' :
+      'bg-[#1a1f26] border-[#27272a]'
+    }`}>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-2">
+            {getStatusBadge()}
+            {item.category && (
+              <Badge className="bg-[#00B4D8]/15 text-[#00B4D8] border-0 text-xs">{item.category}</Badge>
+            )}
+            {item.ai_confidence && (
+              <span className="text-xs text-[#52525b]">AI 信心度: {(item.ai_confidence * 100).toFixed(0)}%</span>
+            )}
+          </div>
+          
+          {isEditing ? (
+            <div className="space-y-3">
+              <Input
+                value={editedCategory}
+                onChange={(e) => setEditedCategory(e.target.value)}
+                placeholder="類別（如：房型介紹、價格資訊）"
+                className="bg-[#0d1117] border-[#27272a] text-white text-sm"
+              />
+              <Input
+                value={editedTitle}
+                onChange={(e) => setEditedTitle(e.target.value)}
+                placeholder="標題"
+                className="bg-[#0d1117] border-[#27272a] text-white"
+              />
+              <Textarea
+                value={editedContent}
+                onChange={(e) => setEditedContent(e.target.value)}
+                placeholder="知識內容"
+                className="bg-[#0d1117] border-[#27272a] text-white min-h-[100px]"
+              />
+              <div className="flex gap-2">
+                <Button onClick={handleSave} className="bg-[#22c55e] hover:bg-[#16a34a] text-white text-sm">
+                  <CheckCircle2 className="w-4 h-4 mr-1" />儲存
+                </Button>
+                <Button onClick={() => setIsEditing(false)} variant="outline" className="border-[#27272a] text-[#8b949e] text-sm">
+                  取消
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <>
+              <h4 className="text-white font-medium mb-1">{item.title || '未命名知識'}</h4>
+              <p className="text-[#8b949e] text-sm">{item.content}</p>
+              {item.original_text && (
+                <div className="mt-2 p-2 bg-[#0d1117] rounded-lg">
+                  <p className="text-xs text-[#52525b]">原文片段：</p>
+                  <p className="text-xs text-[#8b949e] italic">"{item.original_text.substring(0, 150)}..."</p>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+        
+        {item.status === 'draft' && !isEditing && (
+          <div className="flex flex-col gap-2">
+            <Button onClick={onApprove} size="sm" className="bg-[#22c55e] hover:bg-[#16a34a] text-white">
+              <CheckCircle2 className="w-4 h-4" />
+            </Button>
+            <Button onClick={() => setIsEditing(true)} size="sm" variant="outline" className="border-[#27272a] text-[#8b949e]">
+              <PenLine className="w-4 h-4" />
+            </Button>
+            <Button onClick={onReject} size="sm" variant="outline" className="border-red-500/30 text-red-400 hover:bg-red-500/10">
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
