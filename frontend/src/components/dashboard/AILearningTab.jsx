@@ -160,6 +160,16 @@ export const AILearningTab = () => {
   const [isTyping, setIsTyping] = useState(false);
   const fileInputRef = useRef(null);
   const logoInputRef = useRef(null);
+  
+  // 新增：批次管理相關狀態
+  const [batches, setBatches] = useState([]);
+  const [isLoadingBatches, setIsLoadingBatches] = useState(false);
+  const [currentBatch, setCurrentBatch] = useState(null);
+  const [batchKnowledge, setBatchKnowledge] = useState([]);
+  const [isLoadingBatch, setIsLoadingBatch] = useState(false);
+  const [showBatchReview, setShowBatchReview] = useState(false);
+  const [textContent, setTextContent] = useState('');
+  const [extractProgress, setExtractProgress] = useState('');
 
   // 從 API 載入場域列表
   useEffect(() => {
@@ -168,6 +178,275 @@ export const AILearningTab = () => {
       try {
         const response = await axios.get(`${API_URL}/api/venues`, {
           headers: { Authorization: `Bearer ${token}` }
+        });
+        const venueList = response.data.venues || [];
+        setVenues(venueList);
+        if (venueList.length > 0 && !venueList.find(v => v.id === currentVenue)) {
+          setCurrentVenue(venueList[0].id);
+        }
+      } catch (err) {
+        console.error('Failed to load venues:', err);
+      }
+    };
+    loadVenues();
+  }, [token]);
+
+  // 從 API 載入知識庫
+  useEffect(() => {
+    const loadKnowledge = async () => {
+      if (!token || !currentVenue) return;
+      setIsLoadingKnowledge(true);
+      try {
+        const response = await axios.get(`${API_URL}/api/venues/${currentVenue}/knowledge`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setKnowledge(response.data.knowledge || []);
+      } catch (err) {
+        console.error('Failed to load knowledge:', err);
+        toast.error('載入知識庫失敗');
+      } finally {
+        setIsLoadingKnowledge(false);
+      }
+    };
+    loadKnowledge();
+  }, [token, currentVenue]);
+
+  // 從 API 載入學習批次列表
+  useEffect(() => {
+    const loadBatches = async () => {
+      if (!token || !currentVenue) return;
+      setIsLoadingBatches(true);
+      try {
+        const response = await axios.get(`${API_URL}/api/venues/${currentVenue}/knowledge/batches`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setBatches(response.data.batches || []);
+      } catch (err) {
+        console.error('Failed to load batches:', err);
+      } finally {
+        setIsLoadingBatches(false);
+      }
+    };
+    loadBatches();
+  }, [token, currentVenue]);
+
+  // AI 知識提取 - 文字模式
+  const handleExtractText = async () => {
+    if (!textContent.trim()) {
+      toast.error('請輸入文字內容');
+      return;
+    }
+    if (!token || !currentVenue) return;
+    
+    setIsProcessing(true);
+    setExtractProgress('正在提交內容...');
+    
+    try {
+      setExtractProgress('🤖 AI 正在萃取知識...');
+      const response = await axios.post(
+        `${API_URL}/api/venues/${currentVenue}/knowledge/extract`,
+        { content: textContent, source_type: 'text' },
+        { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
+      );
+      
+      const { batch, extracted_knowledge, total_extracted } = response.data;
+      setExtractProgress(`✅ 萃取完成！共發現 ${total_extracted} 條知識`);
+      toast.success(`成功萃取 ${total_extracted} 條知識！`);
+      
+      // 自動跳轉到批次審核
+      if (batch && batch.id) {
+        setCurrentBatch(batch);
+        setBatchKnowledge(extracted_knowledge || []);
+        setShowBatchReview(true);
+      }
+      
+      setTextContent('');
+      // 重新載入批次列表
+      const batchResponse = await axios.get(`${API_URL}/api/venues/${currentVenue}/knowledge/batches`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setBatches(batchResponse.data.batches || []);
+      
+    } catch (err) {
+      console.error('Failed to extract knowledge:', err);
+      toast.error('AI 萃取失敗：' + (err.response?.data?.detail || err.response?.data?.error || '請稍後再試'));
+      setExtractProgress('');
+    } finally {
+      setIsProcessing(false);
+      setTimeout(() => setExtractProgress(''), 3000);
+    }
+  };
+
+  // AI 知識提取 - 檔案模式
+  const handleExtractFile = async (file) => {
+    if (!file) return;
+    if (!token || !currentVenue) return;
+    
+    // 檢查檔案大小 (10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('檔案大小超過 10MB 限制');
+      return;
+    }
+    
+    setIsProcessing(true);
+    setExtractProgress(`📄 正在解析 ${file.name}...`);
+    
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      setExtractProgress('🤖 AI 正在萃取知識...');
+      const response = await axios.post(
+        `${API_URL}/api/venues/${currentVenue}/knowledge/extract`,
+        formData,
+        { 
+          headers: { 
+            Authorization: `Bearer ${token}`
+            // 不要手動設定 Content-Type，讓瀏覽器自動處理
+          } 
+        }
+      );
+      
+      const { batch, extracted_knowledge, total_extracted, file_info } = response.data;
+      setExtractProgress(`✅ 萃取完成！從 ${file_info?.filename || file.name} 發現 ${total_extracted} 條知識`);
+      toast.success(`成功萃取 ${total_extracted} 條知識！`);
+      
+      // 自動跳轉到批次審核
+      if (batch && batch.id) {
+        setCurrentBatch(batch);
+        setBatchKnowledge(extracted_knowledge || []);
+        setShowBatchReview(true);
+      }
+      
+      // 清除已上傳的檔案
+      setUploadedFiles([]);
+      // 重新載入批次列表
+      const batchResponse = await axios.get(`${API_URL}/api/venues/${currentVenue}/knowledge/batches`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setBatches(batchResponse.data.batches || []);
+      
+    } catch (err) {
+      console.error('Failed to extract from file:', err);
+      const errorMsg = err.response?.data?.detail || err.response?.data?.error || '請稍後再試';
+      toast.error('檔案處理失敗：' + errorMsg);
+      setExtractProgress('');
+    } finally {
+      setIsProcessing(false);
+      setTimeout(() => setExtractProgress(''), 3000);
+    }
+  };
+
+  // 載入批次詳情
+  const handleLoadBatchDetail = async (batchId) => {
+    if (!token || !currentVenue) return;
+    setIsLoadingBatch(true);
+    try {
+      const response = await axios.get(
+        `${API_URL}/api/venues/${currentVenue}/knowledge/batches/${batchId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setCurrentBatch(response.data.batch || response.data);
+      setBatchKnowledge(response.data.extracted_knowledge || response.data.knowledge_items || []);
+      setShowBatchReview(true);
+    } catch (err) {
+      console.error('Failed to load batch detail:', err);
+      toast.error('載入批次詳情失敗');
+    } finally {
+      setIsLoadingBatch(false);
+    }
+  };
+
+  // 確認單條知識
+  const handleApproveKnowledge = async (knowledgeId) => {
+    if (!token || !currentVenue) return;
+    try {
+      await axios.put(
+        `${API_URL}/api/venues/${currentVenue}/knowledge/${knowledgeId}/approve`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success('知識已確認');
+      // 更新本地狀態
+      setBatchKnowledge(prev => prev.map(k => 
+        k.id === knowledgeId ? { ...k, status: 'approved' } : k
+      ));
+      // 重新載入知識庫
+      const response = await axios.get(`${API_URL}/api/venues/${currentVenue}/knowledge`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setKnowledge(response.data.knowledge || []);
+    } catch (err) {
+      console.error('Failed to approve knowledge:', err);
+      toast.error('確認失敗');
+    }
+  };
+
+  // 拒絕單條知識
+  const handleRejectKnowledge = async (knowledgeId, reason = '') => {
+    if (!token || !currentVenue) return;
+    try {
+      await axios.put(
+        `${API_URL}/api/venues/${currentVenue}/knowledge/${knowledgeId}/reject`,
+        { reason },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success('已拒絕此知識');
+      // 更新本地狀態
+      setBatchKnowledge(prev => prev.map(k => 
+        k.id === knowledgeId ? { ...k, status: 'rejected' } : k
+      ));
+    } catch (err) {
+      console.error('Failed to reject knowledge:', err);
+      toast.error('拒絕失敗');
+    }
+  };
+
+  // 編輯知識
+  const handleUpdateKnowledge = async (knowledgeId, updates) => {
+    if (!token || !currentVenue) return;
+    try {
+      await axios.put(
+        `${API_URL}/api/venues/${currentVenue}/knowledge/${knowledgeId}`,
+        updates,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success('已儲存修改');
+      // 更新本地狀態
+      setBatchKnowledge(prev => prev.map(k => 
+        k.id === knowledgeId ? { ...k, ...updates } : k
+      ));
+    } catch (err) {
+      console.error('Failed to update knowledge:', err);
+      toast.error('儲存失敗');
+    }
+  };
+
+  // 一鍵全部確認
+  const handleApproveAll = async (batchId) => {
+    if (!token || !currentVenue) return;
+    try {
+      const response = await axios.post(
+        `${API_URL}/api/venues/${currentVenue}/knowledge/batches/${batchId}/approve-all`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const { approved_count } = response.data;
+      toast.success(`已確認 ${approved_count} 條知識`);
+      // 更新本地狀態
+      setBatchKnowledge(prev => prev.map(k => 
+        k.status === 'draft' ? { ...k, status: 'approved' } : k
+      ));
+      // 重新載入知識庫
+      const knowledgeResponse = await axios.get(`${API_URL}/api/venues/${currentVenue}/knowledge`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setKnowledge(knowledgeResponse.data.knowledge || []);
+    } catch (err) {
+      console.error('Failed to approve all:', err);
+      toast.error('批次確認失敗');
+    }
+  };
         });
         const venueList = response.data.venues || [];
         setVenues(venueList);
