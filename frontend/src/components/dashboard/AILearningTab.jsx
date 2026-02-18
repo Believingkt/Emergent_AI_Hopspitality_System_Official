@@ -834,51 +834,82 @@ export const AILearningTab = () => {
 
           {/* Learned Rules Summary */}
           <div className="bg-[#0d1117] rounded-2xl p-5 border-2 border-[#27272a]">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-[#22c55e]/15 flex items-center justify-center">
-                <CheckCircle2 className="w-5 h-5 text-[#22c55e]" />
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-base font-semibold text-white">已學習規則總結</h3>
-                  <Badge className="bg-[#22c55e]/15 text-[#22c55e] border-0 text-xs">
-                    {LEARNED_RULES_SUMMARY.totalRules} 條
-                  </Badge>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#22c55e]/15 flex items-center justify-center">
+                  <CheckCircle2 className="w-5 h-5 text-[#22c55e]" />
                 </div>
-                <p className="text-xs text-[#8b949e]">
-                  模型版本：{currentVersion?.version} · 生效日期：{currentVersion?.date}
-                </p>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base font-semibold text-white">已學習內容</h3>
+                    <Badge className="bg-[#22c55e]/15 text-[#22c55e] border-0 text-xs">
+                      {knowledge.length} 條
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-[#8b949e]">
+                    模型版本：{currentVersion?.version} · 生效日期：{currentVersion?.date}
+                  </p>
+                </div>
               </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={async () => {
+                  setIsLoadingKnowledge(true);
+                  try {
+                    const response = await axios.get(`${API_URL}/api/venues/${currentVenue}/knowledge`, {
+                      headers: { Authorization: `Bearer ${token}` }
+                    });
+                    setKnowledge(response.data.knowledge || []);
+                    toast.success('已更新');
+                  } catch (err) {
+                    toast.error('更新失敗');
+                  } finally {
+                    setIsLoadingKnowledge(false);
+                  }
+                }}
+                className="text-[#8b949e] hover:text-white"
+              >
+                <RefreshCw className={`w-4 h-4 ${isLoadingKnowledge ? 'animate-spin' : ''}`} />
+              </Button>
             </div>
 
-            <Accordion type="single" collapsible className="space-y-2">
-              {LEARNED_RULES_SUMMARY.categories.map((cat, idx) => (
-                <AccordionItem 
-                  key={idx} 
-                  value={`item-${idx}`}
-                  className="border border-[#27272a] rounded-lg bg-[#1a1f26] px-3"
-                >
-                  <AccordionTrigger className="text-white text-sm hover:no-underline py-3">
-                    <div className="flex items-center gap-2">
-                      <span>{cat.name}</span>
-                      <Badge className="bg-[#FF6B35]/15 text-[#FF6B35] border-0 text-xs">
-                        {cat.count}
-                      </Badge>
+            {knowledge.length > 0 ? (
+              <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                {knowledge.map((item) => (
+                  <div 
+                    key={item.id} 
+                    className="p-3 rounded-lg border bg-[#1a1f26] border-[#27272a] group"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-white font-medium text-sm">{item.title}</span>
+                          <Badge className="bg-[#FF6B35]/15 text-[#FF6B35] border-0 text-xs">
+                            {item.category}
+                          </Badge>
+                        </div>
+                        <p className="text-[#8b949e] text-xs line-clamp-2">{item.content}</p>
+                        <p className="text-[#52525b] text-xs mt-1">
+                          {item.created_at ? new Date(item.created_at).toLocaleDateString() : ''}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => handleDeleteKnowledge(item.id)}
+                        className="text-[#52525b] hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity ml-2"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="text-[#8b949e] text-sm pb-3">
-                    <ul className="space-y-1">
-                      {cat.examples.map((ex, i) => (
-                        <li key={i} className="flex items-start gap-2">
-                          <span className="text-[#52525b]">•</span>
-                          {ex}
-                        </li>
-                      ))}
-                    </ul>
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-6 text-[#52525b]">
+                <BookOpen className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">尚無學習內容</p>
+              </div>
+            )}
           </div>
 
           {/* Version History */}
