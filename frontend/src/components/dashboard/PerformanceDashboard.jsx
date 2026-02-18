@@ -147,67 +147,23 @@ const MetricCard = ({ icon: Icon, label, value, prefix = '', suffix = '', trend,
   );
 };
 
-// 專業營收趨勢圖組件 - 使用 SVG 繪製完整的圖表
+// 專業營收趨勢圖組件 - 直條圖 + 折線圖
 const RevenueTrendChart = ({ data, dateRange }) => {
   const [hoveredIndex, setHoveredIndex] = useState(null);
   
-  // 圖表尺寸配置
-  const width = 100;
-  const height = 180;
-  const margin = { top: 20, right: 10, bottom: 40, left: 45 };
-  const innerWidth = width - margin.left - margin.right;
-  const innerHeight = height - margin.top - margin.bottom;
+  // 計算最大值（用於縮放）
+  const maxValue = Math.max(...data.map(d => Math.max(d.revenue, d.lastYear))) * 1.15;
   
-  // 計算最大值（用於 Y 軸縮放）
-  const maxValue = Math.max(...data.map(d => Math.max(d.revenue, d.lastYear))) * 1.1;
-  const minValue = Math.min(...data.map(d => Math.min(d.revenue, d.lastYear))) * 0.9;
-  const valueRange = maxValue - minValue;
+  // 計算總營收和成長率
+  const totalCurrentYear = data.reduce((sum, d) => sum + d.revenue, 0);
+  const totalLastYear = data.reduce((sum, d) => sum + d.lastYear, 0);
+  const totalGrowth = ((totalCurrentYear - totalLastYear) / totalLastYear * 100).toFixed(1);
   
-  // Y 軸刻度
-  const yTicks = [0, 0.25, 0.5, 0.75, 1].map(t => minValue + valueRange * t);
-  
-  // 計算點座標
-  const getX = (idx) => margin.left + (idx / (data.length - 1)) * innerWidth;
-  const getY = (val) => margin.top + innerHeight - ((val - minValue) / valueRange) * innerHeight;
-  
-  // 生成曲線路徑（使用貝茲曲線使線條更平滑）
-  const createSmoothPath = (values, isLastYear = false) => {
-    const points = values.map((item, idx) => ({
-      x: getX(idx),
-      y: getY(isLastYear ? item.lastYear : item.revenue)
-    }));
-    
-    if (points.length < 2) return '';
-    
-    let path = `M ${points[0].x} ${points[0].y}`;
-    for (let i = 1; i < points.length; i++) {
-      const prev = points[i - 1];
-      const curr = points[i];
-      const cpX = (prev.x + curr.x) / 2;
-      path += ` C ${cpX} ${prev.y}, ${cpX} ${curr.y}, ${curr.x} ${curr.y}`;
-    }
-    return path;
-  };
-  
-  // 生成面積路徑
-  const createAreaPath = (values, isLastYear = false) => {
-    const linePath = createSmoothPath(values, isLastYear);
-    const firstX = getX(0);
-    const lastX = getX(values.length - 1);
-    const bottomY = margin.top + innerHeight;
-    return `${linePath} L ${lastX} ${bottomY} L ${firstX} ${bottomY} Z`;
-  };
-  
-  // 計算成長率
+  // 計算單月成長率
   const calculateGrowth = (current, previous) => {
     if (!previous || previous === 0) return 0;
     return ((current - previous) / previous * 100).toFixed(1);
   };
-  
-  // 計算總營收
-  const totalCurrentYear = data.reduce((sum, d) => sum + d.revenue, 0);
-  const totalLastYear = data.reduce((sum, d) => sum + d.lastYear, 0);
-  const totalGrowth = calculateGrowth(totalCurrentYear, totalLastYear);
   
   return (
     <div className="space-y-4">
@@ -215,220 +171,177 @@ const RevenueTrendChart = ({ data, dateRange }) => {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-[#FF6B35]" />
-            <span className="text-xs text-[#8b949e]">今年 ${(totalCurrentYear/10000).toFixed(0)}萬</span>
+            <div className="w-4 h-4 rounded bg-gradient-to-t from-[#FF6B35] to-[#FF8F6B]" />
+            <span className="text-sm text-[#8b949e]">今年 <span className="text-white font-medium">${(totalCurrentYear/10000).toFixed(0)}萬</span></span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-[#52525b]" />
-            <span className="text-xs text-[#8b949e]">去年 ${(totalLastYear/10000).toFixed(0)}萬</span>
+            <div className="w-4 h-4 rounded bg-[#3f3f46]" />
+            <span className="text-sm text-[#8b949e]">去年 <span className="text-white font-medium">${(totalLastYear/10000).toFixed(0)}萬</span></span>
           </div>
         </div>
-        <div className={`flex items-center gap-1 text-sm font-medium ${parseFloat(totalGrowth) >= 0 ? 'text-[#22c55e]' : 'text-red-400'}`}>
-          {parseFloat(totalGrowth) >= 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
-          <span>{totalGrowth}%</span>
+        <div className={`flex items-center gap-1 text-lg font-bold ${parseFloat(totalGrowth) >= 0 ? 'text-[#22c55e]' : 'text-red-400'}`}>
+          {parseFloat(totalGrowth) >= 0 ? <TrendingUp className="w-5 h-5" /> : <TrendingDown className="w-5 h-5" />}
+          <span>{parseFloat(totalGrowth) >= 0 ? '+' : ''}{totalGrowth}%</span>
         </div>
       </div>
       
-      {/* SVG 圖表 */}
-      <div className="relative">
-        <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-48">
-          <defs>
-            <linearGradient id="currentGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#FF6B35" stopOpacity="0.3" />
-              <stop offset="100%" stopColor="#FF6B35" stopOpacity="0.02" />
-            </linearGradient>
-            <linearGradient id="lastYearGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#52525b" stopOpacity="0.2" />
-              <stop offset="100%" stopColor="#52525b" stopOpacity="0.02" />
-            </linearGradient>
-            <filter id="glow">
-              <feGaussianBlur stdDeviation="1" result="coloredBlur"/>
-              <feMerge>
-                <feMergeNode in="coloredBlur"/>
-                <feMergeNode in="SourceGraphic"/>
-              </feMerge>
-            </filter>
-          </defs>
-          
-          {/* 網格線 */}
-          {yTicks.map((tick, i) => (
-            <g key={i}>
-              <line
-                x1={margin.left}
-                y1={getY(tick)}
-                x2={margin.left + innerWidth}
-                y2={getY(tick)}
-                stroke="#27272a"
-                strokeDasharray="2,2"
-              />
-              <text
-                x={margin.left - 3}
-                y={getY(tick) + 1}
-                textAnchor="end"
-                className="fill-[#52525b] text-[4px]"
-              >
-                {(tick/10000).toFixed(0)}萬
-              </text>
-            </g>
+      {/* 直條圖 + 折線圖 */}
+      <div className="relative h-64">
+        {/* Y 軸刻度 */}
+        <div className="absolute left-0 top-0 bottom-8 w-12 flex flex-col justify-between text-right pr-2">
+          {[100, 75, 50, 25, 0].map((percent, i) => (
+            <span key={i} className="text-xs text-[#52525b]">
+              {((maxValue * percent / 100) / 10000).toFixed(0)}萬
+            </span>
           ))}
-          
-          {/* 去年面積 */}
-          <path
-            d={createAreaPath(data, true)}
-            fill="url(#lastYearGradient)"
-          />
-          
-          {/* 去年線條 */}
-          <path
-            d={createSmoothPath(data, true)}
-            fill="none"
-            stroke="#52525b"
-            strokeWidth="1"
-            strokeDasharray="3,2"
-          />
-          
-          {/* 今年面積 */}
-          <path
-            d={createAreaPath(data)}
-            fill="url(#currentGradient)"
-          />
-          
-          {/* 今年線條 */}
-          <path
-            d={createSmoothPath(data)}
-            fill="none"
-            stroke="#FF6B35"
-            strokeWidth="1.5"
-            filter="url(#glow)"
-          />
-          
-          {/* 數據點和交互區域 */}
-          {data.map((item, idx) => {
-            const x = getX(idx);
-            const yCurrentYear = getY(item.revenue);
-            const yLastYear = getY(item.lastYear);
-            const growth = calculateGrowth(item.revenue, item.lastYear);
-            const isHovered = hoveredIndex === idx;
+        </div>
+        
+        {/* 圖表區域 */}
+        <div className="ml-12 h-full flex flex-col">
+          {/* 網格線 */}
+          <div className="flex-1 relative border-l border-b border-[#27272a]">
+            {[0, 1, 2, 3, 4].map((i) => (
+              <div 
+                key={i} 
+                className="absolute left-0 right-0 border-t border-[#27272a]/50" 
+                style={{ top: `${i * 25}%` }}
+              />
+            ))}
             
-            return (
-              <g key={idx}>
-                {/* 垂直參考線 */}
-                {isHovered && (
-                  <line
-                    x1={x}
-                    y1={margin.top}
-                    x2={x}
-                    y2={margin.top + innerHeight}
-                    stroke="#FF6B35"
-                    strokeWidth="0.5"
-                    strokeDasharray="2,2"
-                    opacity="0.5"
-                  />
-                )}
+            {/* 直條圖 */}
+            <div className="absolute inset-0 flex items-end justify-around px-2 pb-0">
+              {data.map((item, idx) => {
+                const currentHeight = (item.revenue / maxValue) * 100;
+                const lastYearHeight = (item.lastYear / maxValue) * 100;
+                const growth = calculateGrowth(item.revenue, item.lastYear);
+                const isHovered = hoveredIndex === idx;
                 
-                {/* 今年數據點 */}
-                <circle
-                  cx={x}
-                  cy={yCurrentYear}
-                  r={isHovered ? 3 : 2}
-                  fill="#FF6B35"
-                  className="transition-all duration-200"
-                />
-                {isHovered && (
-                  <circle
-                    cx={x}
-                    cy={yCurrentYear}
-                    r={5}
-                    fill="#FF6B35"
-                    opacity="0.3"
-                  />
-                )}
-                
-                {/* 去年數據點 */}
-                <circle
-                  cx={x}
-                  cy={yLastYear}
-                  r={isHovered ? 2 : 1.5}
-                  fill="#52525b"
-                  className="transition-all duration-200"
-                />
-                
-                {/* X 軸標籤 */}
-                <text
-                  x={x}
-                  y={height - 8}
-                  textAnchor="middle"
-                  className={`text-[5px] ${isHovered ? 'fill-white' : 'fill-[#52525b]'}`}
-                >
-                  {item.month}
-                </text>
-                
-                {/* 滑鼠互動區域 */}
-                <rect
-                  x={x - 5}
-                  y={margin.top}
-                  width={10}
-                  height={innerHeight}
-                  fill="transparent"
-                  onMouseEnter={() => setHoveredIndex(idx)}
-                  onMouseLeave={() => setHoveredIndex(null)}
-                  style={{ cursor: 'pointer' }}
-                />
-                
-                {/* Tooltip */}
-                {isHovered && (
-                  <g>
-                    <rect
-                      x={x - 18}
-                      y={Math.min(yCurrentYear, yLastYear) - 28}
-                      width={36}
-                      height={25}
-                      rx={2}
-                      fill="#18181b"
-                      stroke="#27272a"
-                      strokeWidth="0.5"
+                return (
+                  <div 
+                    key={idx} 
+                    className="flex-1 flex items-end justify-center gap-1 h-full relative group"
+                    onMouseEnter={() => setHoveredIndex(idx)}
+                    onMouseLeave={() => setHoveredIndex(null)}
+                  >
+                    {/* 去年直條 */}
+                    <div 
+                      className={`w-5 rounded-t transition-all duration-300 ${isHovered ? 'bg-[#52525b]' : 'bg-[#3f3f46]'}`}
+                      style={{ height: `${lastYearHeight}%` }}
                     />
-                    <text
-                      x={x}
-                      y={Math.min(yCurrentYear, yLastYear) - 18}
-                      textAnchor="middle"
-                      className="fill-white text-[4px] font-medium"
-                    >
-                      ${(item.revenue/10000).toFixed(0)}萬
-                    </text>
-                    <text
-                      x={x}
-                      y={Math.min(yCurrentYear, yLastYear) - 10}
-                      textAnchor="middle"
-                      className={`text-[3.5px] ${parseFloat(growth) >= 0 ? 'fill-[#22c55e]' : 'fill-red-400'}`}
-                    >
-                      {parseFloat(growth) >= 0 ? '↑' : '↓'} {Math.abs(parseFloat(growth))}%
-                    </text>
+                    {/* 今年直條 */}
+                    <div 
+                      className={`w-5 rounded-t transition-all duration-300 ${
+                        isHovered 
+                          ? 'bg-gradient-to-t from-[#FF6B35] to-[#FF8F6B] shadow-lg shadow-[#FF6B35]/30' 
+                          : 'bg-gradient-to-t from-[#FF6B35]/90 to-[#FF8F6B]/90'
+                      }`}
+                      style={{ height: `${currentHeight}%` }}
+                    />
+                    
+                    {/* Hover Tooltip */}
+                    {isHovered && (
+                      <div className="absolute -top-20 left-1/2 -translate-x-1/2 bg-[#18181b] border border-[#27272a] rounded-lg px-3 py-2 z-10 whitespace-nowrap shadow-xl">
+                        <p className="text-white font-medium text-sm">{item.month}</p>
+                        <div className="flex items-center gap-3 mt-1">
+                          <span className="text-[#FF6B35] text-sm">${(item.revenue/10000).toFixed(0)}萬</span>
+                          <span className="text-[#52525b] text-sm">${(item.lastYear/10000).toFixed(0)}萬</span>
+                        </div>
+                        <p className={`text-xs mt-1 ${parseFloat(growth) >= 0 ? 'text-[#22c55e]' : 'text-red-400'}`}>
+                          {parseFloat(growth) >= 0 ? '↑' : '↓'} {Math.abs(parseFloat(growth))}%
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            
+            {/* 折線圖 - 趨勢線 */}
+            <svg className="absolute inset-0 pointer-events-none" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#00B4D8" />
+                  <stop offset="100%" stopColor="#22c55e" />
+                </linearGradient>
+                <filter id="glowLine">
+                  <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                  <feMerge>
+                    <feMergeNode in="coloredBlur"/>
+                    <feMergeNode in="SourceGraphic"/>
+                  </feMerge>
+                </filter>
+              </defs>
+              
+              {/* 今年趨勢線 */}
+              <polyline
+                fill="none"
+                stroke="url(#lineGradient)"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                filter="url(#glowLine)"
+                points={data.map((item, idx) => {
+                  const x = ((idx + 0.5) / data.length) * 100;
+                  const y = 100 - (item.revenue / maxValue) * 100;
+                  return `${x}%,${y}%`;
+                }).join(' ')}
+              />
+              
+              {/* 趨勢線數據點 */}
+              {data.map((item, idx) => {
+                const x = ((idx + 0.5) / data.length) * 100;
+                const y = 100 - (item.revenue / maxValue) * 100;
+                return (
+                  <g key={idx}>
+                    <circle
+                      cx={`${x}%`}
+                      cy={`${y}%`}
+                      r={hoveredIndex === idx ? 6 : 4}
+                      fill="#00B4D8"
+                      stroke="#0d1117"
+                      strokeWidth="2"
+                      className="transition-all duration-200"
+                    />
                   </g>
-                )}
-              </g>
-            );
-          })}
-        </svg>
+                );
+              })}
+            </svg>
+          </div>
+          
+          {/* X 軸標籤 */}
+          <div className="h-8 flex justify-around items-center">
+            {data.map((item, idx) => (
+              <span 
+                key={idx} 
+                className={`text-sm transition-colors ${hoveredIndex === idx ? 'text-white font-medium' : 'text-[#8b949e]'}`}
+              >
+                {item.month}
+              </span>
+            ))}
+          </div>
+        </div>
       </div>
       
-      {/* 詳細數據表格 */}
-      <div className="grid grid-cols-6 gap-1 text-xs">
+      {/* 底部數據卡片 */}
+      <div className="grid grid-cols-6 gap-2">
         {data.map((item, idx) => {
           const growth = calculateGrowth(item.revenue, item.lastYear);
           const isPositive = parseFloat(growth) >= 0;
+          const isHovered = hoveredIndex === idx;
           return (
             <div 
               key={idx} 
-              className={`text-center p-2 rounded-lg transition-all duration-200 ${
-                hoveredIndex === idx ? 'bg-[#FF6B35]/10 border border-[#FF6B35]/30' : 'bg-[#1a1f26]'
+              className={`text-center p-2 rounded-lg transition-all duration-200 cursor-pointer ${
+                isHovered 
+                  ? 'bg-[#FF6B35]/15 border border-[#FF6B35]/40' 
+                  : 'bg-[#1a1f26] border border-transparent hover:border-[#27272a]'
               }`}
               onMouseEnter={() => setHoveredIndex(idx)}
               onMouseLeave={() => setHoveredIndex(null)}
             >
-              <p className="text-[#52525b] text-[10px]">{item.month}</p>
-              <p className="text-white font-medium">${(item.revenue/10000).toFixed(0)}萬</p>
-              <p className={`text-[10px] ${isPositive ? 'text-[#22c55e]' : 'text-red-400'}`}>
+              <p className="text-[#52525b] text-xs">{item.month}</p>
+              <p className="text-white font-semibold text-sm">${(item.revenue/10000).toFixed(0)}萬</p>
+              <p className={`text-xs font-medium ${isPositive ? 'text-[#22c55e]' : 'text-red-400'}`}>
                 {isPositive ? '↑' : '↓'}{Math.abs(parseFloat(growth))}%
               </p>
             </div>
