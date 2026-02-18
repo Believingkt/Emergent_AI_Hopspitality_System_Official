@@ -223,6 +223,25 @@ export const AILearningTab = () => {
     loadT1Prompt();
   }, [token]);
 
+  // 儲存 T1 Prompt
+  const handleSaveT1Prompt = async (promptText, version) => {
+    if (!token) return;
+    try {
+      const response = await axios.post(
+        `${API_URL}/api/t1/prompt`,
+        { prompt_text: promptText, version: version || `v${(t1Prompt?.id || 0) + 1}` },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setT1Prompt(response.data.prompt || null);
+      toast.success(`T1 Prompt 已更新至 ${response.data.prompt?.version || version}`);
+      return true;
+    } catch (err) {
+      console.error('Failed to save T1 prompt:', err);
+      toast.error('儲存失敗：' + (err.response?.data?.detail || err.response?.data?.error || '請稍後再試'));
+      return false;
+    }
+  };
+
   const currentVenueData = venues.find(v => v.id === currentVenue) || { id: currentVenue, name: '森山寫照' };
   const currentVersion = t1Prompt ? { 
     version: `v${t1Prompt.id || 1}`, 
