@@ -275,7 +275,7 @@ const AILearningDialog = ({ isOpen, onClose, onConfirm, conversations, managerRe
 };
 
 // 對話卡片組件 - 重新設計
-const ConversationCard = ({ task, token, onRefresh }) => {
+const ConversationCard = ({ task, token, onRefresh, isPaymentSection = false }) => {
   const [expanded, setExpanded] = useState(false);
   const [conversations, setConversations] = useState([]);
   const [loadingConv, setLoadingConv] = useState(false);
@@ -284,8 +284,18 @@ const ConversationCard = ({ task, token, onRefresh }) => {
   const [replyText, setReplyText] = useState('');
   const [isReplying, setIsReplying] = useState(false);
   const [showReplyInput, setShowReplyInput] = useState(false);
+  const [isConfirmingPayment, setIsConfirmingPayment] = useState(false);
   
-  const reason = HANDOFF_REASONS[detectHandoffReason(task.customer_message)] || HANDOFF_REASONS.other;
+  // 判斷是否為付款確認階段
+  const isPaymentStage = task.customer_stage === 'payment';
+  
+  // 根據 customer_stage 或訊息內容判斷原因
+  const getReasonKey = () => {
+    if (isPaymentStage) return 'payment';
+    return detectHandoffReason(task.customer_message);
+  };
+  
+  const reason = HANDOFF_REASONS[getReasonKey()] || HANDOFF_REASONS.other;
   const ReasonIcon = reason.icon;
   
   const formatTime = (timestamp) => {
