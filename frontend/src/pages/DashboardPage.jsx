@@ -107,6 +107,16 @@ export default function DashboardPage() {
                     </div>
                     <span className="text-base font-medium">AI 學習</span>
                   </TabsTrigger>
+                  <TabsTrigger 
+                    value="knowledge"
+                    className="w-full h-14 bg-[#18181b] border border-[#27272a] data-[state=active]:bg-[#FF6B35] data-[state=active]:border-[#FF6B35] data-[state=active]:text-white text-[#a1a1aa] rounded-xl transition-all duration-300 flex items-center justify-start gap-3 px-4"
+                    data-testid="tab-knowledge-mobile"
+                  >
+                    <div className="w-10 h-10 rounded-lg bg-[#FF6B35]/20 data-[state=active]:bg-white/20 flex items-center justify-center">
+                      <BookOpen className="w-5 h-5" />
+                    </div>
+                    <span className="text-base font-medium">知識管理</span>
+                  </TabsTrigger>
                 </TabsList>
               </div>
 
