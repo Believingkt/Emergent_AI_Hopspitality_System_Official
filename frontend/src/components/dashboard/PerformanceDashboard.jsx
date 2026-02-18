@@ -646,7 +646,7 @@ export const PerformanceDashboard = ({ venue }) => {
               <h3 className="text-lg font-semibold text-white">您目前的服務方案</h3>
             </div>
             <p className="text-[#8b949e]">
-              <span className="text-white font-medium">專業版</span> · AI 銷售 Agent + 新念計畫流量服務
+              <span className="text-white font-medium">專業版</span> · AI 銷售 Agent + 星鏈計畫流量服務
             </p>
             <p className="text-[#8b949e] text-sm mt-1">月費：NT$ 25,000 / 月</p>
           </div>
