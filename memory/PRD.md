@@ -173,18 +173,24 @@
 
 ## 更新紀錄
 - **2026-02-18 Session 5**:
+  - **Manus 後端整合**：
+    - ✅ 管家回覆 API (`POST /api/tasks/{id}/reply`) - 已串接並測試通過
+    - ✅ 知識庫 API (`GET/POST/DELETE /api/venues/{id}/knowledge`) - 已串接
+    - ✅ T1 Prompt API (`GET /api/t1/prompt`) - 已串接
+    - ✅ 場域列表 API (`GET /api/venues`) - 已串接
   - **UI 修改**:
     - 「新念計畫」改名為「星鏈計畫」(所有相關位置)
     - 營收趨勢圖改用面積圖 (Area Chart) 更清楚顯示差異
     - 新增日期選擇器（日曆），顯示明確的統計期間
     - 核心指標標籤動態化：顯示「X月訂單數」而非固定的「本月」
-    - 統計期間顯示完整日期範圍和數據來源 (LINE OA)
+    - AI 學習頁面顯示真實知識庫數據
   - **AI 銷售風格修改**:
     - T1 模型：可用（預設）
     - T2、T3 模型：標記為「需升級」，點選時顯示升級提示
   - **部署準備**:
     - 修復所有硬編碼 URL（7 個文件）
     - 環境變數設定為外部 API：https://line-ai-bot-xiaosen.onrender.com
+    - Manus 已設定 FRONTEND_URL 允許 manager.lakeze.co 和預覽環境
 - **2026-02-17 Session 4**:
   - 驗證並測試儀表板大型功能擴充
   - 所有 12 項前端測試全部通過 (100% 成功率)
