@@ -210,8 +210,6 @@ export const AILearningTab = () => {
     summary: `已學習 ${knowledge.length} 條場域知識`,
     canRollback: false
   };
-    canRollback: false
-  } : VERSION_HISTORY.find(v => v.isCurrent);
   const currentLogo = venueLogos[currentVenue];
 
   // 根據知識庫生成已學習內容列表
