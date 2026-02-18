@@ -861,51 +861,74 @@ export const HandoffAnalysis = ({ venue, autoRefresh = false, refreshInterval = 
         </div>
       ) : (
         <>
-          {/* 轉交原因分佈 */}
-          <div className="bg-[#0d1117] rounded-2xl p-5 border-2 border-[#27272a]">
-            <h3 className="text-sm font-semibold text-[#8b949e] uppercase tracking-wide mb-4 flex items-center gap-2">
-              <AlertCircle className="w-4 h-4" />
-              轉交原因分佈
-            </h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              {reasonStats.map(([key, count]) => {
-                const reason = HANDOFF_REASONS[key];
-                const ReasonIcon = reason.icon;
-                const percentage = ((count / tasks.length) * 100).toFixed(0);
-                
-                return (
-                  <div key={key} className={`p-4 rounded-xl ${reason.bgColor} border ${reason.borderColor}`}>
-                    <div className="flex items-center gap-2 mb-2">
-                      <ReasonIcon className={`w-5 h-5 ${reason.color}`} />
-                      <span className={`font-semibold ${reason.color}`}>{reason.label}</span>
-                    </div>
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-2xl font-bold text-white">{count}</span>
-                      <span className="text-[#8b949e] text-sm">則 ({percentage}%)</span>
-                    </div>
+          {/* 區塊一：待確認匯款 */}
+          {(() => {
+            const paymentTasks = tasks.filter(t => t.customer_stage === 'payment');
+            if (paymentTasks.length === 0) return null;
+            return (
+              <div className="bg-[#22c55e]/5 rounded-2xl p-5 border-2 border-[#22c55e]/30">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-[#22c55e]/20 flex items-center justify-center">
+                    <DollarSign className="w-5 h-5 text-[#22c55e]" />
                   </div>
-                );
-              })}
-            </div>
-          </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-[#22c55e]">待確認匯款</h3>
+                    <p className="text-[#8b949e] text-sm">
+                      客戶已完成匯款，請核對後確認收到訂金
+                    </p>
+                  </div>
+                  <Badge className="ml-auto bg-[#22c55e] text-white text-lg px-3 py-1">
+                    {paymentTasks.length}
+                  </Badge>
+                </div>
+                <div className="space-y-4">
+                  {paymentTasks.map(task => (
+                    <ConversationCard 
+                      key={task.task_id} 
+                      task={task}
+                      token={token}
+                      onRefresh={fetchTasks}
+                      isPaymentSection={true}
+                    />
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
           
-          {/* 對話列表 */}
-          <div>
-            <h3 className="text-sm font-semibold text-[#8b949e] uppercase tracking-wide mb-4 flex items-center gap-2">
-              <MessageSquare className="w-4 h-4" />
-              LINE OA 轉交對話 ({tasks.length} 則)
-            </h3>
-            <div className="space-y-4">
-              {tasks.map(task => (
-                <ConversationCard 
-                  key={task.task_id} 
-                  task={task}
-                  token={token}
-                  onRefresh={fetchTasks}
-                />
-              ))}
-            </div>
-          </div>
+          {/* 區塊二：待回覆問題 */}
+          {(() => {
+            const questionTasks = tasks.filter(t => t.customer_stage !== 'payment');
+            if (questionTasks.length === 0) return null;
+            return (
+              <div className="bg-[#0d1117] rounded-2xl p-5 border-2 border-[#27272a]">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-[#FF6B35]/15 flex items-center justify-center">
+                    <MessageSquare className="w-5 h-5 text-[#FF6B35]" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-white">待回覆問題</h3>
+                    <p className="text-[#8b949e] text-sm">
+                      客戶詢問需要管家協助回覆
+                    </p>
+                  </div>
+                  <Badge className="ml-auto bg-[#FF6B35] text-white text-lg px-3 py-1">
+                    {questionTasks.length}
+                  </Badge>
+                </div>
+                <div className="space-y-4">
+                  {questionTasks.map(task => (
+                    <ConversationCard 
+                      key={task.task_id} 
+                      task={task}
+                      token={token}
+                      onRefresh={fetchTasks}
+                    />
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
         </>
       )}
     </div>
