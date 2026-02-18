@@ -389,6 +389,33 @@ const ConversationCard = ({ task, token, onRefresh, isPaymentSection = false }) 
       toast.error('學習請求失敗：' + (err.response?.data?.detail || '請稍後再試'));
     }
   };
+
+  // 確認收到訂金
+  const handleConfirmPayment = async () => {
+    if (!task.venue_id || !task.customer_user_id) {
+      toast.error('缺少必要資訊，無法確認匯款');
+      return;
+    }
+    
+    setIsConfirmingPayment(true);
+    try {
+      const response = await axios.post(
+        `${API_URL}/api/venues/${task.venue_id}/customers/${task.customer_user_id}/confirm-payment`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      toast.success('訂金確認成功！AI 已切換為禮賓模式。');
+      // 刷新任務列表
+      if (onRefresh) onRefresh();
+    } catch (err) {
+      console.error('Confirm payment failed:', err);
+      const errorMsg = err.response?.data?.error || err.response?.data?.detail || '請稍後再試';
+      toast.error(`訂金確認失敗：${errorMsg}`);
+    } finally {
+      setIsConfirmingPayment(false);
+    }
+  };
   
   return (
     <div className="bg-[#0d1117] rounded-2xl border-2 border-[#27272a] overflow-hidden hover:border-[#FF6B35]/50 transition-all duration-300 shadow-xl">
