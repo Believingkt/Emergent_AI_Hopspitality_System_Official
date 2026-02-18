@@ -447,38 +447,6 @@ export const AILearningTab = () => {
       toast.error('批次確認失敗');
     }
   };
-        });
-        const venueList = response.data.venues || [];
-        setVenues(venueList);
-        if (venueList.length > 0 && !venueList.find(v => v.id === currentVenue)) {
-          setCurrentVenue(venueList[0].id);
-        }
-      } catch (err) {
-        console.error('Failed to load venues:', err);
-      }
-    };
-    loadVenues();
-  }, [token]);
-
-  // 從 API 載入知識庫
-  useEffect(() => {
-    const loadKnowledge = async () => {
-      if (!token || !currentVenue) return;
-      setIsLoadingKnowledge(true);
-      try {
-        const response = await axios.get(`${API_URL}/api/venues/${currentVenue}/knowledge`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setKnowledge(response.data.knowledge || []);
-      } catch (err) {
-        console.error('Failed to load knowledge:', err);
-        toast.error('載入知識庫失敗');
-      } finally {
-        setIsLoadingKnowledge(false);
-      }
-    };
-    loadKnowledge();
-  }, [token, currentVenue]);
 
   const currentVenueData = venues.find(v => v.id === currentVenue) || { id: currentVenue, name: '森山寫照' };
   // 使用知識庫數量作為版本顯示
