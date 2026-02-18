@@ -147,7 +147,112 @@ const MetricCard = ({ icon: Icon, label, value, prefix = '', suffix = '', trend,
   );
 };
 
-// 簡易柱狀圖
+// 面積圖組件 - 更清楚顯示營收變化
+const AreaChart = ({ data, maxValue }) => {
+  const chartWidth = 100;
+  const chartHeight = 120;
+  const padding = { top: 10, right: 5, bottom: 25, left: 5 };
+  const innerWidth = chartWidth - padding.left - padding.right;
+  const innerHeight = chartHeight - padding.top - padding.bottom;
+  
+  // 生成路徑點
+  const getPoints = (values, isLastYear = false) => {
+    return values.map((item, idx) => {
+      const x = padding.left + (idx / (values.length - 1)) * innerWidth;
+      const value = isLastYear ? item.lastYear : item.revenue;
+      const y = padding.top + innerHeight - (value / maxValue) * innerHeight;
+      return { x, y, value, month: item.month };
+    });
+  };
+  
+  const currentPoints = getPoints(data);
+  const lastYearPoints = getPoints(data, true);
+  
+  // 生成 SVG path
+  const createLinePath = (points) => {
+    return points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+  };
+  
+  const createAreaPath = (points) => {
+    const linePath = createLinePath(points);
+    const bottomY = padding.top + innerHeight;
+    return `${linePath} L ${points[points.length - 1].x} ${bottomY} L ${points[0].x} ${bottomY} Z`;
+  };
+  
+  return (
+    <div className="relative">
+      <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="w-full h-32">
+        <defs>
+          <linearGradient id="areaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#FF6B35" stopOpacity="0.4" />
+            <stop offset="100%" stopColor="#FF6B35" stopOpacity="0.05" />
+          </linearGradient>
+          <linearGradient id="lastYearGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#52525b" stopOpacity="0.3" />
+            <stop offset="100%" stopColor="#52525b" stopOpacity="0.05" />
+          </linearGradient>
+        </defs>
+        
+        {/* 去年面積 */}
+        <path
+          d={createAreaPath(lastYearPoints)}
+          fill="url(#lastYearGradient)"
+        />
+        
+        {/* 去年線條 */}
+        <path
+          d={createLinePath(lastYearPoints)}
+          fill="none"
+          stroke="#52525b"
+          strokeWidth="1.5"
+          strokeDasharray="3,3"
+        />
+        
+        {/* 今年面積 */}
+        <path
+          d={createAreaPath(currentPoints)}
+          fill="url(#areaGradient)"
+        />
+        
+        {/* 今年線條 */}
+        <path
+          d={createLinePath(currentPoints)}
+          fill="none"
+          stroke="#FF6B35"
+          strokeWidth="2"
+        />
+        
+        {/* 數據點 */}
+        {currentPoints.map((p, i) => (
+          <g key={i}>
+            <circle cx={p.x} cy={p.y} r="3" fill="#FF6B35" />
+            <circle cx={p.x} cy={p.y} r="5" fill="#FF6B35" fillOpacity="0.3" />
+          </g>
+        ))}
+        
+        {/* X 軸標籤 */}
+        {data.map((item, idx) => {
+          const x = padding.left + (idx / (data.length - 1)) * innerWidth;
+          return (
+            <text
+              key={idx}
+              x={x}
+              y={chartHeight - 5}
+              textAnchor="middle"
+              className="fill-[#8b949e] text-[6px]"
+            >
+              {item.month}
+            </text>
+          );
+        })}
+      </svg>
+      
+      {/* Hover tooltips would go here in a more complete implementation */}
+    </div>
+  );
+};
+
+// 簡易柱狀圖 (備用)
 const SimpleBarChart = ({ data, maxValue }) => {
   return (
     <div className="flex items-end gap-2 h-32">
