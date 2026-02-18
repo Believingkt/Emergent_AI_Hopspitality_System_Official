@@ -890,56 +890,6 @@ export const AILearningTab = () => {
               </div>
             </TabsContent>
 
-            {/* 輸入網址 */}
-            <TabsContent value="url" className="mt-4">
-              <div className="bg-[#0d1117] rounded-2xl p-5 border-2 border-[#27272a]">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-8 h-8 rounded-lg bg-[#00B4D8]/15 flex items-center justify-center">
-                    <Globe className="w-4 h-4 text-[#00B4D8]" />
-                  </div>
-                  <div>
-                    <h3 className="text-base font-semibold text-white">輸入網址</h3>
-                    <p className="text-xs text-[#8b949e]">AI 會爬取網頁內容並學習</p>
-                  </div>
-                </div>
-
-                <div className="flex gap-2 mb-4">
-                  <Input 
-                    placeholder="https://example.com/your-page"
-                    value={newUrl}
-                    onChange={(e) => setNewUrl(e.target.value)}
-                    className="bg-[#1a1f26] border-[#27272a] text-white flex-1"
-                  />
-                  <Button onClick={handleAddUrl} className="bg-[#00B4D8] hover:bg-[#0096B4] text-white">
-                    <Plus className="w-4 h-4" />
-                  </Button>
-                </div>
-
-                {urls.length > 0 && (
-                  <div className="space-y-2">
-                    {urls.map((item, idx) => (
-                      <div key={idx} className="flex items-center justify-between bg-[#1a1f26] rounded-lg p-2.5">
-                        <div className="flex items-center gap-2 flex-1 min-w-0">
-                          <Link className="w-4 h-4 text-[#00B4D8] flex-shrink-0" />
-                          <span className="text-white text-sm truncate">{item.url}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {item.status === 'learned' ? (
-                            <Badge className="bg-[#22c55e]/15 text-[#22c55e] border-0 text-xs">已學習</Badge>
-                          ) : (
-                            <Badge className="bg-amber-500/15 text-amber-400 border-0 text-xs">待處理</Badge>
-                          )}
-                          <button onClick={() => handleRemoveUrl(idx)} className="text-[#52525b] hover:text-red-400">
-                            <X className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </TabsContent>
-
             {/* 貼上文字 */}
             <TabsContent value="rules" className="mt-4">
               <div className="bg-[#0d1117] rounded-2xl p-5 border-2 border-[#27272a]">
