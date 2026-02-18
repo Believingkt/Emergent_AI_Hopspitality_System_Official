@@ -814,18 +814,11 @@ export const AILearningTab = () => {
                 上傳檔案
               </TabsTrigger>
               <TabsTrigger 
-                value="url"
-                className="data-[state=active]:bg-[#FF6B35] data-[state=active]:text-white text-[#a1a1aa] rounded-lg px-4"
-              >
-                <Globe className="w-4 h-4 mr-2" />
-                輸入網址
-              </TabsTrigger>
-              <TabsTrigger 
                 value="rules"
                 className="data-[state=active]:bg-[#FF6B35] data-[state=active]:text-white text-[#a1a1aa] rounded-lg px-4"
               >
                 <PenLine className="w-4 h-4 mr-2" />
-                自訂規則
+                貼上文字
               </TabsTrigger>
             </TabsList>
 
