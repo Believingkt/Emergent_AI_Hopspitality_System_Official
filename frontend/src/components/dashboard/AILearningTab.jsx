@@ -138,8 +138,16 @@ const simulateAIResponse = (question) => {
   return responses[question] || '感謝您的詢問！請問您想了解什麼呢？我可以幫您查詢房況、報價，或回答任何關於住宿的問題 😊';
 };
 
+const API_URL = process.env.REACT_APP_BACKEND_URL;
+
 export const AILearningTab = () => {
-  const [currentVenue, setCurrentVenue] = useState('senshan');
+  const { token } = useAuth();
+  const [currentVenue, setCurrentVenue] = useState('sensan_inn');
+  const [venues, setVenues] = useState([]);
+  const [knowledge, setKnowledge] = useState([]);
+  const [t1Prompt, setT1Prompt] = useState(null);
+  const [isLoadingKnowledge, setIsLoadingKnowledge] = useState(false);
+  const [isLoadingPrompt, setIsLoadingPrompt] = useState(false);
   const [venueLogos, setVenueLogos] = useState({});
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [urls, setUrls] = useState([]);
@@ -156,16 +164,122 @@ export const AILearningTab = () => {
   const fileInputRef = useRef(null);
   const logoInputRef = useRef(null);
 
-  const currentVenueData = VENUES.find(v => v.id === currentVenue);
-  const currentVersion = VERSION_HISTORY.find(v => v.isCurrent);
+  // 從 API 載入場域列表
+  useEffect(() => {
+    const loadVenues = async () => {
+      if (!token) return;
+      try {
+        const response = await axios.get(`${API_URL}/api/venues`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const venueList = response.data.venues || [];
+        setVenues(venueList);
+        if (venueList.length > 0 && !venueList.find(v => v.id === currentVenue)) {
+          setCurrentVenue(venueList[0].id);
+        }
+      } catch (err) {
+        console.error('Failed to load venues:', err);
+      }
+    };
+    loadVenues();
+  }, [token]);
+
+  // 從 API 載入知識庫
+  useEffect(() => {
+    const loadKnowledge = async () => {
+      if (!token || !currentVenue) return;
+      setIsLoadingKnowledge(true);
+      try {
+        const response = await axios.get(`${API_URL}/api/venues/${currentVenue}/knowledge`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setKnowledge(response.data.knowledge || []);
+      } catch (err) {
+        console.error('Failed to load knowledge:', err);
+        toast.error('載入知識庫失敗');
+      } finally {
+        setIsLoadingKnowledge(false);
+      }
+    };
+    loadKnowledge();
+  }, [token, currentVenue]);
+
+  // 從 API 載入 T1 Prompt
+  useEffect(() => {
+    const loadT1Prompt = async () => {
+      if (!token) return;
+      setIsLoadingPrompt(true);
+      try {
+        const response = await axios.get(`${API_URL}/api/t1/prompt`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setT1Prompt(response.data.prompt || null);
+      } catch (err) {
+        console.error('Failed to load T1 prompt:', err);
+      } finally {
+        setIsLoadingPrompt(false);
+      }
+    };
+    loadT1Prompt();
+  }, [token]);
+
+  const currentVenueData = venues.find(v => v.id === currentVenue) || { id: currentVenue, name: '森山寫照' };
+  const currentVersion = t1Prompt ? { 
+    version: `v${t1Prompt.id || 1}`, 
+    date: t1Prompt.created_at ? new Date(t1Prompt.created_at).toLocaleDateString() : '2026-02-17',
+    isCurrent: true,
+    summary: 'AI 銷售話術',
+    canRollback: false
+  } : VERSION_HISTORY.find(v => v.isCurrent);
   const currentLogo = venueLogos[currentVenue];
 
-  // 模擬已學習的內容
-  const learnedContent = [
-    { type: 'file', name: '森山寫照房型介紹.pdf', date: '2026-02-15', status: 'learned' },
-    { type: 'url', name: 'https://lakeze.com/faq', date: '2026-02-14', status: 'learned' },
-    { type: 'rule', name: '客戶詢問價格時，先確認入住日期', date: '2026-02-13', status: 'learned' },
-  ];
+  // 根據知識庫生成已學習內容列表
+  const learnedContent = knowledge.map(k => ({
+    id: k.id,
+    type: k.source_type || 'rule',
+    name: k.title,
+    date: k.created_at ? new Date(k.created_at).toLocaleDateString() : '',
+    status: 'learned',
+    category: k.category,
+    content: k.content
+  }));
+
+  // 新增知識
+  const handleAddKnowledge = async (category, title, content) => {
+    if (!token || !currentVenue) return;
+    try {
+      await axios.post(
+        `${API_URL}/api/venues/${currentVenue}/knowledge`,
+        { category, title, content },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success('知識新增成功！');
+      // 重新載入知識庫
+      const response = await axios.get(`${API_URL}/api/venues/${currentVenue}/knowledge`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setKnowledge(response.data.knowledge || []);
+    } catch (err) {
+      console.error('Failed to add knowledge:', err);
+      toast.error('新增失敗：' + (err.response?.data?.detail || '請稍後再試'));
+    }
+  };
+
+  // 刪除知識
+  const handleDeleteKnowledge = async (knowledgeId) => {
+    if (!token || !currentVenue) return;
+    try {
+      await axios.delete(
+        `${API_URL}/api/venues/${currentVenue}/knowledge/${knowledgeId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success('已刪除');
+      setKnowledge(prev => prev.filter(k => k.id !== knowledgeId));
+    } catch (err) {
+      console.error('Failed to delete knowledge:', err);
+      toast.error('刪除失敗');
+    }
+  };
 
   const handleFileUpload = (e) => {
     const files = Array.from(e.target.files);
