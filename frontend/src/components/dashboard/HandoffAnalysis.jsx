@@ -460,6 +460,59 @@ const ConversationCard = ({ task, token, onRefresh }) => {
           
           {/* AI 學習區 */}
           <div className="p-5 bg-[#161b22] border-t border-[#27272a]">
+            {/* 管家回覆輸入區 */}
+            {!hasManagerResponse && (
+              <div className="mb-4">
+                {showReplyInput ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Send className="w-4 h-4 text-[#FF6B35]" />
+                      <span className="text-[#FF6B35] text-sm font-semibold">回覆客戶</span>
+                    </div>
+                    <Textarea
+                      value={replyText}
+                      onChange={(e) => setReplyText(e.target.value)}
+                      placeholder="輸入您要回覆客戶的內容..."
+                      className="min-h-[100px] bg-[#0d1117] border-[#27272a] text-white rounded-lg resize-none"
+                    />
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="ghost"
+                        onClick={() => {
+                          setShowReplyInput(false);
+                          setReplyText('');
+                        }}
+                        className="text-[#8b949e] hover:text-white"
+                      >
+                        取消
+                      </Button>
+                      <Button
+                        onClick={handleSendReply}
+                        disabled={isReplying || !replyText.trim()}
+                        className="bg-[#FF6B35] hover:bg-[#E55A2B] text-white"
+                      >
+                        {isReplying ? (
+                          <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                        ) : (
+                          <Send className="w-4 h-4 mr-2" />
+                        )}
+                        發送回覆
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <Button
+                    onClick={() => setShowReplyInput(true)}
+                    className="w-full bg-[#FF6B35]/15 hover:bg-[#FF6B35]/25 text-[#FF6B35] border border-[#FF6B35]/30"
+                  >
+                    <Send className="w-4 h-4 mr-2" />
+                    回覆客戶
+                  </Button>
+                )}
+              </div>
+            )}
+            
+            {/* AI 學習按鈕 */}
             {hasManagerResponse ? (
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-[#22c55e]">
