@@ -147,37 +147,297 @@ const MetricCard = ({ icon: Icon, label, value, prefix = '', suffix = '', trend,
   );
 };
 
-// 面積圖組件 - 更清楚顯示營收變化
-const AreaChart = ({ data, maxValue }) => {
-  const chartWidth = 100;
-  const chartHeight = 120;
-  const padding = { top: 10, right: 5, bottom: 25, left: 5 };
-  const innerWidth = chartWidth - padding.left - padding.right;
-  const innerHeight = chartHeight - padding.top - padding.bottom;
+// 專業營收趨勢圖組件 - 使用 SVG 繪製完整的圖表
+const RevenueTrendChart = ({ data, dateRange }) => {
+  const [hoveredIndex, setHoveredIndex] = useState(null);
   
-  // 生成路徑點
-  const getPoints = (values, isLastYear = false) => {
-    return values.map((item, idx) => {
-      const x = padding.left + (idx / (values.length - 1)) * innerWidth;
-      const value = isLastYear ? item.lastYear : item.revenue;
-      const y = padding.top + innerHeight - (value / maxValue) * innerHeight;
-      return { x, y, value, month: item.month };
-    });
+  // 圖表尺寸配置
+  const width = 100;
+  const height = 180;
+  const margin = { top: 20, right: 10, bottom: 40, left: 45 };
+  const innerWidth = width - margin.left - margin.right;
+  const innerHeight = height - margin.top - margin.bottom;
+  
+  // 計算最大值（用於 Y 軸縮放）
+  const maxValue = Math.max(...data.map(d => Math.max(d.revenue, d.lastYear))) * 1.1;
+  const minValue = Math.min(...data.map(d => Math.min(d.revenue, d.lastYear))) * 0.9;
+  const valueRange = maxValue - minValue;
+  
+  // Y 軸刻度
+  const yTicks = [0, 0.25, 0.5, 0.75, 1].map(t => minValue + valueRange * t);
+  
+  // 計算點座標
+  const getX = (idx) => margin.left + (idx / (data.length - 1)) * innerWidth;
+  const getY = (val) => margin.top + innerHeight - ((val - minValue) / valueRange) * innerHeight;
+  
+  // 生成曲線路徑（使用貝茲曲線使線條更平滑）
+  const createSmoothPath = (values, isLastYear = false) => {
+    const points = values.map((item, idx) => ({
+      x: getX(idx),
+      y: getY(isLastYear ? item.lastYear : item.revenue)
+    }));
+    
+    if (points.length < 2) return '';
+    
+    let path = `M ${points[0].x} ${points[0].y}`;
+    for (let i = 1; i < points.length; i++) {
+      const prev = points[i - 1];
+      const curr = points[i];
+      const cpX = (prev.x + curr.x) / 2;
+      path += ` C ${cpX} ${prev.y}, ${cpX} ${curr.y}, ${curr.x} ${curr.y}`;
+    }
+    return path;
   };
   
-  const currentPoints = getPoints(data);
-  const lastYearPoints = getPoints(data, true);
-  
-  // 生成 SVG path
-  const createLinePath = (points) => {
-    return points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+  // 生成面積路徑
+  const createAreaPath = (values, isLastYear = false) => {
+    const linePath = createSmoothPath(values, isLastYear);
+    const firstX = getX(0);
+    const lastX = getX(values.length - 1);
+    const bottomY = margin.top + innerHeight;
+    return `${linePath} L ${lastX} ${bottomY} L ${firstX} ${bottomY} Z`;
   };
   
-  const createAreaPath = (points) => {
-    const linePath = createLinePath(points);
-    const bottomY = padding.top + innerHeight;
-    return `${linePath} L ${points[points.length - 1].x} ${bottomY} L ${points[0].x} ${bottomY} Z`;
+  // 計算成長率
+  const calculateGrowth = (current, previous) => {
+    if (!previous || previous === 0) return 0;
+    return ((current - previous) / previous * 100).toFixed(1);
   };
+  
+  // 計算總營收
+  const totalCurrentYear = data.reduce((sum, d) => sum + d.revenue, 0);
+  const totalLastYear = data.reduce((sum, d) => sum + d.lastYear, 0);
+  const totalGrowth = calculateGrowth(totalCurrentYear, totalLastYear);
+  
+  return (
+    <div className="space-y-4">
+      {/* 圖例和總結 */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-[#FF6B35]" />
+            <span className="text-xs text-[#8b949e]">今年 ${(totalCurrentYear/10000).toFixed(0)}萬</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-[#52525b]" />
+            <span className="text-xs text-[#8b949e]">去年 ${(totalLastYear/10000).toFixed(0)}萬</span>
+          </div>
+        </div>
+        <div className={`flex items-center gap-1 text-sm font-medium ${parseFloat(totalGrowth) >= 0 ? 'text-[#22c55e]' : 'text-red-400'}`}>
+          {parseFloat(totalGrowth) >= 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+          <span>{totalGrowth}%</span>
+        </div>
+      </div>
+      
+      {/* SVG 圖表 */}
+      <div className="relative">
+        <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-48">
+          <defs>
+            <linearGradient id="currentGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#FF6B35" stopOpacity="0.3" />
+              <stop offset="100%" stopColor="#FF6B35" stopOpacity="0.02" />
+            </linearGradient>
+            <linearGradient id="lastYearGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#52525b" stopOpacity="0.2" />
+              <stop offset="100%" stopColor="#52525b" stopOpacity="0.02" />
+            </linearGradient>
+            <filter id="glow">
+              <feGaussianBlur stdDeviation="1" result="coloredBlur"/>
+              <feMerge>
+                <feMergeNode in="coloredBlur"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+          </defs>
+          
+          {/* 網格線 */}
+          {yTicks.map((tick, i) => (
+            <g key={i}>
+              <line
+                x1={margin.left}
+                y1={getY(tick)}
+                x2={margin.left + innerWidth}
+                y2={getY(tick)}
+                stroke="#27272a"
+                strokeDasharray="2,2"
+              />
+              <text
+                x={margin.left - 3}
+                y={getY(tick) + 1}
+                textAnchor="end"
+                className="fill-[#52525b] text-[4px]"
+              >
+                {(tick/10000).toFixed(0)}萬
+              </text>
+            </g>
+          ))}
+          
+          {/* 去年面積 */}
+          <path
+            d={createAreaPath(data, true)}
+            fill="url(#lastYearGradient)"
+          />
+          
+          {/* 去年線條 */}
+          <path
+            d={createSmoothPath(data, true)}
+            fill="none"
+            stroke="#52525b"
+            strokeWidth="1"
+            strokeDasharray="3,2"
+          />
+          
+          {/* 今年面積 */}
+          <path
+            d={createAreaPath(data)}
+            fill="url(#currentGradient)"
+          />
+          
+          {/* 今年線條 */}
+          <path
+            d={createSmoothPath(data)}
+            fill="none"
+            stroke="#FF6B35"
+            strokeWidth="1.5"
+            filter="url(#glow)"
+          />
+          
+          {/* 數據點和交互區域 */}
+          {data.map((item, idx) => {
+            const x = getX(idx);
+            const yCurrentYear = getY(item.revenue);
+            const yLastYear = getY(item.lastYear);
+            const growth = calculateGrowth(item.revenue, item.lastYear);
+            const isHovered = hoveredIndex === idx;
+            
+            return (
+              <g key={idx}>
+                {/* 垂直參考線 */}
+                {isHovered && (
+                  <line
+                    x1={x}
+                    y1={margin.top}
+                    x2={x}
+                    y2={margin.top + innerHeight}
+                    stroke="#FF6B35"
+                    strokeWidth="0.5"
+                    strokeDasharray="2,2"
+                    opacity="0.5"
+                  />
+                )}
+                
+                {/* 今年數據點 */}
+                <circle
+                  cx={x}
+                  cy={yCurrentYear}
+                  r={isHovered ? 3 : 2}
+                  fill="#FF6B35"
+                  className="transition-all duration-200"
+                />
+                {isHovered && (
+                  <circle
+                    cx={x}
+                    cy={yCurrentYear}
+                    r={5}
+                    fill="#FF6B35"
+                    opacity="0.3"
+                  />
+                )}
+                
+                {/* 去年數據點 */}
+                <circle
+                  cx={x}
+                  cy={yLastYear}
+                  r={isHovered ? 2 : 1.5}
+                  fill="#52525b"
+                  className="transition-all duration-200"
+                />
+                
+                {/* X 軸標籤 */}
+                <text
+                  x={x}
+                  y={height - 8}
+                  textAnchor="middle"
+                  className={`text-[5px] ${isHovered ? 'fill-white' : 'fill-[#52525b]'}`}
+                >
+                  {item.month}
+                </text>
+                
+                {/* 滑鼠互動區域 */}
+                <rect
+                  x={x - 5}
+                  y={margin.top}
+                  width={10}
+                  height={innerHeight}
+                  fill="transparent"
+                  onMouseEnter={() => setHoveredIndex(idx)}
+                  onMouseLeave={() => setHoveredIndex(null)}
+                  style={{ cursor: 'pointer' }}
+                />
+                
+                {/* Tooltip */}
+                {isHovered && (
+                  <g>
+                    <rect
+                      x={x - 18}
+                      y={Math.min(yCurrentYear, yLastYear) - 28}
+                      width={36}
+                      height={25}
+                      rx={2}
+                      fill="#18181b"
+                      stroke="#27272a"
+                      strokeWidth="0.5"
+                    />
+                    <text
+                      x={x}
+                      y={Math.min(yCurrentYear, yLastYear) - 18}
+                      textAnchor="middle"
+                      className="fill-white text-[4px] font-medium"
+                    >
+                      ${(item.revenue/10000).toFixed(0)}萬
+                    </text>
+                    <text
+                      x={x}
+                      y={Math.min(yCurrentYear, yLastYear) - 10}
+                      textAnchor="middle"
+                      className={`text-[3.5px] ${parseFloat(growth) >= 0 ? 'fill-[#22c55e]' : 'fill-red-400'}`}
+                    >
+                      {parseFloat(growth) >= 0 ? '↑' : '↓'} {Math.abs(parseFloat(growth))}%
+                    </text>
+                  </g>
+                )}
+              </g>
+            );
+          })}
+        </svg>
+      </div>
+      
+      {/* 詳細數據表格 */}
+      <div className="grid grid-cols-6 gap-1 text-xs">
+        {data.map((item, idx) => {
+          const growth = calculateGrowth(item.revenue, item.lastYear);
+          const isPositive = parseFloat(growth) >= 0;
+          return (
+            <div 
+              key={idx} 
+              className={`text-center p-2 rounded-lg transition-all duration-200 ${
+                hoveredIndex === idx ? 'bg-[#FF6B35]/10 border border-[#FF6B35]/30' : 'bg-[#1a1f26]'
+              }`}
+              onMouseEnter={() => setHoveredIndex(idx)}
+              onMouseLeave={() => setHoveredIndex(null)}
+            >
+              <p className="text-[#52525b] text-[10px]">{item.month}</p>
+              <p className="text-white font-medium">${(item.revenue/10000).toFixed(0)}萬</p>
+              <p className={`text-[10px] ${isPositive ? 'text-[#22c55e]' : 'text-red-400'}`}>
+                {isPositive ? '↑' : '↓'}{Math.abs(parseFloat(growth))}%
+              </p>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
   
   return (
     <div className="relative">
