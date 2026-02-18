@@ -786,43 +786,18 @@ export const PerformanceDashboard = ({ venue }) => {
       
       {/* 趨勢圖表 & 銷售漏斗 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* 月度趨勢 - 使用面積圖 */}
+        {/* 月度趨勢 - 使用專業圖表 */}
         <div className="bg-[#0d1117] rounded-2xl p-6 border-2 border-[#27272a]">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="text-lg font-semibold text-white">營收趨勢</h3>
+              <h3 className="text-lg font-semibold text-white">營收趨勢分析</h3>
               <p className="text-sm text-[#8b949e]">
                 {formatDate(dateRange.from)} ~ {formatDate(dateRange.to)} vs 去年同期
               </p>
             </div>
-            <div className="flex items-center gap-4 text-xs">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded bg-[#FF6B35]" />
-                <span className="text-[#8b949e]">今年</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded bg-[#52525b]" />
-                <span className="text-[#8b949e]">去年</span>
-              </div>
-            </div>
           </div>
           
-          <AreaChart data={data.monthlyData} maxValue={maxRevenue} />
-          
-          <div className="mt-4 pt-4 border-t border-[#27272a] grid grid-cols-3 gap-4">
-            <div className="text-center">
-              <p className="text-[#8b949e] text-xs">平均月營收</p>
-              <p className="text-white font-semibold">$847,000</p>
-            </div>
-            <div className="text-center">
-              <p className="text-[#8b949e] text-xs">最高單月</p>
-              <p className="text-[#22c55e] font-semibold">$1,044,000</p>
-            </div>
-            <div className="text-center">
-              <p className="text-[#8b949e] text-xs">年成長率</p>
-              <p className="text-[#FF6B35] font-semibold">+10.1%</p>
-            </div>
-          </div>
+          <RevenueTrendChart data={data.monthlyData} dateRange={dateRange} />
         </div>
         
         {/* 銷售漏斗 - 星鏈計畫 */}
