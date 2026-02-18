@@ -75,7 +75,7 @@ const generateMockData = () => {
     depositGrowth: 12.5,
   };
   
-  // 銷售漏斗數據 (新念計畫)
+  // 銷售漏斗數據 (星鏈計畫)
   const funnel = {
     impressions: 45600,
     clicks: 2280,
