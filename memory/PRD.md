@@ -3,28 +3,9 @@
 ## 專案概述
 為「森山寫照」及其關聯場域建立的專業網頁管理平台，作為管家團隊的中央指揮中心，用於管理來自多個物業的 AI 聊天機器人所轉交的客戶對話。
 
-## 權限架構 (Updated: 2026-02-18)
-
-### 角色定義
-| 角色 | 使用者 | 說明 |
-|------|--------|------|
-| **Admin（Kenneth）** | Kenneth / 人客多團隊 | 系統擁有者，掌控 T1 底層、所有場域設定 |
-| **Client（客戶）** | 森山寫照 / 天送幸福和苑等旅宿業者 | 場域經營者，只能管理自己場域的知識 |
-
-### 功能權限矩陣
-| 功能 | Admin | Client |
-|------|:-----:|:------:|
-| T1 底層 Prompt 讀寫 | ✅ | ❌ |
-| 場域列表（全部/自己的） | ✅ 全部 | ✅ 自己的 |
-| 場域知識 CRUD | ✅ 全部 | ✅ 自己的 |
-| AI 學習餵給 | ✅ | ✅ 自己的 |
-| 任務管理 | ✅ 全部 | ✅ 自己的 |
-| 管家管理 | ✅ | ❌ |
-| 系統設定（LINE Token） | ✅ | ❌ |
-
 ## 技術架構
 - **前端**: React + Tailwind CSS + Shadcn UI
-- **後端 API**: https://line-ai-bot-xiaosen.onrender.com/api (外部)
+- **後端 API**: https://line-ai-bot-xiaosen.onrender.com/api (外部 - Manus 團隊)
 - **認證**: JWT Token (localStorage)
 
 ## 核心功能
@@ -36,30 +17,35 @@
 - Email/密碼表單
 - JWT 認證流程
 
-#### 2. 運營管理中心（儀表板）✅ (Updated: 2026-02-18)
+#### 2. 運營管理中心（儀表板）✅
 
 **2.1 業績總覽 Tab ✅**
 - 日期選擇器
 - 核心指標卡片（4 大數字）
-- **營收趨勢圖** ✅：直條圖（今年/去年）+ 折線圖（趨勢線）
+- **營收趨勢圖**：直條圖（今年/去年）+ 折線圖（趨勢線）
 - 星鏈計畫（銷售漏斗）
 - 房況即時看板
 - AI 效能分析
-- ROI 與成本效益
 
 **2.2 轉交分析 Tab ✅**
 - 真實 LINE OA 對話數據
 - 管家回覆功能
 
-**2.3 AI 學習 Tab ✅ (Updated: 2026-02-18 - 權限修正)**
+**2.3 AI 學習 Tab ✅ (Updated: 2026-02-18 - P1 功能整合)**
 - **場域選擇器**：可切換不同場域
 - **版本顯示**：基於知識庫數量
-- **學習輸入 Tabs**：
-  - 上傳檔案
-  - 輸入網址
-  - 自訂規則
-- ~~AI 銷售模型選擇~~ **[已移除 - 客戶端不應看到]**
-- ~~T1 Prompt 管理~~ **[已移除 - 僅限 Admin]**
+- **學習輸入方式**：
+  - **上傳檔案** - 支援 PDF、Word、Excel、CSV、TXT、圖片（OCR）
+  - **貼上文字** - LINE 對話、房型介紹等
+- **AI 萃取流程** ✅ (NEW)：
+  - 上傳/貼上後自動呼叫 `POST /api/venues/{venue_id}/knowledge/extract`
+  - 顯示進度狀態（處理中 → 萃取完成）
+  - 萃取完成後自動彈出審核 Modal
+- **批次審核 Modal** ✅ (NEW)：
+  - 顯示所有萃取的知識草稿
+  - 單條確認/拒絕/編輯功能
+  - 一鍵全部確認
+  - 狀態標記（待審核/已確認/已拒絕）
 - **與圖文選單協作**：開關控制
 - **已學習內容**：顯示知識庫條目
 - **版本歷史**：可回滾
@@ -70,62 +56,67 @@
 - 管家管理
 - LINE OA 憑證管理
 
-#### 4. 後端 API 整合 ✅
-- **已整合 API（客戶端可用）**：
-  - `POST /api/auth/login` - 登入
-  - `GET /api/venues` - 場域列表（自己的）
-  - `POST /api/tasks/{task_id}/reply` - 管家回覆
-  - `GET /api/venues/{venue_id}/knowledge` - 知識庫讀取
-  - `POST /api/venues/{venue_id}/knowledge` - 知識庫寫入
-  - `DELETE /api/venues/{venue_id}/knowledge/{id}` - 知識庫刪除
+#### 4. 後端 API 整合 ✅ (Updated: 2026-02-18)
 
-- **Admin 專用 API（客戶端不可用）**：
-  - `GET /api/t1/prompt` - T1 Prompt 讀取
-  - `POST /api/t1/prompt` - T1 Prompt 更新
-  - `GET/PUT /api/venues/{id}/config` - 場域設定
+**已整合的 API**：
+
+| API | 方法 | 用途 | 狀態 |
+|-----|------|------|------|
+| `/api/auth/login` | POST | 登入 | ✅ |
+| `/api/venues` | GET | 場域列表 | ✅ |
+| `/api/venues/{id}/knowledge` | GET | 知識庫讀取 | ✅ |
+| `/api/venues/{id}/knowledge` | POST | 新增知識 | ✅ |
+| `/api/venues/{id}/knowledge/{kid}` | DELETE | 刪除知識 | ✅ |
+| `/api/venues/{id}/knowledge/extract` | POST | **AI 知識萃取** | ✅ NEW |
+| `/api/venues/{id}/knowledge/batches` | GET | **批次列表** | ✅ NEW |
+| `/api/venues/{id}/knowledge/batches/{bid}` | GET | **批次詳情** | ✅ NEW |
+| `/api/venues/{id}/knowledge/{kid}/approve` | PUT | **確認知識** | ✅ NEW |
+| `/api/venues/{id}/knowledge/{kid}/reject` | PUT | **拒絕知識** | ✅ NEW |
+| `/api/venues/{id}/knowledge/{kid}` | PUT | **編輯知識** | ✅ NEW |
+| `/api/venues/{id}/knowledge/batches/{bid}/approve-all` | POST | **一鍵全部確認** | ✅ NEW |
+| `/api/tasks/{task_id}/reply` | POST | 管家回覆 | ✅ |
 
 ## 更新紀錄
 
-### 2026-02-18 Session 6
-- **營收趨勢圖修復**：折線圖（趨勢線）正確顯示
+### 2026-02-18 Session 6 (Current)
+- **P1 功能整合 - AI 知識學習流程**：
+  - 實作檔案上傳功能（支援 PDF、Word、Excel、CSV、TXT、圖片）
+  - 實作貼上文字功能（LINE 對話等）
+  - 整合 AI 萃取 API（同步處理，10-30 秒完成）
+  - 新增批次審核 Modal（確認/拒絕/編輯）
+  - 新增一鍵全部確認功能
+  - 移除「輸入網址」Tab（目前不支援）
 - **權限邊界修正**：
   - 移除 T1 Prompt 編輯器（僅限 Admin）
   - 移除 AI 銷售模型選擇（T1/T2）
-  - 客戶端只能管理自己場域的知識庫
-- **環境變數確認**：REACT_APP_BACKEND_URL 正確指向外部 API
-
-### 2026-02-18 Session 5
-- 管家回覆 API 串接
-- 知識庫讀取 API 串接
-- UI 修改（星鏈計畫、日期選擇器）
+- **營收趨勢圖修復**：折線圖（趨勢線）正確顯示
 
 ## 待辦事項 / Backlog
 
-### P1 - 增強功能
-- [ ] 串接 AI 學習 API (`POST /api/venues/{venue_id}/knowledge/extract`)
-- [ ] 串接學習批次管理 API (`GET /api/venues/{venue_id}/knowledge/batches`)
-- [ ] 實作知識審核功能（確認/拒絕/編輯）
-- [ ] 串接圖文選單同步 API (`POST /api/venues/{id}/richmenu/sync`)
+### P0 - 完成
+- [x] 營收趨勢圖折線修復
+- [x] T1/知識庫權限邊界修正
+- [x] AI 知識萃取流程
+- [x] 批次審核功能
 
-### P2 - 優化項目
+### P1 - 待測試
+- [ ] 真實 API 測試（需要 CORS 設定完成）
+- [ ] 檔案上傳 10MB 限制測試
+- [ ] 圖片 OCR 功能測試
+
+### P2 - 後續優化
+- [ ] 串接圖文選單同步 API
 - [ ] 串接 PMS 庫存查詢 API
-- [ ] 清理專案（刪除 `/app/backend` 目錄）
+- [ ] 通知系統（新任務提醒）
+- [ ] 清理專案
 
 ## 測試帳號
-- **Email**: kenneth@lakeze.com / test@lakeze.com
-- **Password**: lakeze2026 / test2026
+- **Email**: kenneth@lakeze.com
+- **Password**: lakeze2026
 
 ## 已知問題
-- **CORS 問題**：預覽環境 URL 需要在後端 FRONTEND_URL 中配置才能正常登入
-- 需要在 Render 後端設定：`FRONTEND_URL=https://manager.lakeze.co,https://ai-ops.preview.emergentagent.com`
+- **CORS 問題**：預覽環境 URL 需要在後端 FRONTEND_URL 中配置
+- 需要設定：`FRONTEND_URL=https://manager.lakeze.co,https://ai-ops.preview.emergentagent.com`
 
-## 數據說明
-### 真實數據 (LIVE)
-- 轉交分析 Tab - 從 /api/tasks 獲取
-- 知識庫 - 從 /api/venues/{id}/knowledge 獲取
-
-### 模擬數據 (MOCKED)
-- 業績指標 (PerformanceDashboard)
-- 房況預測
-- AI 效能
-- ROI 分析
+## API 規格文件
+- `/app/memory/P1_API_Requirements_for_Manus.md` - P1 API 需求文件
