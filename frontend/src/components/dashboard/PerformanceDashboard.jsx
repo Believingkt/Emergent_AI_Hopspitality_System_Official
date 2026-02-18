@@ -256,60 +256,60 @@ const RevenueTrendChart = ({ data, dateRange }) => {
               })}
             </div>
             
-            {/* 折線圖 - 趨勢線 */}
-            <svg 
-              className="absolute inset-0 pointer-events-none overflow-visible" 
-              viewBox="0 0 100 100"
-              preserveAspectRatio="none"
-            >
-              <defs>
-                <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#00B4D8" />
-                  <stop offset="100%" stopColor="#22c55e" />
-                </linearGradient>
-                <filter id="glowLine">
-                  <feGaussianBlur stdDeviation="0.5" result="coloredBlur"/>
-                  <feMerge>
-                    <feMergeNode in="coloredBlur"/>
-                    <feMergeNode in="SourceGraphic"/>
-                  </feMerge>
-                </filter>
-              </defs>
-              
-              {/* 今年趨勢線 */}
-              <polyline
-                fill="none"
-                stroke="url(#lineGradient)"
-                strokeWidth="0.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                filter="url(#glowLine)"
-                vectorEffect="non-scaling-stroke"
-                points={data.map((item, idx) => {
-                  const x = ((idx + 0.5) / data.length) * 100;
-                  const y = 100 - (item.revenue / maxValue) * 100;
-                  return `${x},${y}`;
-                }).join(' ')}
-              />
-              
-              {/* 趨勢線數據點 */}
-              {data.map((item, idx) => {
-                const x = ((idx + 0.5) / data.length) * 100;
-                const y = 100 - (item.revenue / maxValue) * 100;
-                return (
-                  <circle
-                    key={idx}
-                    cx={x}
-                    cy={y}
-                    r={hoveredIndex === idx ? 1.5 : 1}
-                    fill="#00B4D8"
-                    stroke="#0d1117"
-                    strokeWidth="0.3"
-                    className="transition-all duration-200"
-                  />
-                );
-              })}
-            </svg>
+            {/* 折線圖 - 趨勢線 (使用絕對定位的 div 來計算實際像素) */}
+            <div className="absolute inset-0 pointer-events-none">
+              <svg 
+                className="w-full h-full overflow-visible"
+                style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+              >
+                <defs>
+                  <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#00B4D8" />
+                    <stop offset="100%" stopColor="#22c55e" />
+                  </linearGradient>
+                  <filter id="glowLine">
+                    <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                    <feMerge>
+                      <feMergeNode in="coloredBlur"/>
+                      <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                  </filter>
+                </defs>
+                
+                {/* 今年趨勢線 - 使用百分比計算 */}
+                <polyline
+                  fill="none"
+                  stroke="url(#lineGradient)"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  filter="url(#glowLine)"
+                  points={data.map((item, idx) => {
+                    const xPercent = ((idx + 0.5) / data.length) * 100;
+                    const yPercent = 100 - (item.revenue / maxValue) * 100;
+                    return `${xPercent}%,${yPercent}%`;
+                  }).join(' ')}
+                />
+                
+                {/* 趨勢線數據點 */}
+                {data.map((item, idx) => {
+                  const xPercent = ((idx + 0.5) / data.length) * 100;
+                  const yPercent = 100 - (item.revenue / maxValue) * 100;
+                  return (
+                    <circle
+                      key={idx}
+                      cx={`${xPercent}%`}
+                      cy={`${yPercent}%`}
+                      r={hoveredIndex === idx ? 6 : 4}
+                      fill="#00B4D8"
+                      stroke="#0d1117"
+                      strokeWidth="2"
+                      className="transition-all duration-200"
+                    />
+                  );
+                })}
+              </svg>
+            </div>
           </div>
           
           {/* X 軸標籤 */}
