@@ -837,45 +837,54 @@ export const AILearningTab = () => {
                     <File className="w-4 h-4 text-[#FF6B35]" />
                   </div>
                   <div>
-                    <h3 className="text-base font-semibold text-white">上傳 PDF 或文件</h3>
-                    <p className="text-xs text-[#8b949e]">AI 會從中學習您的業務資訊</p>
+                    <h3 className="text-base font-semibold text-white">上傳檔案</h3>
+                    <p className="text-xs text-[#8b949e]">AI 會自動解析並萃取知識</p>
                   </div>
                 </div>
 
                 <div 
-                  onClick={() => fileInputRef.current?.click()}
-                  className="border-2 border-dashed border-[#27272a] rounded-xl p-6 text-center cursor-pointer hover:border-[#FF6B35]/50 transition-colors"
+                  onClick={() => !isProcessing && fileInputRef.current?.click()}
+                  className={`border-2 border-dashed rounded-xl p-6 text-center transition-colors ${
+                    isProcessing 
+                      ? 'border-[#FF6B35] bg-[#FF6B35]/5 cursor-wait' 
+                      : 'border-[#27272a] hover:border-[#FF6B35]/50 cursor-pointer'
+                  }`}
                 >
                   <input 
                     ref={fileInputRef}
                     type="file" 
-                    accept=".pdf,.doc,.docx,.txt"
-                    multiple
+                    accept=".pdf,.doc,.docx,.txt,.csv,.xlsx,.xls,.jpg,.jpeg,.png,.gif,.webp"
                     onChange={handleFileUpload}
                     className="hidden"
+                    disabled={isProcessing}
                   />
-                  {isUploading ? (
-                    <Loader2 className="w-10 h-10 text-[#FF6B35] mx-auto mb-3 animate-spin" />
+                  {isProcessing ? (
+                    <>
+                      <Loader2 className="w-10 h-10 text-[#FF6B35] mx-auto mb-3 animate-spin" />
+                      <p className="text-sm text-[#FF6B35] font-medium">{extractProgress || '處理中...'}</p>
+                    </>
                   ) : (
-                    <Upload className="w-10 h-10 text-[#52525b] mx-auto mb-3" />
+                    <>
+                      <Upload className="w-10 h-10 text-[#52525b] mx-auto mb-3" />
+                      <p className="text-sm text-[#8b949e]">點擊或拖曳檔案</p>
+                      <p className="text-xs text-[#52525b] mt-1">PDF、Word、Excel、CSV、TXT、圖片</p>
+                      <p className="text-xs text-[#52525b]">最大 10MB</p>
+                    </>
                   )}
-                  <p className="text-sm text-[#8b949e]">點擊或拖曳檔案</p>
-                  <p className="text-xs text-[#52525b]">PDF、DOC、TXT，最大 10MB</p>
                 </div>
 
-                {uploadedFiles.length > 0 && (
+                {uploadedFiles.length > 0 && !isProcessing && (
                   <div className="mt-4 space-y-2">
                     {uploadedFiles.map((file, idx) => (
                       <div key={idx} className="flex items-center justify-between bg-[#1a1f26] rounded-lg p-2.5">
                         <div className="flex items-center gap-2">
                           <FileText className="w-4 h-4 text-[#FF6B35]" />
                           <span className="text-white text-sm">{file.name}</span>
+                          <span className="text-xs text-[#52525b]">{file.size}</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          {file.status === 'learned' ? (
-                            <Badge className="bg-[#22c55e]/15 text-[#22c55e] border-0 text-xs">已學習</Badge>
-                          ) : (
-                            <Badge className="bg-amber-500/15 text-amber-400 border-0 text-xs">待處理</Badge>
+                          {file.status === 'uploading' && (
+                            <Loader2 className="w-4 h-4 text-[#FF6B35] animate-spin" />
                           )}
                           <button onClick={() => handleRemoveFile(idx)} className="text-[#52525b] hover:text-red-400">
                             <X className="w-4 h-4" />
