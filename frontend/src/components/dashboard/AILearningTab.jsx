@@ -1,9 +1,12 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
 import { Switch } from '../ui/switch';
+import { toast } from 'sonner';
+import axios from 'axios';
+import { useAuth } from '../../context/AuthContext';
 import { 
   Brain,
   Upload,
@@ -30,7 +33,9 @@ import {
   Zap,
   Bot,
   Users,
-  UserPlus
+  UserPlus,
+  Trash2,
+  RefreshCw
 } from 'lucide-react';
 import {
   Tabs,
