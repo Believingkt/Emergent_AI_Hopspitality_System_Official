@@ -45,7 +45,7 @@
   - Issue 1: (P0) 環境  變數會被自動重置
      - Description:  文件中的  會被平台頻繁地重置為不正確的內部預覽 URL，導致所有對外部 API 的請求（尤其是登入）失敗。
      - Attempted fixes: 在本次會話中多次手動修正該文件。
-     - Next debug checklist: 在執行任何需要 API 的操作（如登入、測試）之前，先使用 REACT_APP_BACKEND_URL=https://booking-analytics-5.preview.emergentagent.com 檢查該變數。如果 API 請求失敗，這應是第一個排查點。
+     - Next debug checklist: 在執行任何需要 API 的操作（如登入、測試）之前，先使用 REACT_APP_BACKEND_URL=https://ai-ops.preview.emergentagent.com 檢查該變數。如果 API 請求失敗，這應是第一個排查點。
      - Why fix this issue and what will be achieved with the fix?: 這是導致應用無法正常使用的關鍵阻礙。解決後才能進行需要真實登入的功能測試和開發。
      - Status:  IN PROGRESS (Recurring environmental issue)
      - Is recurring issue? Y
