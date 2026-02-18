@@ -867,47 +867,63 @@ export const HandoffAnalysis = ({ venue, autoRefresh = false, refreshInterval = 
       ) : (
         <Tabs defaultValue="payment" className="w-full">
           {/* Tab 切換按鈕 */}
-          <TabsList className="bg-transparent border-0 p-0 gap-4 w-full justify-start mb-6">
+          <TabsList className="bg-transparent border-0 p-0 gap-4 w-full justify-start mb-6 h-auto">
             {/* 待確認匯款 Tab */}
             <TabsTrigger 
               value="payment"
-              className="relative data-[state=active]:bg-transparent bg-transparent border-0 p-0 flex-shrink-0"
+              className="relative p-0 border-0 bg-transparent data-[state=active]:bg-transparent h-auto"
             >
-              <div className="flex items-center gap-3 px-6 py-4 rounded-2xl border-2 transition-all duration-300 data-[state=active]:border-[#22c55e] data-[state=active]:bg-[#22c55e]/10 border-[#27272a] bg-[#0d1117] hover:border-[#22c55e]/50">
-                <div className="w-12 h-12 rounded-xl bg-[#22c55e]/20 flex items-center justify-center">
-                  <DollarSign className="w-6 h-6 text-[#22c55e]" />
-                </div>
-                <div className="text-left">
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg font-bold text-[#22c55e]">待確認匯款</span>
-                    <span className="bg-[#22c55e] text-white text-sm font-bold px-2.5 py-0.5 rounded-full">
-                      {paymentTasks.length}
-                    </span>
+              {({ selected }) => (
+                <div className={`flex items-center gap-4 px-6 py-5 rounded-2xl border-3 transition-all duration-300 cursor-pointer ${
+                  selected 
+                    ? 'border-[#22c55e] bg-[#22c55e]/15 shadow-lg shadow-[#22c55e]/20 scale-[1.02]' 
+                    : 'border-[#27272a] bg-[#0d1117] hover:border-[#22c55e]/50 opacity-60'
+                }`}>
+                  <div className={`w-14 h-14 rounded-xl flex items-center justify-center transition-all ${
+                    selected ? 'bg-[#22c55e] shadow-lg shadow-[#22c55e]/30' : 'bg-[#22c55e]/20'
+                  }`}>
+                    <DollarSign className={`w-7 h-7 ${selected ? 'text-white' : 'text-[#22c55e]'}`} />
                   </div>
-                  <p className="text-[#8b949e] text-sm">客戶已匯款，請確認訂金</p>
+                  <div className="text-left">
+                    <div className="flex items-center gap-3">
+                      <span className="text-xl font-bold text-[#22c55e]">待確認匯款</span>
+                      <span className="bg-[#22c55e] text-white text-base font-bold px-3 py-1 rounded-full animate-pulse">
+                        {paymentTasks.length}
+                      </span>
+                    </div>
+                    <p className="text-[#8b949e] text-sm mt-1">客戶已匯款，請確認訂金</p>
+                  </div>
                 </div>
-              </div>
+              )}
             </TabsTrigger>
             
             {/* 待回覆問題 Tab */}
             <TabsTrigger 
               value="questions"
-              className="relative data-[state=active]:bg-transparent bg-transparent border-0 p-0 flex-shrink-0"
+              className="relative p-0 border-0 bg-transparent data-[state=active]:bg-transparent h-auto"
             >
-              <div className="flex items-center gap-3 px-6 py-4 rounded-2xl border-2 transition-all duration-300 data-[state=active]:border-[#FF6B35] data-[state=active]:bg-[#FF6B35]/10 border-[#27272a] bg-[#0d1117] hover:border-[#FF6B35]/50">
-                <div className="w-12 h-12 rounded-xl bg-[#FF6B35]/15 flex items-center justify-center">
-                  <MessageSquare className="w-6 h-6 text-[#FF6B35]" />
-                </div>
-                <div className="text-left">
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg font-bold text-[#FF6B35]">待回覆問題</span>
-                    <span className="bg-[#FF6B35] text-white text-sm font-bold px-2.5 py-0.5 rounded-full">
-                      {questionTasks.length}
-                    </span>
+              {({ selected }) => (
+                <div className={`flex items-center gap-4 px-6 py-5 rounded-2xl border-3 transition-all duration-300 cursor-pointer ${
+                  selected 
+                    ? 'border-[#FF6B35] bg-[#FF6B35]/15 shadow-lg shadow-[#FF6B35]/20 scale-[1.02]' 
+                    : 'border-[#27272a] bg-[#0d1117] hover:border-[#FF6B35]/50 opacity-60'
+                }`}>
+                  <div className={`w-14 h-14 rounded-xl flex items-center justify-center transition-all ${
+                    selected ? 'bg-[#FF6B35] shadow-lg shadow-[#FF6B35]/30' : 'bg-[#FF6B35]/15'
+                  }`}>
+                    <MessageSquare className={`w-7 h-7 ${selected ? 'text-white' : 'text-[#FF6B35]'}`} />
                   </div>
-                  <p className="text-[#8b949e] text-sm">客戶詢問需要協助回覆</p>
+                  <div className="text-left">
+                    <div className="flex items-center gap-3">
+                      <span className="text-xl font-bold text-[#FF6B35]">待回覆問題</span>
+                      <span className="bg-[#FF6B35] text-white text-base font-bold px-3 py-1 rounded-full">
+                        {questionTasks.length}
+                      </span>
+                    </div>
+                    <p className="text-[#8b949e] text-sm mt-1">客戶詢問需要協助回覆</p>
+                  </div>
                 </div>
-              </div>
+              )}
             </TabsTrigger>
           </TabsList>
 
