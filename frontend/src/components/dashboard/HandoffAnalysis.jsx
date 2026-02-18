@@ -326,11 +326,57 @@ const ConversationCard = ({ task, token, onRefresh }) => {
   // 檢查是否有管家回覆
   const hasManagerResponse = conversations.some(m => m.sender_type === 'manager');
   
+  // 發送管家回覆
+  const handleSendReply = async () => {
+    if (!replyText.trim()) {
+      toast.error('請輸入回覆內容');
+      return;
+    }
+    
+    setIsReplying(true);
+    try {
+      await axios.post(
+        `${API_URL}/api/tasks/${task.task_id}/reply`,
+        { message: replyText },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success('回覆已送出！');
+      setReplyText('');
+      setShowReplyInput(false);
+      // 重新載入對話
+      const response = await axios.get(
+        `${API_URL}/api/tasks/${task.task_id}/conversations`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setConversations(response.data.messages || []);
+      // 刷新任務列表
+      if (onRefresh) onRefresh();
+    } catch (err) {
+      console.error('Reply failed:', err);
+      toast.error('回覆送出失敗：' + (err.response?.data?.detail || '請稍後再試'));
+    } finally {
+      setIsReplying(false);
+    }
+  };
+  
   // 處理 AI 學習確認
   const handleLearnConfirm = async (summary) => {
-    toast.success('AI 學習請求已提交！');
-    // TODO: 調用後端 API 提交學習
-    console.log('AI Learning:', { task_id: task.task_id, summary });
+    try {
+      // 調用知識庫 API 新增學習內容
+      await axios.post(
+        `${API_URL}/api/venues/${task.venue_id || 'sensan_inn'}/knowledge`,
+        {
+          category: 'ai_learning',
+          title: `來自對話 ${task.task_id} 的學習`,
+          content: summary
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success('AI 學習請求已提交！');
+    } catch (err) {
+      console.error('AI Learning failed:', err);
+      toast.error('學習請求失敗：' + (err.response?.data?.detail || '請稍後再試'));
+    }
   };
   
   return (
