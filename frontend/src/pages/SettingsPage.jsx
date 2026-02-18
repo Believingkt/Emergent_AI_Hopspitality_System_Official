@@ -609,6 +609,14 @@ export default function SettingsPage() {
 
                           <Separator className="bg-[#27272a]" />
 
+                          {/* LINE OA Credentials */}
+                          <LineOACredentials 
+                            venueId={selectedVenue?.id} 
+                            token={token} 
+                          />
+
+                          <Separator className="bg-[#27272a]" />
+
                           {/* Raw Config Display */}
                           <div className="space-y-2">
                             <Label className="text-[#a1a1aa]">完整設定（JSON）</Label>
