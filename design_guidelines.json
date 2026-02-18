@@ -1,106 +1,102 @@
 {
-  "brand": {
-    "name": "Lakeze Guest Galore",
-    "identity": "Lively, Modern, Tech-First, Collaborative",
-    "core_concept": "AI + Human Collaboration",
-    "slogan": "讓 AI 幫你接單，你專注成交"
+  "project_name": "Mobile Optimization Redesign",
+  "identity": {
+    "persona": "E1 - Anti-AI Designer",
+    "core_principles": [
+      "Mobile Utility First: Thumb-friendly zones.",
+      "Dark Mode Depth: Use layers, not just black.",
+      "Contextual Density: High density for data, low density for reading.",
+      "Hidden Complexity: Tuck advanced tools (like AI Chat) into Drawers on mobile."
+    ]
   },
-  "theme": {
-    "mode": "dark",
-    "radius": "0.75rem",
-    "colors": {
-      "background": "#09090b",
-      "foreground": "#fafafa",
-      "card": "#18181b",
-      "card_foreground": "#fafafa",
-      "popover": "#09090b",
-      "popover_foreground": "#fafafa",
-      "primary": "#FF6B35",
-      "primary_foreground": "#ffffff",
-      "secondary": "#00B4D8",
-      "secondary_foreground": "#ffffff",
-      "muted": "#27272a",
-      "muted_foreground": "#a1a1aa",
-      "accent": "#40E0D0",
-      "accent_foreground": "#171717",
-      "destructive": "#ef4444",
-      "destructive_foreground": "#fafafa",
-      "border": "#27272a",
-      "input": "#27272a",
-      "ring": "#FF6B35"
+  "typography": {
+    "font_family": {
+      "headings": "Manrope, sans-serif",
+      "body": "Public Sans, -apple-system, sans-serif",
+      "mono": "JetBrains Mono, monospace"
     },
-    "typography": {
-      "font_family_sans": "Public Sans, -apple-system, BlinkMacSystemFont, sans-serif",
-      "font_family_heading": "Manrope, sans-serif",
-      "font_family_mono": "JetBrains Mono, monospace"
+    "scale": {
+      "mobile_h1": "text-2xl font-bold tracking-tight",
+      "mobile_h2": "text-xl font-bold tracking-tight",
+      "mobile_body": "text-sm leading-relaxed",
+      "mobile_caption": "text-xs text-muted-foreground"
     }
   },
-  "layout": {
-    "grid_system": "Bento Grid Protocol",
-    "spacing": "Generous (2x standard)",
-    "container_padding": "p-6 md:p-8 lg:p-10",
-    "dashboard_grid": "grid-cols-12 gap-4 md:gap-6",
-    "sidebar_width": "col-span-12 md:col-span-3 lg:col-span-2",
-    "main_content_width": "col-span-12 md:col-span-6 lg:col-span-7",
-    "right_panel_width": "col-span-12 md:col-span-3 lg:col-span-3"
+  "colors": {
+    "base": {
+      "background": "#09090b",
+      "card": "#18181b",
+      "border": "#27272a"
+    },
+    "brand": {
+      "primary": "#FF6B35",
+      "secondary": "#00B4D8",
+      "success": "#22c55e",
+      "warning": "#F59E0B"
+    },
+    "usage": {
+      "primary_action": "bg-[#FF6B35] text-white hover:bg-[#E55A2B]",
+      "secondary_action": "bg-[#27272a] text-white hover:bg-[#3f3f46]",
+      "glass_surface": "bg-black/40 backdrop-blur-xl border-white/10"
+    }
   },
-  "components": {
-    "buttons": {
-      "default_radius": "rounded-full",
-      "primary_style": "bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_0_15px_rgba(255,107,53,0.3)] transition-all duration-300",
-      "secondary_style": "bg-secondary text-secondary-foreground hover:bg-secondary/90",
-      "outline_style": "border-2 border-primary text-primary hover:bg-primary hover:text-white"
+  "layout_strategies": {
+    "handoff_analysis": {
+      "mobile_tabs": {
+        "style": "segment_control",
+        "container": "bg-[#18181b] p-1 rounded-xl flex w-full mb-4",
+        "trigger": "flex-1 py-2 text-sm font-medium rounded-lg transition-all data-[state=active]:bg-[#27272a] data-[state=active]:text-white data-[state=inactive]:text-[#8b949e]",
+        "note": "Convert the large desktop cards into a simple 2-toggle switch on mobile to save vertical space."
+      },
+      "card_list": {
+        "container": "space-y-3 pb-20",
+        "card_mobile": "p-4 rounded-xl bg-[#18181b] border border-[#27272a] active:scale-[0.99] transition-transform",
+        "action_bar": "fixed bottom-0 left-0 right-0 p-4 bg-[#09090b]/90 backdrop-blur-md border-t border-[#27272a] z-40 flex gap-3"
+      }
     },
-    "cards": {
-      "default_radius": "rounded-xl",
-      "style": "bg-card border border-border/40 hover:border-primary/50 transition-colors duration-300",
-      "active_style": "ring-1 ring-primary border-primary bg-card/50"
-    },
-    "inputs": {
-      "style": "bg-muted/50 border-border focus:border-primary focus:ring-1 focus:ring-primary rounded-lg"
-    },
-    "badges": {
-      "radius": "rounded-md",
-      "styles": {
-        "default": "bg-primary/20 text-primary border-primary/20",
-        "secondary": "bg-secondary/20 text-secondary border-secondary/20",
-        "outline": "text-foreground border-border"
+    "ai_learning": {
+      "mobile_structure": {
+        "order": ["venue_header", "stats_summary", "upload_tabs", "history"],
+        "hidden_elements": ["test_chat_column"],
+        "new_elements": ["floating_chat_fab"]
+      },
+      "chat_interface": {
+        "mobile_implementation": "Drawer (Bottom Sheet)",
+        "trigger": "Fixed Floating Action Button (FAB) at bottom-right",
+        "style": "h-[85vh] bg-[#09090b] border-t border-[#27272a]"
       }
     }
   },
-  "assets": {
-    "logo_main": "https://customer-assets.emergentagent.com/job_430b19cf-7dc2-4179-a7b4-72c8b0096192/artifacts/k9ookbrh_%E4%BA%BA%E5%AE%A2%E5%A4%9Alogo%20%281%29.png",
-    "logo_icon": "https://customer-assets.emergentagent.com/job_430b19cf-7dc2-4179-a7b4-72c8b0096192/artifacts/6ffwi2v3_%E4%BA%BA%E5%AE%A2%E5%A4%9A%E7%89%B9%E8%A8%B1%E5%8A%A0%E7%9B%9F%E9%A0%AD%E8%B2%BC.png",
-    "icons": "lucide-react"
-  },
-  "visual_enhancements": {
-    "glassmorphism": "bg-black/40 backdrop-blur-xl border-white/10",
-    "gradients": {
-      "primary_glow": "bg-gradient-to-r from-orange-500/20 to-transparent",
-      "secondary_glow": "bg-gradient-to-b from-blue-500/10 to-transparent"
+  "components": {
+    "mobile_tabs": {
+      "path": "Inline implementation in HandoffAnalysis.jsx",
+      "instruction": "Use a conditional render: specific simpler UI for mobile (window.innerWidth < 768) or CSS hidden classes (hidden md:flex)."
     },
-    "animations": {
-      "hover_lift": "hover:-translate-y-1 transition-transform duration-200",
-      "fade_in": "animate-in fade-in duration-500"
+    "chat_drawer": {
+      "path": "src/components/dashboard/MobileChatDrawer.jsx",
+      "instruction": "Create a new component using Shadcn Drawer to house the Test Chat logic on mobile."
+    },
+    "fab": {
+      "style": "fixed bottom-6 right-6 w-14 h-14 rounded-full bg-[#FF6B35] shadow-lg shadow-orange-500/20 flex items-center justify-center z-50 active:scale-90 transition-transform"
     }
   },
   "universal_guidelines": [
-    "Dark Mode Default: The app must start in dark mode. Background is #09090b.",
-    "Orange & Blue Pulse: Use Orange (#FF6B35) for user actions and Blue (#00B4D8) for system status.",
-    "No Pure Black: Avoid #000000. Use #09090b or #18181b for surfaces.",
-    "Bento Grid: The dashboard must use a dense grid layout with distinct functional zones.",
-    "Data-Test-ID: All interactive elements MUST have data-testid attributes.",
-    "Font: Use 'Manrope' for headings and 'Public Sans' for body text.",
-    "Responsiveness: Ensure the 3-column layout stacks vertically on mobile.",
-    "Chinese Typography: Ensure line-height is relaxed (1.6) for better Chinese character readability.",
-    "Glass Headers: Top navigation should be sticky and glassmorphic."
+    "Touch Targets: All clickable elements must be at least 44px height on mobile.",
+    "Safe Areas: Add padding-bottom-safe to scroll views to avoid collision with iPhone home indicator.",
+    "Input Handling: On mobile, ensure inputs don't zoom the page (font-size >= 16px).",
+    "Loading States: Use skeletons instead of spinners for content loading to reduce layout shift."
   ],
-  "instructions_to_main_agent": [
-    "1. Update tailwind.config.js to extend the theme with new colors and radius.",
-    "2. Replace CSS variables in index.css with the new dark theme values.",
-    "3. Refactor App.js to remove hardcoded light background colors.",
-    "4. Update DashboardPage.jsx to use the new Bento Grid layout classes.",
-    "5. Ensure the Logo URL is updated in the Login and Dashboard headers.",
-    "6. Verify all text contrast ratios against the dark background."
-  ]
+  "instructions_to_main_agent": {
+    "HandoffAnalysis.jsx": [
+      "Refactor the 'TabsList' to be responsive. On desktop, keep the big cards. On mobile (hidden md:flex vs flex md:hidden), show a compact segment switcher.",
+      "Ensure the 'ConversationCard' expands smoothly on mobile without jerking the scroll position."
+    ],
+    "AILearningTab.jsx": [
+      "Hide the right column (Test Chat) on mobile breakpoints (hidden xl:block).",
+      "Add a 'Test AI' Floating Action Button (FAB) visible ONLY on mobile/tablet.",
+      "Implement a Shadcn 'Drawer' component that opens when the FAB is clicked.",
+      "Move the Chat Logic into a reusable component 'ChatInterface' so it can be rendered in both the Desktop Column and the Mobile Drawer without duplicating code.",
+      "Optimize the 'Venue Header' to be more compact on mobile."
+    ]
+  }
 }
