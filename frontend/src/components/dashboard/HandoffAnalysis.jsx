@@ -957,19 +957,3 @@ export const HandoffAnalysis = ({ venue, autoRefresh = false, refreshInterval = 
     </div>
   );
 };
-                    <ConversationCard 
-                      key={task.task_id} 
-                      task={task}
-                      token={token}
-                      onRefresh={fetchTasks}
-                    />
-                  ))}
-                </div>
-              </div>
-            );
-          })()}
-        </>
-      )}
-    </div>
-  );
-};
