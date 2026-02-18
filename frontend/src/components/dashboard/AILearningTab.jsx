@@ -454,7 +454,7 @@ export const AILearningTab = () => {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="bg-[#18181b] border-[#27272a]">
-                {VENUES.map(venue => (
+                {(venues.length > 0 ? venues : VENUES).map(venue => (
                   <SelectItem 
                     key={venue.id} 
                     value={venue.id}
@@ -484,6 +484,7 @@ export const AILearningTab = () => {
               <Brain className="w-5 h-5 text-white" />
             </div>
             AI 學習中心
+            {isLoadingKnowledge && <Loader2 className="w-4 h-4 animate-spin text-[#FF6B35]" />}
           </h2>
           <p className="text-[#8b949e] mt-1 text-sm">上傳資料、輸入規則，優化您的 AI 銷售風格</p>
         </div>
