@@ -170,6 +170,11 @@ export default function DashboardPage() {
               <TabsContent value="ai-learning" className="mt-6">
                 <AILearningTab />
               </TabsContent>
+
+              {/* Knowledge Management Tab */}
+              <TabsContent value="knowledge" className="mt-6">
+                <KnowledgeManagementTab />
+              </TabsContent>
             </Tabs>
           </div>
         </ScrollArea>
