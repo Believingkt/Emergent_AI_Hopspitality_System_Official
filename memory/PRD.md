@@ -37,195 +37,121 @@
 - Email/密碼表單
 - JWT 認證流程
 
-#### 2. 運營管理中心（儀表板升級）✅ (2026-02-16)
+#### 2. 運營管理中心（儀表板升級）✅ (2026-02-18)
 
-**2.1 業績總覽 Tab ✅ (Updated: 2026-02-18 - 全新設計，日期選擇器、星鏈計畫)**
-- **日期選擇器** (新增)：
-  - 日曆選擇器，顯示完整日期範圍 (西元年/月/日)
-  - 快速選擇：本月、近 3 個月、近 6 個月
-  - 統計期間明確顯示在頁面上
-  - 數據來源標示：LINE OA
-- **核心指標卡片**（4 大數字）：
-  - **動態月份標籤**：「X月訂單數」、「X月訂金收入」、「X月總營收」
-  - vs 去年同期成長率
-  - 成交率
-- **營收趨勢圖** (改進)：
-  - 改用**面積圖 (Area Chart)** 更清楚顯示營收變化
-  - 今年 vs 去年同期比較
-  - 平均月營收、最高單月、年成長率
-- **星鏈計畫（銷售漏斗）**（原「新念計畫」）：
-  - 曝光數 → 點擊數 → LINE 加入 → 開始對話 → 成交訂單
-  - 每階段轉換率、CTR、整體轉換率
-  - 衛星圖標 (Satellite icon)
-  - 數據來源：Meta/IG API（待串接）
-- **與全平台比較**：
-  - 成交率 vs 全平台平均
-  - 客單價 vs 全平台平均
-  - 回覆時間 vs 全平台平均
-- **房況即時看板** ✅ (NEW)：
-  - 今日入住/退房統計
-  - 當前入住率、低入住日警示
-  - 日曆視圖：顯示每日已訂/空房/入住率
-  - 時間範圍選擇：7天 / 雙週 / 1個月 / 3個月 / 6個月 / 1年
-- **AI 效能分析** ✅ (NEW)：
-  - AI 自動成交率（72.5%）
-  - 平均回覆速度（8 秒）
-  - 轉真人率（27.5%）
-  - 已學習規則數（156 條）
-  - 對話處理分佈（AI vs 真人）
-  - 客戶滿意度、平均對話輪數、尖峰時段
-- **ROI 與成本效益** ✅ (NEW)：
-  - 投資報酬率（3468%）
-  - 每 $1 投入回報
-  - 月費、每筆訂單成本
-  - 節省人力成本、相當於幾位全職客服
-  - AI vs 真人客服比較表
-- **客戶來源分析** ✅ (NEW)：
-  - 四大渠道：新念計畫、LINE 官方、官網、OTA 平台
-  - 各渠道訂單數、營收、轉換率
-  - 新客 vs 回頭客比例
-- **預警系統** ✅ (NEW)：
-  - 營收下滑預警
-  - 空房預警
-  - 客戶反饋提醒
-  - 轉換率異常警示
-  - 可關閉通知功能
-- **未成交分析** ✅ (NEW)：
-  - 流失原因分佈（價格、日期、比價、特殊需求等）
-  - 客戶最常詢問問題排行
-  - 可挽回客戶預估
-- **服務方案區塊**：顯示當前方案、月費、升級選項
-- 數據來源說明：LINE OA / PMS 連接提示
+**2.1 業績總覽 Tab ✅ (Updated: 2026-02-18 - 營收趨勢圖修復)**
+- **日期選擇器**：日曆選擇器，顯示完整日期範圍
+- **核心指標卡片**（4 大數字）
+- **營收趨勢圖** ✅ (FIXED: 2026-02-18)：
+  - **直條圖**：橘色（今年）+ 灰色（去年）對比
+  - **折線圖**：青綠色趨勢線，穿過各月數據點
+  - 底部數據卡片顯示每月營收和成長率
+  - 圖例和總結統計
+- **星鏈計畫（銷售漏斗）**
+- **房況即時看板** ✅
+- **AI 效能分析** ✅
+- **ROI 與成本效益** ✅
+- **客戶來源分析** ✅
+- **預警系統** ✅
+- **未成交分析** ✅
 
-**重要說明**：以上所有新增組件目前使用模擬數據（MOCKED），待後端 API 串接後顯示真實數據。
+**2.2 轉交分析 Tab ✅ (Updated: 2026-02-16)**
+- 真實 LINE OA 對話數據
+- AI 學習流程
 
-**2.2 轉交分析 Tab ✅ (Updated: 2026-02-16 - 真實數據串接 + UI 重新設計)**
-- **數據來源**: 真實 LINE OA 對話
-  - `/api/tasks` - 獲取任務列表
-  - `/api/tasks/{task_id}/conversations` - 獲取完整對話歷史
-- **對話氣泡設計**:
-  - 客戶訊息：橘色頭像 + 深藍背景 + 靠左
-  - AI 小森：青藍色頭像 + 深青背景 + 靠左
-  - 管家回覆：綠色頭像 + 深綠背景 + 靠右
-- **AI 學習流程**:
-  1. 展開對話卡片查看完整 LINE OA 對話
-  2. 如有管家回覆，顯示「讓 AI 學習此回覆」按鈕
-  3. 點擊後 AI 自動總結學習內容
-  4. 用戶可確認或手動調整
-  5. 確認後提交學習請求
-- 轉交原因分佈統計圖（改為卡片式設計）
-- 重新整理按鈕、Loading 和 Error 狀態處理
+**2.3 AI 學習 Tab ✅ (Updated: 2026-02-18 - T1 Prompt 管理)**
+- **場域選擇器**：可切換不同場域
+- **客服模型版本顯示**：v3.2
+- **學習輸入 Tabs**：
+  - 上傳檔案
+  - 輸入網址
+  - 自訂規則
+- **AI 銷售模型選擇**：
+  - T1 模型（預設，使用中）
+  - T2 模型（標記為「專業版」需升級）
+- **T1 Prompt 管理** ✅ (NEW: 2026-02-18)：
+  - 編輯 AI 銷售話術的核心指令
+  - Textarea 編輯器
+  - 儲存 Prompt 按鈕
+  - 版本和更新時間顯示
+- **與圖文選單協作**：開關控制
+- **已學習內容**：顯示知識庫條目
+- **版本歷史**：可回滾至上一版本
+- **測試對話**：模擬客戶對話測試
 
-**2.3 當班管家 Tab**
-- 森山寫照預設管家：安安、立棠
-- 當班狀態顯示（早班 08:00-16:00 / 晚班 16:00-24:00）
-- 本週排班預覽（7天）
-- 團隊績效指標（回覆及時率、平均評分、本月成交、平均回覆時間）
+#### 3. 設定頁面 ✅
+- 場域管理
+- 管家管理
+- LINE OA 憑證管理
 
-#### 3. 設定頁面（管理員）✅
-- 場域管理：查看/編輯場域設定
-- 管家管理：查看/新增管家帳號
+#### 4. 後端 API 整合 ✅ (Updated: 2026-02-18)
+- **已整合 API**：
+  - `POST /api/auth/login` - 登入
+  - `GET /api/venues` - 場域列表
+  - `POST /api/tasks/{task_id}/reply` - 管家回覆
+  - `GET /api/venues/{venue_id}/knowledge` - 知識庫讀取
+  - `POST /api/venues/{venue_id}/knowledge` - 知識庫寫入 ✅ (NEW)
+  - `DELETE /api/venues/{venue_id}/knowledge/{id}` - 知識庫刪除
+  - `GET /api/t1/prompt` - T1 Prompt 讀取 ✅ (NEW)
+  - `POST /api/t1/prompt` - T1 Prompt 更新 ✅ (NEW)
 
-#### 4. PMS 整合模擬 ✅
-- 查詢房間可用性（日期選擇器）
+## 更新紀錄
 
-#### 5. WebSocket 即時更新 ✅
-- Socket.IO 連線（輪詢模式）
-- 連線狀態顯示
+### 2026-02-18 Session 6 (Current)
+- **營收趨勢圖修復**：
+  - 修正 SVG polyline 的 viewBox 和 points 計算
+  - 折線圖（趨勢線）現在正確顯示
+  - 直條圖和折線圖完美結合
+- **T1 Prompt 管理功能**：
+  - 新增 T1 Prompt 編輯器組件
+  - 實現 `handleSaveT1Prompt` 函數
+  - 整合 `POST /api/t1/prompt` API
+- **知識庫寫入 API**：
+  - 確認 `handleAddKnowledge` 函數正確實現
+  - 已測試 `POST /api/venues/{id}/knowledge` API
+- **環境變數修正**：
+  - 修正 `REACT_APP_BACKEND_URL` 為正確的外部 API
 
-## 使用者角色
-1. **管家 (Manager)**: 可存取儀表板
-2. **管理員 (Admin)**: 可存取設定頁面
+### 2026-02-18 Session 5
+- 管家回覆 API 串接
+- 知識庫讀取 API 串接
+- UI 修改（星鏈計畫、日期選擇器）
 
-## 數據說明
+## 待辦事項 / Backlog
 
-### 真實數據 (LIVE)
-- **轉交分析 Tab** - 從 /api/tasks 端點獲取真實 LINE OA 對話
+### P0 - 必須完成
+- [x] 修復營收趨勢圖折線 ✅
+- [x] 串接 T1 Prompt 管理 API ✅
+- [x] 串接知識庫寫入 API ✅
 
-### 模擬數據（MOCKED）
-目前以下功能使用模擬數據，需要後端 API 支援才能顯示真實數據：
-- `PerformanceDashboard` - generateMockData() 產生業績指標和銷售漏斗
-- `RoomStatusDashboard` - generateRoomData() 產生房況預測
-- `AIPerformanceDashboard` - generateAIPerformanceData() 產生 AI 效能數據
-- `ROIDashboard` - generateROIData() 產生 ROI 分析數據
-- `ChannelAnalysisDashboard` - generateChannelData() 產生渠道分析數據
-- `AlertsAndAnalysisDashboard` - generateAlerts() / generateLostReasons() 產生預警和未成交分析
-- `ManagerSchedule` - generateShiftSchedule() 產生排班（安安、立棠固定）
+### P1 - 增強功能
+- [ ] 串接圖文選單同步 API (`POST /api/venues/{id}/richmenu/sync`)
+- [ ] 串接 PMS 庫存查詢 API (`GET /api/pms/{venue_id}/availability`)
+- [ ] 通知系統（新任務提醒）
 
-### 需要的 API 端點
-- ✅ `GET /api/tasks` - 任務列表
-- ✅ `GET /api/tasks/{task_id}/conversations` - 任務對話歷史
-- ✅ `GET /api/conversations/{user_id}` - 用戶對話歷史
-- `POST /api/tasks/{task_id}/reply` - 管家回覆（已有 API，前端待串接）
-- `POST /api/ai/learn` - 提交 AI 學習請求（後端待實作）
-- `GET /api/venues/{venue_id}/stats` - 場域統計數據
-- `GET /api/managers/schedule` - 管家排班
-- `PUT /api/managers/schedule` - 更新排班
-
-## 測試狀態
-- **前端 UI**: 100% 通過
-- **API 連接**: 正常（登入、場域、任務）
-- **WebSocket**: Socket.IO 輪詢模式運作
+### P2 - 優化項目
+- [ ] 清理專案（刪除 `/app/backend` 目錄）
+- [ ] 實作圖文選單協作功能
+- [ ] 管家績效報表
 
 ## 測試帳號
 - **Email**: kenneth@lakeze.com
 - **Password**: lakeze2026
 
-## 更新紀錄
-- **2026-02-18 Session 5**:
-  - **Manus 後端整合**：
-    - ✅ 管家回覆 API (`POST /api/tasks/{id}/reply`) - 已串接並測試通過
-    - ✅ 知識庫 API (`GET/POST/DELETE /api/venues/{id}/knowledge`) - 已串接
-    - ✅ T1 Prompt API (`GET /api/t1/prompt`) - 已串接
-    - ✅ 場域列表 API (`GET /api/venues`) - 已串接
-  - **UI 修改**:
-    - 「新念計畫」改名為「星鏈計畫」(所有相關位置)
-    - 營收趨勢圖改用面積圖 (Area Chart) 更清楚顯示差異
-    - 新增日期選擇器（日曆），顯示明確的統計期間
-    - 核心指標標籤動態化：顯示「X月訂單數」而非固定的「本月」
-    - AI 學習頁面顯示真實知識庫數據
-  - **AI 銷售風格修改**:
-    - T1 模型：可用（預設）
-    - T2、T3 模型：標記為「需升級」，點選時顯示升級提示
-  - **部署準備**:
-    - 修復所有硬編碼 URL（7 個文件）
-    - 環境變數設定為外部 API：https://line-ai-bot-xiaosen.onrender.com
-    - Manus 已設定 FRONTEND_URL 允許 manager.lakeze.co 和預覽環境
-- **2026-02-17 Session 4**:
-  - 驗證並測試儀表板大型功能擴充
-  - 所有 12 項前端測試全部通過 (100% 成功率)
-  - 確認新組件正常渲染：房況即時看板、AI 效能分析、ROI 分析、客戶來源分析、預警系統、未成交分析
-  - 確認房況預測時間範圍選擇功能正常（支援 7天/雙週/1個月/3個月/6個月/1年）
-  - 修復 .env 環境變數問題（REACT_APP_BACKEND_URL 被重置）
-- **2026-02-16 Session 3**: 
-  - 登入頁文案全面更新：
-    - 主標題：「AI 智能接單，您專心經營品牌」
-    - 強調「銷售 Agent」定位（從詢問、報價、收款到完成訂房，全自動成交）
-    - 強調 15 家旅宿品牌、年營收破億的真實經驗
-    - 強調支持智能更新，銷售成交率不斷提高
-    - 強調無需學習新軟體，在 LINE OA 介面操作
-  - 新增服務特色：「PMS 庫存直連」、「支持動態報價」、「成交率與詢問率分析」
-  - 轉交分析 Tab 改為串接真實 LINE OA 數據（/api/tasks）
-  - 準備部署至 manager.lakeze.co
-- **2026-02-16 Session 2**: 
-  - UI/UX 重新設計（深色主題、橘藍配色）
-  - 儀表板升級為「運營管理中心」
-  - 新增：運營概況、轉交分析、當班管家功能
-  - 新增：成交率儀表、即時分析、AI 學習回饋功能
-- **2026-02-16 Session 1**: MVP 完成
+## 已知問題
+- **CORS 問題**：預覽環境 URL 需要在後端 FRONTEND_URL 中配置才能正常登入
+- 預覽模式 (`?preview=true`) 可繞過登入進行 UI 測試
 
-## 待辦事項 / Backlog
+## 數據說明
+### 真實數據 (LIVE)
+- 轉交分析 Tab - 從 /api/tasks 獲取
+- 知識庫 - 從 /api/venues/{id}/knowledge 獲取
+- T1 Prompt - 從 /api/t1/prompt 獲取
 
-### P0 - 必須整合
-- [x] 轉交分析改為真實 API 調用 (已完成)
-- [ ] 運營概況統計改為真實 API 調用
-- [ ] AI 學習功能後端實作
-
-### P1 - 增強功能
-- [ ] 通知系統（新任務提醒）
-- [ ] 管家績效報表（週/月）
-- [ ] 數據匯出功能
-
-### P2 - 優化項目
-- [ ] 離線模式支援
-- [ ] 深色/淺色模式切換
+### 模擬數據 (MOCKED)
+- 業績指標 (PerformanceDashboard)
+- 房況預測 (RoomStatusDashboard)
+- AI 效能 (AIPerformanceDashboard)
+- ROI 分析 (ROIDashboard)
+- 渠道分析 (ChannelAnalysisDashboard)
+- 預警系統 (AlertsAndAnalysisDashboard)
