@@ -539,20 +539,31 @@ export const AILearningTab = () => {
     }
   };
 
-  const handleFileUpload = (e) => {
+  const handleFileUpload = async (e) => {
     const files = Array.from(e.target.files);
-    if (files.length > 0) {
-      setIsUploading(true);
-      setTimeout(() => {
-        const newFiles = files.map(file => ({
-          name: file.name,
-          size: (file.size / 1024).toFixed(1) + ' KB',
-          status: 'pending'
-        }));
-        setUploadedFiles(prev => [...prev, ...newFiles]);
-        setIsUploading(false);
-      }, 1000);
+    if (files.length === 0) return;
+    
+    const file = files[0]; // 一次處理一個檔案
+    
+    // 支援的格式
+    const supportedFormats = ['pdf', 'docx', 'doc', 'txt', 'csv', 'xlsx', 'xls', 'jpg', 'jpeg', 'png', 'gif', 'webp'];
+    const ext = file.name.split('.').pop().toLowerCase();
+    
+    if (!supportedFormats.includes(ext)) {
+      toast.error(`不支援此格式。支援：${supportedFormats.join(', ')}`);
+      return;
     }
+    
+    // 顯示檔案資訊
+    setUploadedFiles([{
+      name: file.name,
+      size: (file.size / 1024).toFixed(1) + ' KB',
+      status: 'uploading',
+      file: file
+    }]);
+    
+    // 呼叫 AI 萃取
+    await handleExtractFile(file);
   };
 
   const handleAddUrl = () => {
