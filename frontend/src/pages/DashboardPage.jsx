@@ -5,6 +5,7 @@ import { PerformanceDashboard } from '../components/dashboard/PerformanceDashboa
 import { HandoffAnalysis } from '../components/dashboard/HandoffAnalysis';
 import { ManagerSchedule } from '../components/dashboard/ManagerSchedule';
 import { AILearningTab } from '../components/dashboard/AILearningTab';
+import { KnowledgeManagementTab } from '../components/dashboard/KnowledgeManagementTab';
 import { useVenue } from '../context/VenueContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { ScrollArea } from '../components/ui/scroll-area';
@@ -15,7 +16,8 @@ import {
   Users,
   Building2,
   Menu,
-  Brain
+  Brain,
+  BookOpen
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '../components/ui/sheet';
