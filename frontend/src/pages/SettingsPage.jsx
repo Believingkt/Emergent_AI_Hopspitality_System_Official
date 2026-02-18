@@ -266,9 +266,14 @@ export default function SettingsPage() {
                             </Label>
                             <Select
                               value={venueConfig.ai_model || 'T1'}
-                              onValueChange={(value) => 
-                                setVenueConfig({ ...venueConfig, ai_model: value })
-                              }
+                              onValueChange={(value) => {
+                                const model = AI_MODELS.find(m => m.value === value);
+                                if (model?.requiresUpgrade) {
+                                  toast.error('此模型需要升級至專業版才能使用');
+                                  return;
+                                }
+                                setVenueConfig({ ...venueConfig, ai_model: value });
+                              }}
                             >
                               <SelectTrigger 
                                 className="bg-[#27272a]/50 border-[#27272a] text-white rounded-lg"
@@ -278,16 +283,30 @@ export default function SettingsPage() {
                               </SelectTrigger>
                               <SelectContent className="bg-[#18181b] border-[#27272a] rounded-lg">
                                 {AI_MODELS.map((model) => (
-                                  <SelectItem key={model.value} value={model.value} className="text-white hover:bg-[#27272a] focus:bg-[#27272a] focus:text-white">
-                                    <div>
-                                      <div className="font-medium">{model.label}</div>
-                                      <div className="text-xs text-[#8b949e]">{model.description}</div>
+                                  <SelectItem 
+                                    key={model.value} 
+                                    value={model.value} 
+                                    className="text-white hover:bg-[#27272a] focus:bg-[#27272a] focus:text-white"
+                                  >
+                                    <div className="flex items-center gap-2">
+                                      <div>
+                                        <div className="font-medium flex items-center gap-2">
+                                          {model.label}
+                                          {model.requiresUpgrade && (
+                                            <Badge className="bg-amber-500/15 text-amber-400 border-0 text-xs">
+                                              <Lock className="w-3 h-3 mr-1" />
+                                              需升級
+                                            </Badge>
+                                          )}
+                                        </div>
+                                        <div className="text-xs text-[#8b949e]">{model.description}</div>
+                                      </div>
                                     </div>
                                   </SelectItem>
                                 ))}
                               </SelectContent>
                             </Select>
-                            <p className="text-xs text-[#52525b]">選擇 AI 與客戶互動的風格策略</p>
+                            <p className="text-xs text-[#52525b]">選擇 AI 與客戶互動的風格策略（T2、T3 需升級專業版）</p>
                           </div>
 
                           {/* Knowledge Base URL */}
