@@ -70,16 +70,53 @@ export default function DashboardPage() {
         {/* Main Dashboard Content */}
         <ScrollArea className="flex-1">
           <div className="p-6 space-y-6">
-            {/* Tab Navigation */}
+            {/* Tab Navigation - 手機版優化 */}
             <Tabs defaultValue="overview" className="w-full">
-              <TabsList className="bg-[#18181b] border border-[#27272a] p-1 rounded-xl w-full md:w-auto">
+              {/* 手機版：垂直堆疊的大按鈕 */}
+              <div className="md:hidden space-y-2 mb-4">
+                <TabsList className="bg-transparent p-0 h-auto flex flex-col w-full gap-2">
+                  <TabsTrigger 
+                    value="overview"
+                    className="w-full h-14 bg-[#18181b] border border-[#27272a] data-[state=active]:bg-[#FF6B35] data-[state=active]:border-[#FF6B35] data-[state=active]:text-white text-[#a1a1aa] rounded-xl transition-all duration-300 flex items-center justify-start gap-3 px-4"
+                    data-testid="tab-overview-mobile"
+                  >
+                    <div className="w-10 h-10 rounded-lg bg-[#FF6B35]/20 data-[state=active]:bg-white/20 flex items-center justify-center">
+                      <BarChart3 className="w-5 h-5" />
+                    </div>
+                    <span className="text-base font-medium">業績總覽</span>
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="handoffs"
+                    className="w-full h-14 bg-[#18181b] border border-[#27272a] data-[state=active]:bg-[#FF6B35] data-[state=active]:border-[#FF6B35] data-[state=active]:text-white text-[#a1a1aa] rounded-xl transition-all duration-300 flex items-center justify-start gap-3 px-4"
+                    data-testid="tab-handoffs-mobile"
+                  >
+                    <div className="w-10 h-10 rounded-lg bg-[#FF6B35]/20 data-[state=active]:bg-white/20 flex items-center justify-center">
+                      <MessageSquareWarning className="w-5 h-5" />
+                    </div>
+                    <span className="text-base font-medium">轉交對話列表</span>
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="ai-learning"
+                    className="w-full h-14 bg-[#18181b] border border-[#27272a] data-[state=active]:bg-[#FF6B35] data-[state=active]:border-[#FF6B35] data-[state=active]:text-white text-[#a1a1aa] rounded-xl transition-all duration-300 flex items-center justify-start gap-3 px-4"
+                    data-testid="tab-ai-learning-mobile"
+                  >
+                    <div className="w-10 h-10 rounded-lg bg-[#FF6B35]/20 data-[state=active]:bg-white/20 flex items-center justify-center">
+                      <Brain className="w-5 h-5" />
+                    </div>
+                    <span className="text-base font-medium">AI 學習</span>
+                  </TabsTrigger>
+                </TabsList>
+              </div>
+
+              {/* 桌面版：水平排列 */}
+              <TabsList className="hidden md:flex bg-[#18181b] border border-[#27272a] p-1 rounded-xl w-auto">
                 <TabsTrigger 
                   value="overview"
                   className="data-[state=active]:bg-[#FF6B35] data-[state=active]:text-white text-[#a1a1aa] rounded-lg px-4 transition-all duration-300 flex items-center gap-2"
                   data-testid="tab-overview"
                 >
                   <BarChart3 className="w-4 h-4" />
-                  <span className="hidden sm:inline">運營概況</span>
+                  <span>業績總覽</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="handoffs"
@@ -87,7 +124,7 @@ export default function DashboardPage() {
                   data-testid="tab-handoffs"
                 >
                   <MessageSquareWarning className="w-4 h-4" />
-                  <span className="hidden sm:inline">轉交對話列表</span>
+                  <span>轉交對話列表</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="ai-learning"
@@ -95,7 +132,7 @@ export default function DashboardPage() {
                   data-testid="tab-ai-learning"
                 >
                   <Brain className="w-4 h-4" />
-                  <span className="hidden sm:inline">AI 學習</span>
+                  <span>AI 學習</span>
                 </TabsTrigger>
               </TabsList>
 
