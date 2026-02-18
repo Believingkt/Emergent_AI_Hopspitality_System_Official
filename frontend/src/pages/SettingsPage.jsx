@@ -306,6 +306,33 @@ const LineOACredentials = ({ venueId, token }) => {
         />
       </div>
       
+      {/* Webhook URL 提示 */}
+      <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4 mt-4">
+        <div className="flex items-start gap-3">
+          <div className="w-8 h-8 rounded-lg bg-amber-500/15 flex items-center justify-center flex-shrink-0">
+            <Link className="w-4 h-4 text-amber-400" />
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              <p className="font-medium text-amber-400 text-sm">Webhook URL 設定</p>
+              <Badge className="bg-amber-500/15 text-amber-400 border-0 text-xs">
+                <Lock className="w-3 h-3 mr-1" />
+                工程師專用
+              </Badge>
+            </div>
+            <p className="text-xs text-[#8b949e] mb-2">
+              此設定需由工程師協助修改，以避免系統當機或無法使用。
+            </p>
+            <div className="bg-[#0d1117] rounded-md p-2 font-mono text-xs text-[#8b949e]">
+              https://line-ai-bot-xiaosen.onrender.com/webhook/{venueId || 'venue_id'}
+            </div>
+            <p className="text-xs text-[#52525b] mt-2">
+              請將上述 URL 設定至 LINE Developers Console 的 Webhook URL 欄位
+            </p>
+          </div>
+        </div>
+      </div>
+      
       {/* 安全提示 */}
       <div className="bg-[#27272a]/30 rounded-lg p-3 mt-4">
         <div className="flex items-start gap-2">
