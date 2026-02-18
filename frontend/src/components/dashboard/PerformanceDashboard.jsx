@@ -512,36 +512,6 @@ const RevenueTrendChart = ({ data, dateRange }) => {
   );
 };
 
-// 簡易柱狀圖 (備用)
-const SimpleBarChart = ({ data, maxValue }) => {
-  return (
-    <div className="flex items-end gap-2 h-32">
-      {data.map((item, idx) => {
-        const heightPercent = (item.revenue / maxValue) * 100;
-        const lastYearPercent = (item.lastYear / maxValue) * 100;
-        
-        return (
-          <div key={idx} className="flex-1 flex flex-col items-center gap-1">
-            <div className="w-full flex gap-1 items-end h-24">
-              {/* 去年同期 */}
-              <div 
-                className="flex-1 bg-[#27272a] rounded-t transition-all duration-500"
-                style={{ height: `${lastYearPercent}%` }}
-              />
-              {/* 今年 */}
-              <div 
-                className="flex-1 bg-gradient-to-t from-[#FF6B35] to-[#00B4D8] rounded-t transition-all duration-500"
-                style={{ height: `${heightPercent}%` }}
-              />
-            </div>
-            <span className="text-xs text-[#8b949e]">{item.month}</span>
-          </div>
-        );
-      })}
-    </div>
-  );
-};
-
 // 銷售漏斗組件
 const SalesFunnel = ({ data }) => {
   const stages = [
