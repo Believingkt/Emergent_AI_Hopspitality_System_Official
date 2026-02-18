@@ -280,6 +280,9 @@ const ConversationCard = ({ task, token, onRefresh }) => {
   const [loadingConv, setLoadingConv] = useState(false);
   const [showLearning, setShowLearning] = useState(false);
   const [managerResponse, setManagerResponse] = useState('');
+  const [replyText, setReplyText] = useState('');
+  const [isReplying, setIsReplying] = useState(false);
+  const [showReplyInput, setShowReplyInput] = useState(false);
   
   const reason = HANDOFF_REASONS[detectHandoffReason(task.customer_message)] || HANDOFF_REASONS.other;
   const ReasonIcon = reason.icon;
