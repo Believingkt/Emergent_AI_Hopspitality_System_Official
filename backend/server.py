@@ -17,8 +17,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# JWT Secret
-JWT_SECRET = "lakeze-secret-key-2025-secure"
+# JWT Secret - 從環境變數讀取
+JWT_SECRET = os.environ.get("JWT_SECRET", "default-secret-change-in-production")
 JWT_ALGORITHM = "HS256"
 
 # ============ 模擬資料 ============

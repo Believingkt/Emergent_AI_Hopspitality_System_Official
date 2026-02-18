@@ -324,7 +324,7 @@ const LineOACredentials = ({ venueId, token }) => {
               此設定需由工程師協助修改，以避免系統當機或無法使用。
             </p>
             <div className="bg-[#0d1117] rounded-md p-2 font-mono text-xs text-[#8b949e]">
-              https://line-ai-bot-xiaosen.onrender.com/webhook/{venueId || 'venue_id'}
+              {process.env.REACT_APP_BACKEND_URL}/webhook/{venueId || 'venue_id'}
             </div>
             <p className="text-xs text-[#52525b] mt-2">
               請將上述 URL 設定至 LINE Developers Console 的 Webhook URL 欄位
