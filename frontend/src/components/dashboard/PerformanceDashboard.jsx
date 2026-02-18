@@ -2,6 +2,8 @@ import { useState, useMemo } from 'react';
 import { Card } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
+import { Calendar as CalendarComponent } from '../ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { 
   TrendingUp, 
   TrendingDown,
@@ -20,7 +22,8 @@ import {
   CheckCircle2,
   ChevronDown,
   Info,
-  Sparkles
+  Sparkles,
+  Satellite
 } from 'lucide-react';
 import {
   Select,
