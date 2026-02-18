@@ -829,10 +829,10 @@ export const HandoffAnalysis = ({ venue, autoRefresh = false, refreshInterval = 
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FF6B35] to-[#00B4D8] flex items-center justify-center">
               <MessageSquare className="w-5 h-5 text-white" />
             </div>
-            轉交真人分析
+            轉交對話列表
           </h2>
           <p className="text-[#8b949e] mt-1 ml-13">
-            來自 LINE OA 的真實對話 · 支持 AI 學習
+            來自 LINE OA 的真實對話
             {lastUpdated && (
               <span className="ml-2 text-[#52525b]">
                 · 最後更新：{lastUpdated.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })}
