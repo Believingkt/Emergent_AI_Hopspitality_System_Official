@@ -470,6 +470,64 @@ const ConversationCard = ({ task, token, onRefresh, isPaymentSection = false }) 
       {/* 展開的對話內容 */}
       {expanded && (
         <div className="border-t border-[#27272a]">
+          {/* 付款確認區塊 - 僅在 payment 階段顯示 */}
+          {isPaymentStage && task.customer_info && (
+            <div className="p-5 bg-[#22c55e]/5 border-b border-[#22c55e]/30">
+              <div className="flex items-center gap-2 mb-4">
+                <DollarSign className="w-5 h-5 text-[#22c55e]" />
+                <span className="text-[#22c55e] text-sm font-semibold">客戶預約資訊</span>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                {task.customer_info.date && (
+                  <div className="bg-[#0d1117] rounded-lg p-3 border border-[#27272a]">
+                    <p className="text-[#8b949e] text-xs mb-1">入住日期</p>
+                    <p className="text-white font-medium">{task.customer_info.date}</p>
+                  </div>
+                )}
+                {task.customer_info.room_type && (
+                  <div className="bg-[#0d1117] rounded-lg p-3 border border-[#27272a]">
+                    <p className="text-[#8b949e] text-xs mb-1">房型</p>
+                    <p className="text-white font-medium">{task.customer_info.room_type}</p>
+                  </div>
+                )}
+                {(task.customer_info.num_adults !== undefined) && (
+                  <div className="bg-[#0d1117] rounded-lg p-3 border border-[#27272a]">
+                    <p className="text-[#8b949e] text-xs mb-1">人數</p>
+                    <p className="text-white font-medium">
+                      {task.customer_info.num_adults} 大 {task.customer_info.num_children || 0} 小
+                    </p>
+                  </div>
+                )}
+                {task.customer_info.total_price && (
+                  <div className="bg-[#0d1117] rounded-lg p-3 border border-[#27272a]">
+                    <p className="text-[#8b949e] text-xs mb-1">訂金金額</p>
+                    <p className="text-[#22c55e] font-bold text-lg">NT$ {task.customer_info.total_price.toLocaleString()}</p>
+                  </div>
+                )}
+              </div>
+              <Button
+                onClick={handleConfirmPayment}
+                disabled={isConfirmingPayment}
+                className="w-full bg-[#22c55e] hover:bg-[#16a34a] text-white font-bold py-3"
+              >
+                {isConfirmingPayment ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                    確認中...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="w-5 h-5 mr-2" />
+                    確認收到訂金
+                  </>
+                )}
+              </Button>
+              <p className="text-[#8b949e] text-xs text-center mt-2">
+                確認後，AI 將自動發送訂金確認訊息給客戶，並切換為禮賓服務模式 (SG1)
+              </p>
+            </div>
+          )}
+          
           {/* 對話歷史區 */}
           <div className="p-5 bg-[#0d1117]">
             <div className="flex items-center gap-2 mb-4">
