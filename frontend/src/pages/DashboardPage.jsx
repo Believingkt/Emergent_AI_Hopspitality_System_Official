@@ -87,7 +87,7 @@ export default function DashboardPage() {
                   data-testid="tab-handoffs"
                 >
                   <MessageSquareWarning className="w-4 h-4" />
-                  <span className="hidden sm:inline">轉交分析</span>
+                  <span className="hidden sm:inline">轉交對話列表</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="ai-learning"
