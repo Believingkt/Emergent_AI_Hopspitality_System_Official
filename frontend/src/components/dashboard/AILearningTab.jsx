@@ -822,6 +822,60 @@ export const AILearningTab = () => {
             </div>
           </div>
 
+          {/* T1 Prompt 編輯器 */}
+          <div className="bg-[#0d1117] rounded-2xl p-5 border-2 border-[#27272a]">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#00B4D8]/15 flex items-center justify-center">
+                  <FileText className="w-5 h-5 text-[#00B4D8]" />
+                </div>
+                <div>
+                  <h3 className="text-base font-semibold text-white">T1 Prompt 管理</h3>
+                  <p className="text-sm text-[#8b949e]">編輯 AI 銷售話術的核心指令</p>
+                </div>
+              </div>
+              {t1Prompt && (
+                <Badge className="bg-[#22c55e]/15 text-[#22c55e] border-0 text-xs">
+                  {t1Prompt.version || `v${t1Prompt.id}`}
+                </Badge>
+              )}
+            </div>
+            
+            {isLoadingPrompt ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-6 h-6 animate-spin text-[#00B4D8]" />
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <Textarea
+                  value={t1Prompt?.prompt_text || ''}
+                  onChange={(e) => setT1Prompt(prev => ({ ...prev, prompt_text: e.target.value }))}
+                  placeholder="輸入 AI 銷售話術..."
+                  className="bg-[#1a1f26] border-[#27272a] text-white min-h-[200px] text-sm font-mono"
+                />
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-[#52525b]">
+                    {t1Prompt?.created_at ? `上次更新：${new Date(t1Prompt.created_at).toLocaleString()}` : '尚未設定'}
+                  </p>
+                  <Button
+                    onClick={async () => {
+                      if (!t1Prompt?.prompt_text?.trim()) {
+                        toast.error('請輸入 Prompt 內容');
+                        return;
+                      }
+                      const newVersion = `v${(t1Prompt?.id || 0) + 1}.0`;
+                      await handleSaveT1Prompt(t1Prompt.prompt_text, newVersion);
+                    }}
+                    className="bg-[#00B4D8] hover:bg-[#0096B4] text-white"
+                  >
+                    <CheckCircle2 className="w-4 h-4 mr-2" />
+                    儲存 Prompt
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Rich Menu Collaboration */}
           <div className="bg-[#0d1117] rounded-2xl p-5 border-2 border-[#27272a]">
             <div className="flex items-center justify-between">
