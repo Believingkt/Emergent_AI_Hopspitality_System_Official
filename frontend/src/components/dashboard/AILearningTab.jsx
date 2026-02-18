@@ -145,9 +145,7 @@ export const AILearningTab = () => {
   const [currentVenue, setCurrentVenue] = useState('sensan_inn');
   const [venues, setVenues] = useState([]);
   const [knowledge, setKnowledge] = useState([]);
-  const [t1Prompt, setT1Prompt] = useState(null);
   const [isLoadingKnowledge, setIsLoadingKnowledge] = useState(false);
-  const [isLoadingPrompt, setIsLoadingPrompt] = useState(false);
   const [venueLogos, setVenueLogos] = useState({});
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [urls, setUrls] = useState([]);
@@ -157,7 +155,6 @@ export const AILearningTab = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [richMenuEnabled, setRichMenuEnabled] = useState(true);
-  const [selectedModel, setSelectedModel] = useState('T1');
   const [testInput, setTestInput] = useState('');
   const [chatMessages, setChatMessages] = useState([]);
   const [isTyping, setIsTyping] = useState(false);
@@ -204,50 +201,15 @@ export const AILearningTab = () => {
     loadKnowledge();
   }, [token, currentVenue]);
 
-  // 從 API 載入 T1 Prompt
-  useEffect(() => {
-    const loadT1Prompt = async () => {
-      if (!token) return;
-      setIsLoadingPrompt(true);
-      try {
-        const response = await axios.get(`${API_URL}/api/t1/prompt`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setT1Prompt(response.data.prompt || null);
-      } catch (err) {
-        console.error('Failed to load T1 prompt:', err);
-      } finally {
-        setIsLoadingPrompt(false);
-      }
-    };
-    loadT1Prompt();
-  }, [token]);
-
-  // 儲存 T1 Prompt
-  const handleSaveT1Prompt = async (promptText, version) => {
-    if (!token) return;
-    try {
-      const response = await axios.post(
-        `${API_URL}/api/t1/prompt`,
-        { prompt_text: promptText, version: version || `v${(t1Prompt?.id || 0) + 1}` },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setT1Prompt(response.data.prompt || null);
-      toast.success(`T1 Prompt 已更新至 ${response.data.prompt?.version || version}`);
-      return true;
-    } catch (err) {
-      console.error('Failed to save T1 prompt:', err);
-      toast.error('儲存失敗：' + (err.response?.data?.detail || err.response?.data?.error || '請稍後再試'));
-      return false;
-    }
-  };
-
   const currentVenueData = venues.find(v => v.id === currentVenue) || { id: currentVenue, name: '森山寫照' };
-  const currentVersion = t1Prompt ? { 
-    version: `v${t1Prompt.id || 1}`, 
-    date: t1Prompt.created_at ? new Date(t1Prompt.created_at).toLocaleDateString() : '2026-02-17',
+  // 使用知識庫數量作為版本顯示
+  const currentVersion = {
+    version: `v${knowledge.length > 0 ? '3.2' : '3.0'}`,
+    date: new Date().toLocaleDateString(),
     isCurrent: true,
-    summary: 'AI 銷售話術',
+    summary: `已學習 ${knowledge.length} 條場域知識`,
+    canRollback: false
+  };
     canRollback: false
   } : VERSION_HISTORY.find(v => v.isCurrent);
   const currentLogo = venueLogos[currentVenue];
