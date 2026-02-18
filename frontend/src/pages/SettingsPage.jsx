@@ -639,16 +639,6 @@ export default function SettingsPage() {
                             venueId={selectedVenue?.id} 
                             token={token} 
                           />
-
-                          <Separator className="bg-[#27272a]" />
-
-                          {/* Raw Config Display */}
-                          <div className="space-y-2">
-                            <Label className="text-[#a1a1aa]">完整設定（JSON）</Label>
-                            <pre className="p-4 bg-[#27272a]/50 rounded-lg text-sm overflow-auto max-h-48 font-mono text-[#00B4D8] border border-[#27272a]">
-                              {JSON.stringify(venueConfig, null, 2)}
-                            </pre>
-                          </div>
                         </div>
                       ) : (
                         <div className="text-center py-12 text-[#71717a]">
