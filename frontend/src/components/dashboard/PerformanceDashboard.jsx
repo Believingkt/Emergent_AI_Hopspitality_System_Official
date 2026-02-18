@@ -370,9 +370,26 @@ const ComparisonCard = ({ label, yourValue, avgValue, unit = '', better = true }
 
 export const PerformanceDashboard = ({ venue }) => {
   const [timeRange, setTimeRange] = useState('6months');
+  const [dateRange, setDateRange] = useState({
+    from: new Date(2024, 8, 1), // 2024-09-01
+    to: new Date(2025, 1, 28),  // 2025-02-28
+  });
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const data = useMemo(() => generateMockData(), []);
   
   const maxRevenue = Math.max(...data.monthlyData.map(d => Math.max(d.revenue, d.lastYear)));
+  
+  // 格式化日期顯示
+  const formatDate = (date) => {
+    if (!date) return '';
+    return `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`;
+  };
+  
+  // 獲取當前月份名稱
+  const getCurrentMonthName = () => {
+    const months = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+    return months[new Date().getMonth()];
+  };
   
   return (
     <div className="space-y-6">
@@ -389,16 +406,90 @@ export const PerformanceDashboard = ({ venue }) => {
         </div>
         
         <div className="flex items-center gap-3">
-          <Select value={timeRange} onValueChange={setTimeRange}>
-            <SelectTrigger className="w-32 bg-[#1a1f26] border-[#27272a] text-white">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="bg-[#1a1f26] border-[#27272a]">
-              <SelectItem value="6months">過去 6 個月</SelectItem>
-              <SelectItem value="12months">過去 12 個月</SelectItem>
-              <SelectItem value="ytd">今年至今</SelectItem>
-            </SelectContent>
-          </Select>
+          {/* 日期範圍選擇器 */}
+          <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+            <PopoverTrigger asChild>
+              <Button 
+                variant="outline" 
+                className="bg-[#1a1f26] border-[#27272a] text-white hover:bg-[#27272a] min-w-[280px] justify-start"
+              >
+                <Calendar className="w-4 h-4 mr-2 text-[#FF6B35]" />
+                <span className="text-sm">
+                  {formatDate(dateRange.from)} ~ {formatDate(dateRange.to)}
+                </span>
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0 bg-[#18181b] border-[#27272a]" align="end">
+              <div className="p-3 border-b border-[#27272a]">
+                <p className="text-sm text-white font-medium">選擇日期範圍</p>
+                <p className="text-xs text-[#8b949e]">數據同步自 LINE OA</p>
+              </div>
+              <div className="p-2">
+                <div className="flex gap-2 mb-2">
+                  <Button 
+                    size="sm" 
+                    variant="ghost"
+                    onClick={() => {
+                      const now = new Date();
+                      setDateRange({
+                        from: new Date(now.getFullYear(), now.getMonth(), 1),
+                        to: now
+                      });
+                    }}
+                    className="text-xs text-[#8b949e] hover:text-white hover:bg-[#27272a]"
+                  >
+                    本月
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant="ghost"
+                    onClick={() => {
+                      const now = new Date();
+                      setDateRange({
+                        from: new Date(now.getFullYear(), now.getMonth() - 3, 1),
+                        to: now
+                      });
+                    }}
+                    className="text-xs text-[#8b949e] hover:text-white hover:bg-[#27272a]"
+                  >
+                    近 3 個月
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant="ghost"
+                    onClick={() => {
+                      const now = new Date();
+                      setDateRange({
+                        from: new Date(now.getFullYear(), now.getMonth() - 6, 1),
+                        to: now
+                      });
+                    }}
+                    className="text-xs text-[#8b949e] hover:text-white hover:bg-[#27272a]"
+                  >
+                    近 6 個月
+                  </Button>
+                </div>
+                <CalendarComponent
+                  mode="range"
+                  selected={dateRange}
+                  onSelect={(range) => {
+                    if (range) setDateRange(range);
+                  }}
+                  numberOfMonths={2}
+                  className="text-white"
+                />
+              </div>
+              <div className="p-3 border-t border-[#27272a] flex justify-end">
+                <Button 
+                  size="sm"
+                  onClick={() => setIsCalendarOpen(false)}
+                  className="bg-[#FF6B35] hover:bg-[#E55A2B] text-white"
+                >
+                  確認
+                </Button>
+              </div>
+            </PopoverContent>
+          </Popover>
           
           <Badge className="bg-[#22c55e]/15 text-[#22c55e] border-[#22c55e]/30">
             <Sparkles className="w-3 h-3 mr-1" />
@@ -407,11 +498,23 @@ export const PerformanceDashboard = ({ venue }) => {
         </div>
       </div>
       
+      {/* 日期範圍顯示 */}
+      <div className="bg-[#1a1f26]/50 rounded-lg px-4 py-2 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Calendar className="w-4 h-4 text-[#FF6B35]" />
+          <span className="text-sm text-[#8b949e]">統計期間：</span>
+          <span className="text-sm text-white font-medium">
+            {formatDate(dateRange.from)} ~ {formatDate(dateRange.to)}
+          </span>
+        </div>
+        <span className="text-xs text-[#52525b]">數據來源：LINE OA</span>
+      </div>
+      
       {/* 核心指標 - 4 大數字 */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard 
           icon={ShoppingCart}
-          label="本月訂單數"
+          label={`${getCurrentMonthName()}訂單數`}
           value={data.currentMonth.orders}
           suffix="筆"
           trend="up"
@@ -421,7 +524,7 @@ export const PerformanceDashboard = ({ venue }) => {
         />
         <MetricCard 
           icon={DollarSign}
-          label="本月訂金收入"
+          label={`${getCurrentMonthName()}訂金收入`}
           value={data.currentMonth.deposit}
           prefix="$"
           trend="up"
@@ -431,7 +534,7 @@ export const PerformanceDashboard = ({ venue }) => {
         />
         <MetricCard 
           icon={TrendingUp}
-          label="本月總營收"
+          label={`${getCurrentMonthName()}總營收`}
           value={data.currentMonth.totalRevenue}
           prefix="$"
           trend="up"
