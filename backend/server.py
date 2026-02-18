@@ -5,6 +5,7 @@ from typing import Optional, List
 from datetime import datetime, timedelta
 import jwt
 import json
+import os
 
 app = FastAPI(title="Lakeze 多場域 AI 管家協作平台 - 模擬後端")
 
