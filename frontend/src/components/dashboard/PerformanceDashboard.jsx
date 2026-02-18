@@ -257,14 +257,18 @@ const RevenueTrendChart = ({ data, dateRange }) => {
             </div>
             
             {/* 折線圖 - 趨勢線 */}
-            <svg className="absolute inset-0 pointer-events-none" preserveAspectRatio="none">
+            <svg 
+              className="absolute inset-0 pointer-events-none overflow-visible" 
+              viewBox="0 0 100 100"
+              preserveAspectRatio="none"
+            >
               <defs>
                 <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
                   <stop offset="0%" stopColor="#00B4D8" />
                   <stop offset="100%" stopColor="#22c55e" />
                 </linearGradient>
                 <filter id="glowLine">
-                  <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                  <feGaussianBlur stdDeviation="0.5" result="coloredBlur"/>
                   <feMerge>
                     <feMergeNode in="coloredBlur"/>
                     <feMergeNode in="SourceGraphic"/>
@@ -276,14 +280,15 @@ const RevenueTrendChart = ({ data, dateRange }) => {
               <polyline
                 fill="none"
                 stroke="url(#lineGradient)"
-                strokeWidth="3"
+                strokeWidth="0.8"
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 filter="url(#glowLine)"
+                vectorEffect="non-scaling-stroke"
                 points={data.map((item, idx) => {
                   const x = ((idx + 0.5) / data.length) * 100;
                   const y = 100 - (item.revenue / maxValue) * 100;
-                  return `${x}%,${y}%`;
+                  return `${x},${y}`;
                 }).join(' ')}
               />
               
@@ -292,17 +297,16 @@ const RevenueTrendChart = ({ data, dateRange }) => {
                 const x = ((idx + 0.5) / data.length) * 100;
                 const y = 100 - (item.revenue / maxValue) * 100;
                 return (
-                  <g key={idx}>
-                    <circle
-                      cx={`${x}%`}
-                      cy={`${y}%`}
-                      r={hoveredIndex === idx ? 6 : 4}
-                      fill="#00B4D8"
-                      stroke="#0d1117"
-                      strokeWidth="2"
-                      className="transition-all duration-200"
-                    />
-                  </g>
+                  <circle
+                    key={idx}
+                    cx={x}
+                    cy={y}
+                    r={hoveredIndex === idx ? 1.5 : 1}
+                    fill="#00B4D8"
+                    stroke="#0d1117"
+                    strokeWidth="0.3"
+                    className="transition-all duration-200"
+                  />
                 );
               })}
             </svg>
