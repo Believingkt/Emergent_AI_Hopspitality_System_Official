@@ -662,32 +662,67 @@ const isPreviewMode = () => {
 const PREVIEW_TASKS = [
   {
     task_id: 'preview-1',
+    venue_id: 'sensan_inn',
+    customer_user_id: 'U_preview_001',
     customer_name: 'Kenneth 天鈴',
-    customer_message: '請問 3/15-3/17 還有空房嗎？兩大一小',
+    customer_message: '我已經匯款了，再麻煩您確認',
+    customer_stage: 'payment',
+    agent_mode: 'T1_booking',
+    customer_info: {
+      date: '2026-03-15',
+      num_adults: 2,
+      num_children: 1,
+      room_type: '豪華雙人房',
+      customer_name: 'Kenneth 天鈴',
+      customer_phone: '0912345678',
+      total_price: 8000,
+      payment_confirmed: false
+    },
     status: 'pending',
     created_at: new Date(Date.now() - 3600000 * 2).toISOString(),
     venue_name: '森山寫照'
   },
   {
     task_id: 'preview-2',
+    venue_id: 'sensan_inn',
+    customer_user_id: 'U_preview_002',
     customer_name: 'Lionel',
     customer_message: '價格可以優惠嗎？我們有 4 個人',
+    customer_stage: 'inquiry',
+    agent_mode: 'T1_booking',
     status: 'pending',
     created_at: new Date(Date.now() - 3600000 * 5).toISOString(),
     venue_name: '森山寫照'
   },
   {
     task_id: 'preview-3',
+    venue_id: 'sensan_inn',
+    customer_user_id: 'U_preview_003',
     customer_name: '小美',
     customer_message: '可以帶寵物嗎？我們有一隻小狗',
+    customer_stage: 'inquiry',
+    agent_mode: 'T1_booking',
     status: 'completed',
     created_at: new Date(Date.now() - 3600000 * 8).toISOString(),
     venue_name: '森山寫照'
   },
   {
     task_id: 'preview-4',
+    venue_id: 'sensan_inn',
+    customer_user_id: 'U_preview_004',
     customer_name: '王先生',
-    customer_message: '預約流程是什麼？需要先付訂金嗎？',
+    customer_message: '訂金已匯，帳號後五碼 12345',
+    customer_stage: 'payment',
+    agent_mode: 'T1_booking',
+    customer_info: {
+      date: '2026-03-20',
+      num_adults: 2,
+      num_children: 0,
+      room_type: '精緻四人房',
+      customer_name: '王先生',
+      total_price: 12000,
+      payment_confirmed: false
+    },
     status: 'pending',
     created_at: new Date(Date.now() - 3600000 * 12).toISOString(),
     venue_name: '森山寫照'
