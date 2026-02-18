@@ -304,9 +304,10 @@ export const AILearningTab = () => {
     }
   };
 
-  const handleAddRule = () => {
+  const handleAddRule = async () => {
     if (newRule.trim()) {
-      setRules(prev => [...prev, { rule: newRule, status: 'pending' }]);
+      // 直接透過 API 新增規則
+      await handleAddKnowledge('rule', newRule.slice(0, 50), newRule);
       setNewRule('');
     }
   };
@@ -323,14 +324,25 @@ export const AILearningTab = () => {
     setRules(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleSubmitLearning = () => {
+  const handleSubmitLearning = async () => {
     setIsProcessing(true);
-    setTimeout(() => {
-      setUploadedFiles(prev => prev.map(f => ({ ...f, status: 'learned' })));
+    try {
+      // 提交所有待處理的 URL 作為知識
+      for (const u of urls.filter(u => u.status === 'pending')) {
+        await handleAddKnowledge('url', u.url, `從網址學習：${u.url}`);
+      }
+      // 提交所有待處理的規則
+      for (const r of rules.filter(r => r.status === 'pending')) {
+        await handleAddKnowledge('rule', r.rule.slice(0, 50), r.rule);
+      }
       setUrls(prev => prev.map(u => ({ ...u, status: 'learned' })));
       setRules(prev => prev.map(r => ({ ...r, status: 'learned' })));
+      toast.success('學習內容已提交！');
+    } catch (err) {
+      toast.error('提交失敗');
+    } finally {
       setIsProcessing(false);
-    }, 2000);
+    }
   };
 
   const handleSendTestMessage = (message) => {
