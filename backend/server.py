@@ -215,8 +215,17 @@ def get_current_user(authorization: Optional[str] = Header(None)) -> dict:
 
 # ============ API Endpoints ============
 
-@app.get("/api/")
+@app.get("/")
 def root():
+    return {"message": "Lakeze 多場域 AI 管家協作平台 API", "status": "running"}
+
+@app.get("/api/health")
+def health_check():
+    """Health check endpoint for Kubernetes liveness/readiness probes"""
+    return {"status": "healthy", "service": "lakeze-backend"}
+
+@app.get("/api/")
+def api_root():
     return {"message": "Lakeze 多場域 AI 管家協作平台 API", "status": "running"}
 
 @app.post("/api/auth/login", response_model=LoginResponse)
