@@ -74,7 +74,7 @@
 - 管家管理
 - LINE OA 憑證管理
 
-#### 4. 後端 API 整合 ✅ (Updated: 2026-02-18)
+#### 4. 後端 API 整合 ✅ (Updated: 2026-02-19)
 
 **已整合的 API**：
 
@@ -84,15 +84,25 @@
 | `/api/venues` | GET | 場域列表 | ✅ |
 | `/api/venues/{id}/knowledge` | GET | 知識庫讀取 | ✅ |
 | `/api/venues/{id}/knowledge` | POST | 新增知識 | ✅ |
-| `/api/venues/{id}/knowledge/{kid}` | DELETE | 刪除知識 | ✅ |
-| `/api/venues/{id}/knowledge/extract` | POST | **AI 知識萃取** | ✅ NEW |
-| `/api/venues/{id}/knowledge/batches` | GET | **批次列表** | ✅ NEW |
-| `/api/venues/{id}/knowledge/batches/{bid}` | GET | **批次詳情** | ✅ NEW |
-| `/api/venues/{id}/knowledge/{kid}/approve` | PUT | **確認知識** | ✅ NEW |
-| `/api/venues/{id}/knowledge/{kid}/reject` | PUT | **拒絕知識** | ✅ NEW |
-| `/api/venues/{id}/knowledge/{kid}` | PUT | **編輯知識** | ✅ NEW |
-| `/api/venues/{id}/knowledge/batches/{bid}/approve-all` | POST | **一鍵全部確認** | ✅ NEW |
+| `/api/venues/{id}/knowledge/{kid}` | PUT | 編輯知識 | ✅ |
+| `/api/venues/{id}/knowledge/{kid}` | DELETE | 停用知識 | ✅ |
+| `/api/venues/{id}/knowledge/stats` | GET | **知識統計** | ✅ v7.4.0 |
+| `/api/venues/{id}/knowledge/extract` | POST | AI 知識萃取 | ✅ |
+| `/api/venues/{id}/knowledge/batches` | GET | 批次列表 | ✅ |
+| `/api/venues/{id}/knowledge/batches/{bid}` | GET | 批次詳情 | ✅ |
+| `/api/venues/{id}/knowledge/{kid}/approve` | PUT | 確認知識 | ✅ |
+| `/api/venues/{id}/knowledge/{kid}/reject` | PUT | 拒絕知識 | ✅ |
+| `/api/venues/{id}/knowledge/batches/{bid}/approve-all` | POST | 一鍵全部確認 | ✅ |
 | `/api/tasks/{task_id}/reply` | POST | 管家回覆 | ✅ |
+
+**待整合的 API (版本管理 - 進階)**：
+
+| API | 方法 | 用途 | 狀態 |
+|-----|------|------|------|
+| `/api/venues/{id}/knowledge/publish` | POST | 發佈新版本 | ⏳ |
+| `/api/venues/{id}/knowledge/versions` | GET | 版本歷史 | ⏳ |
+| `/api/venues/{id}/knowledge/versions/{vid}` | GET | 查看版本內容 | ⏳ |
+| `/api/venues/{id}/knowledge/versions/{vid}/rollback` | POST | 回滾版本 | ⏳ |
 
 ## 更新紀錄
 
