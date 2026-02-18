@@ -324,8 +324,6 @@ const LineOACredentials = ({ venueId, token }) => {
   );
 };
 
-const API_URL = process.env.REACT_APP_BACKEND_URL;
-
 const AI_MODELS = [
   { value: 'T1', label: 'T1 - 接單導向（預設）', description: '專注於銷售成交，積極引導客戶下訂', available: true },
   { value: 'T2', label: 'T2 - 客服導向', description: '側重客戶服務，耐心解答問題', available: false, requiresUpgrade: true },
