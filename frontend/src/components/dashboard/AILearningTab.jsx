@@ -433,14 +433,14 @@ export const AILearningTab = () => {
                 <Badge className="bg-[#FF6B35]/15 text-[#FF6B35] border-0">目前場域</Badge>
               </div>
               <p className="text-[#8b949e] text-sm">正在管理此場域的 AI 學習內容</p>
-              <div className="flex items-center gap-4 mt-2">
+                <div className="flex items-center gap-4 mt-2">
                 <div className="flex items-center gap-1.5 text-xs text-[#52525b]">
                   <Bot className="w-3.5 h-3.5" />
                   <span>客服模型 {currentVersion?.version}</span>
                 </div>
                 <div className="flex items-center gap-1.5 text-xs text-[#52525b]">
                   <Clock className="w-3.5 h-3.5" />
-                  <span>已學習 {LEARNED_RULES_SUMMARY.totalRules} 條規則</span>
+                  <span>已學習 {knowledge.length} 條規則</span>
                 </div>
               </div>
             </div>
