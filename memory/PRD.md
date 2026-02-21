@@ -147,4 +147,5 @@
 - 需要設定：`FRONTEND_URL=https://manager.lakeze.co,https://model-integrate.preview.emergentagent.com`
 
 ## API 規格文件
-- `/app/memory/P1_API_Requirements_for_Manus.md` - P1 API 需求文件
+- `/app/memory/P1_API_Requirements_for_Manus.md` - P1 API 需求文件（AI 知識萃取）
+- `/app/memory/P2_Version_Management_API_for_Manus.md` - P2 API 需求文件（知識庫版本管理）
