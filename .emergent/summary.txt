@@ -50,7 +50,7 @@
      - Blocked on other issue: No
   - Issue 2: 
      - Attempted fixes: 在整個會話中，代理多次手動編輯  文件，將  修正為 。
-     - Next debug checklist: 在執行任何需要 API 的操作前，先使用 REACT_APP_BACKEND_URL=https://ai-butler-collab.preview.emergentagent.com 檢查該變數。
+     - Next debug checklist: 在執行任何需要 API 的操作前，先使用 REACT_APP_BACKEND_URL=https://model-integrate.preview.emergentagent.com 檢查該變數。
      - Why fix this issue and what will be achieved with the fix?: 這是導致前端無法與後端正常通訊的關鍵阻礙。
      - Status:  IN PROGRESS (Recurring environmental issue)
      - Is recurring issue? Y
