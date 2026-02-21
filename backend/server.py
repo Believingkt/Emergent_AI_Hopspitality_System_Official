@@ -45,6 +45,13 @@ USERS = {
         "email": "jane@lakeze.com",
         "password": "jane123",
         "role": "manager"
+    },
+    "test@lakeze.com": {
+        "id": "user_004",
+        "name": "測試帳號",
+        "email": "test@lakeze.com",
+        "password": "test2026",
+        "role": "admin"
     }
 }
 
