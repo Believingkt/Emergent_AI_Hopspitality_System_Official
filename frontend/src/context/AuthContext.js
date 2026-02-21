@@ -12,8 +12,8 @@ const isPreviewMode = () => {
 };
 
 const PREVIEW_USER = {
-  email: 'kenneth@lakeze.com',
-  name: 'Kenneth (Preview)',
+  email: 'test@lakeze.com',
+  name: '測試帳號 (Preview)',
   role: 'admin'
 };
 
