@@ -1,4 +1,7 @@
 """Lakeze 多場域 AI 管家協作平台 - Real Backend with MongoDB"""
+from dotenv import load_dotenv
+load_dotenv()
+
 from fastapi import FastAPI, HTTPException, Depends, Header, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr
