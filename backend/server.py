@@ -1,15 +1,25 @@
-from fastapi import FastAPI, HTTPException, Depends, WebSocket, WebSocketDisconnect, Query, Header
+"""Lakeze 多場域 AI 管家協作平台 - Real Backend with MongoDB"""
+from fastapi import FastAPI, HTTPException, Depends, Header, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr
 from typing import Optional, List
 from datetime import datetime, timedelta
 import jwt
-import json
+import bcrypt
 import os
+import json
+import openai
 
-app = FastAPI(title="Lakeze 多場域 AI 管家協作平台 - 模擬後端")
+from database import (
+    db, users_col, venues_col, tasks_col, knowledge_col,
+    batches_col, config_col, counters_col, versions_col,
+    version_items_col, get_next_id, init_indexes
+)
+from config_loader import load_config, get_config, get_config_value
+from migrate import migrate
 
-# CORS
+app = FastAPI(title="Lakeze 多場域 AI 管家協作平台")
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -18,447 +28,670 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# JWT Secret - 從環境變數讀取
-JWT_SECRET = os.environ.get("JWT_SECRET", "default-secret-change-in-production")
+JWT_SECRET = os.environ.get("JWT_SECRET", "lakeze-secret-key-2025-secure")
 JWT_ALGORITHM = "HS256"
 
-# ============ 模擬資料 ============
+# ============ Startup ============
 
-USERS = {
-    "admin@lakeze.com": {
-        "id": "user_001",
-        "name": "王管理員",
-        "email": "admin@lakeze.com",
-        "password": "admin123",
-        "role": "admin"
-    },
-    "manager@lakeze.com": {
-        "id": "user_002",
-        "name": "陳管家",
-        "email": "manager@lakeze.com",
-        "password": "manager123",
-        "role": "manager"
-    },
-    "jane@lakeze.com": {
-        "id": "user_003",
-        "name": "Jane Lin",
-        "email": "jane@lakeze.com",
-        "password": "jane123",
-        "role": "manager"
-    },
-    "test@lakeze.com": {
-        "id": "user_004",
-        "name": "測試帳號",
-        "email": "test@lakeze.com",
-        "password": "test2026",
-        "role": "admin"
-    }
-}
+@app.on_event("startup")
+async def startup():
+    print("[Server] Starting up...")
+    await init_indexes()
+    await migrate()
+    await load_config()
+    print("[Server] Ready!")
 
-VENUES = [
-    {"id": "venue_001", "name": "森山寫照"},
-    {"id": "venue_002", "name": "天送幸福和苑"},
-    {"id": "venue_003", "name": "湖畔雅居"}
-]
-
-VENUE_CONFIGS = {
-    "venue_001": {
-        "venue_id": "venue_001",
-        "ai_model": "gpt-4.1-mini",
-        "ai_knowledge_base_url": "https://kb.lakeze.com/senshan",
-        "greeting_message": "歡迎來到森山寫照！",
-        "handoff_keywords": ["真人", "客服", "人工"]
-    },
-    "venue_002": {
-        "venue_id": "venue_002",
-        "ai_model": "manus-1.6-max",
-        "ai_knowledge_base_url": "https://kb.lakeze.com/tiansong",
-        "greeting_message": "歡迎來到天送幸福和苑！",
-        "handoff_keywords": ["真人", "管家"]
-    },
-    "venue_003": {
-        "venue_id": "venue_003",
-        "ai_model": "gpt-4.1",
-        "ai_knowledge_base_url": "",
-        "greeting_message": "歡迎來到湖畔雅居！",
-        "handoff_keywords": ["人工服務"]
-    }
-}
-
-TASKS = [
-    {
-        "id": 101,
-        "venue_id": "venue_001",
-        "customer_name": "張小明",
-        "customer_user_id": "U1234567890abcdef",
-        "initial_message": "請問明天還有空房嗎？我想訂兩晚，需要有陽台的房間。",
-        "ai_response": "您好！關於房間預訂的詳細需求，我將為您轉接真人管家為您服務。",
-        "status": "待處理",
-        "assigned_to": None,
-        "assigned_to_name": None,
-        "notes": "",
-        "created_at": (datetime.now() - timedelta(minutes=15)).isoformat(),
-        "claimed_at": None,
-        "completed_at": None
-    },
-    {
-        "id": 102,
-        "venue_id": "venue_001",
-        "customer_name": "李美玲",
-        "customer_user_id": "U0987654321fedcba",
-        "initial_message": "我上次住的時候東西忘在房間了，可以幫我查一下嗎？",
-        "ai_response": "非常抱歉聽到這個情況！關於遺失物品的查詢，讓我為您轉接管家處理。",
-        "status": "待處理",
-        "assigned_to": None,
-        "assigned_to_name": None,
-        "notes": "",
-        "created_at": (datetime.now() - timedelta(minutes=8)).isoformat(),
-        "claimed_at": None,
-        "completed_at": None
-    },
-    {
-        "id": 103,
-        "venue_id": "venue_001",
-        "customer_name": "王大華",
-        "customer_user_id": "Uabcdef1234567890",
-        "initial_message": "請問有提供接駁服務嗎？我從台北車站過去。",
-        "ai_response": "關於接駁服務的安排，我將為您轉接管家提供詳細資訊。",
-        "status": "處理中",
-        "assigned_to": "user_002",
-        "assigned_to_name": "陳管家",
-        "notes": "客人預計下午2點抵達台北車站",
-        "created_at": (datetime.now() - timedelta(hours=1)).isoformat(),
-        "claimed_at": (datetime.now() - timedelta(minutes=45)).isoformat(),
-        "completed_at": None
-    },
-    {
-        "id": 104,
-        "venue_id": "venue_002",
-        "customer_name": "陳雅婷",
-        "customer_user_id": "Ufedcba0987654321",
-        "initial_message": "我想詢問週末的親子活動有哪些？",
-        "ai_response": "週末活動的詳細內容，讓我為您轉接管家說明。",
-        "status": "待處理",
-        "assigned_to": None,
-        "assigned_to_name": None,
-        "notes": "",
-        "created_at": (datetime.now() - timedelta(minutes=5)).isoformat(),
-        "claimed_at": None,
-        "completed_at": None
-    },
-    {
-        "id": 105,
-        "venue_id": "venue_001",
-        "customer_name": "林志偉",
-        "customer_user_id": "U5555666677778888",
-        "initial_message": "退房後可以寄放行李嗎？大概到下午5點。",
-        "ai_response": "好的，關於行李寄放服務，我將為您轉接管家協助。",
-        "status": "已完成",
-        "assigned_to": "user_003",
-        "assigned_to_name": "Jane Lin",
-        "notes": "已確認可寄放至下午6點，客人表示感謝",
-        "created_at": (datetime.now() - timedelta(hours=3)).isoformat(),
-        "claimed_at": (datetime.now() - timedelta(hours=2, minutes=50)).isoformat(),
-        "completed_at": (datetime.now() - timedelta(hours=2)).isoformat()
-    }
-]
-
-connected_clients: List[WebSocket] = []
-
-# ============ Models ============
+# ============ Pydantic Models ============
 
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
 
-class LoginResponse(BaseModel):
-    access_token: str
-    token_type: str = "bearer"
-    user: dict
+class KnowledgeCreate(BaseModel):
+    title: str
+    content: str
+    category: str = "other"
 
-class TaskUpdate(BaseModel):
-    notes: Optional[str] = None
+class KnowledgeUpdate(BaseModel):
+    title: Optional[str] = None
+    content: Optional[str] = None
+    category: Optional[str] = None
 
-class ManagerCreate(BaseModel):
-    name: str
-    email: EmailStr
-    password: str
-    role: str = "manager"
+class ExtractRequest(BaseModel):
+    content_type: str = "text"
+    content: Optional[str] = None
+    file_url: Optional[str] = None
 
-class VenueConfigUpdate(BaseModel):
-    ai_model: Optional[str] = None
-    ai_knowledge_base_url: Optional[str] = None
+class TaskReply(BaseModel):
+    message: str
 
-# ============ Auth Functions ============
+class PublishRequest(BaseModel):
+    description: Optional[str] = ""
+    change_summary: Optional[str] = ""
 
-def create_token(user_id: str) -> str:
+class RollbackRequest(BaseModel):
+    reason: Optional[str] = ""
+
+# ============ Auth Helpers ============
+
+def create_token(email: str) -> str:
     payload = {
-        "sub": user_id,
-        "exp": datetime.utcnow() + timedelta(hours=24)
+        "sub": email,
+        "iat": datetime.utcnow(),
+        "exp": datetime.utcnow() + timedelta(hours=24),
+        "type": "access",
+        "fresh": False,
     }
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
-def verify_token(token: str) -> Optional[dict]:
-    try:
-        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-        user_id = payload.get("sub")
-        for user in USERS.values():
-            if user["id"] == user_id:
-                return user
-        return None
-    except Exception as e:
-        print(f"Token verification error: {e}")
-        return None
 
-def get_current_user(authorization: Optional[str] = Header(None)) -> dict:
+def verify_password(plain: str, hashed: str) -> bool:
+    return bcrypt.checkpw(plain.encode(), hashed.encode())
+
+
+async def get_current_user(authorization: Optional[str] = Header(None)) -> dict:
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="未提供認證 Token")
-    
     token = authorization.replace("Bearer ", "")
-    user = verify_token(token)
-    if not user:
-        raise HTTPException(status_code=401, detail="Token 無效或已過期")
-    return user
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        email = payload.get("sub")
+        user = await users_col.find_one({"email": email})
+        if not user:
+            raise HTTPException(status_code=401, detail="用戶不存在")
+        return {"email": user["email"], "name": user["name"], "role": user["role"]}
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token 已過期")
+    except Exception:
+        raise HTTPException(status_code=401, detail="Token 無效")
 
-# ============ API Endpoints ============
 
-@app.get("/")
-def root():
-    return {"message": "Lakeze 多場域 AI 管家協作平台 API", "status": "running"}
+# ============ Helper to strip Mongo _id ============
+
+def clean(doc):
+    if doc and "_id" in doc:
+        del doc["_id"]
+    return doc
+
+# ============ Health ============
 
 @app.get("/api/health")
-def health_check():
-    """Health check endpoint for Kubernetes liveness/readiness probes"""
-    return {"status": "healthy", "service": "lakeze-backend"}
+async def health():
+    return {"status": "healthy", "service": "lakeze-backend", "db": "mongodb"}
 
 @app.get("/api/")
-def api_root():
-    return {"message": "Lakeze 多場域 AI 管家協作平台 API", "status": "running"}
+async def api_root():
+    return {"message": "Lakeze 多場域 AI 管家協作平台 API", "status": "running", "backend": "mongodb"}
 
-@app.post("/api/auth/login", response_model=LoginResponse)
-def login(request: LoginRequest):
-    user = USERS.get(request.email)
-    if not user or user["password"] != request.password:
+@app.get("/")
+async def root():
+    return {"message": "Lakeze API", "status": "running"}
+
+# ============ Auth ============
+
+@app.post("/api/auth/login")
+async def login(req: LoginRequest):
+    user = await users_col.find_one({"email": req.email})
+    if not user:
         raise HTTPException(status_code=401, detail="登入失敗，請檢查帳號密碼")
-    
-    token = create_token(user["id"])
-    user_data = {k: v for k, v in user.items() if k != "password"}
-    
-    return LoginResponse(access_token=token, user=user_data)
+    if not verify_password(req.password, user["password_hash"]):
+        raise HTTPException(status_code=401, detail="登入失敗，請檢查帳號密碼")
+
+    token = create_token(user["email"])
+    return {
+        "access_token": token,
+        "user": {"email": user["email"], "name": user["name"], "role": user["role"]}
+    }
 
 @app.get("/api/auth/me")
-def get_me(user: dict = Depends(get_current_user)):
-    return {k: v for k, v in user.items() if k != "password"}
+async def get_me(user: dict = Depends(get_current_user)):
+    return {"user": user}
+
+# ============ Venues ============
 
 @app.get("/api/venues")
-def get_venues(user: dict = Depends(get_current_user)):
-    return VENUES
+async def get_venues(user: dict = Depends(get_current_user)):
+    venues = await venues_col.find({}).to_list(100)
+    return {"venues": [{"id": v["id"], "name": v["name"], "description": v.get("description", "")} for v in venues]}
 
-@app.get("/api/venues/{venue_id}/config")
-def get_venue_config(venue_id: str, user: dict = Depends(get_current_user)):
-    config = VENUE_CONFIGS.get(venue_id)
-    if not config:
-        raise HTTPException(status_code=404, detail="場域不存在")
-    return config
-
-@app.put("/api/venues/{venue_id}/config")
-def update_venue_config(venue_id: str, update: VenueConfigUpdate, user: dict = Depends(get_current_user)):
-    if user["role"] != "admin":
-        raise HTTPException(status_code=403, detail="權限不足")
-    
-    if venue_id not in VENUE_CONFIGS:
-        raise HTTPException(status_code=404, detail="場域不存在")
-    
-    config = VENUE_CONFIGS[venue_id]
-    if update.ai_model is not None:
-        config["ai_model"] = update.ai_model
-    if update.ai_knowledge_base_url is not None:
-        config["ai_knowledge_base_url"] = update.ai_knowledge_base_url
-    
-    return config
+# ============ Tasks ============
 
 @app.get("/api/tasks")
-def get_tasks(venue_id: Optional[str] = None, user: dict = Depends(get_current_user)):
-    if venue_id:
-        return [t for t in TASKS if t["venue_id"] == venue_id]
-    return TASKS
+async def get_tasks(venue_id: Optional[str] = None, user: dict = Depends(get_current_user)):
+    query = {"venue_id": venue_id} if venue_id else {}
+    tasks = await tasks_col.find(query).sort("created_at", -1).to_list(200)
+    return {"tasks": [clean(t) for t in tasks]}
 
 @app.post("/api/tasks/{task_id}/claim")
 async def claim_task(task_id: int, user: dict = Depends(get_current_user)):
-    task = next((t for t in TASKS if t["id"] == task_id), None)
+    task = await tasks_col.find_one({"task_id": task_id})
     if not task:
-        raise HTTPException(status_code=404, detail="任務不存在")
-    
+        raise HTTPException(404, "任務不存在")
     if task["status"] != "待處理":
-        raise HTTPException(status_code=400, detail="此任務無法被認領")
-    
+        raise HTTPException(400, "此任務無法被認領")
+
+    now = datetime.utcnow().isoformat()
+    await tasks_col.update_one(
+        {"task_id": task_id},
+        {"$set": {"status": "處理中", "assigned_manager": user["email"], "claimed_at": now}}
+    )
     task["status"] = "處理中"
-    task["assigned_to"] = user["id"]
-    task["assigned_to_name"] = user["name"]
-    task["claimed_at"] = datetime.now().isoformat()
-    
-    await broadcast_event("task_updated", {"venue_id": task["venue_id"], "task": task})
-    await broadcast_event("activity", {
-        "type": "task_claimed",
-        "manager_name": user["name"],
-        "message": f"認領了任務 #{task_id}",
-        "venue_id": task["venue_id"],
-        "venue_name": next((v["name"] for v in VENUES if v["id"] == task["venue_id"]), ""),
-        "timestamp": datetime.now().isoformat()
-    })
-    
-    return task
+    task["assigned_manager"] = user["email"]
+    task["claimed_at"] = now
+    return clean(task)
 
 @app.post("/api/tasks/{task_id}/unclaim")
 async def unclaim_task(task_id: int, user: dict = Depends(get_current_user)):
-    task = next((t for t in TASKS if t["id"] == task_id), None)
+    task = await tasks_col.find_one({"task_id": task_id})
     if not task:
-        raise HTTPException(status_code=404, detail="任務不存在")
-    
-    if task["status"] != "處理中" or task["assigned_to"] != user["id"]:
-        raise HTTPException(status_code=400, detail="無法取消認領此任務")
-    
+        raise HTTPException(404, "任務不存在")
+
+    await tasks_col.update_one(
+        {"task_id": task_id},
+        {"$set": {"status": "待處理", "assigned_manager": None, "claimed_at": None}}
+    )
     task["status"] = "待處理"
-    task["assigned_to"] = None
-    task["assigned_to_name"] = None
+    task["assigned_manager"] = None
     task["claimed_at"] = None
-    
-    await broadcast_event("task_updated", {"venue_id": task["venue_id"], "task": task})
-    await broadcast_event("activity", {
-        "type": "task_unclaimed",
-        "manager_name": user["name"],
-        "message": f"取消認領了任務 #{task_id}",
-        "venue_id": task["venue_id"],
-        "venue_name": next((v["name"] for v in VENUES if v["id"] == task["venue_id"]), ""),
-        "timestamp": datetime.now().isoformat()
-    })
-    
-    return task
+    return clean(task)
 
 @app.post("/api/tasks/{task_id}/complete")
 async def complete_task(task_id: int, user: dict = Depends(get_current_user)):
-    task = next((t for t in TASKS if t["id"] == task_id), None)
+    task = await tasks_col.find_one({"task_id": task_id})
     if not task:
-        raise HTTPException(status_code=404, detail="任務不存在")
-    
-    if task["status"] != "處理中" or task["assigned_to"] != user["id"]:
-        raise HTTPException(status_code=400, detail="無法完成此任務")
-    
-    task["status"] = "已完成"
-    task["completed_at"] = datetime.now().isoformat()
-    
-    await broadcast_event("task_updated", {"venue_id": task["venue_id"], "task": task})
-    await broadcast_event("activity", {
-        "type": "task_completed",
-        "manager_name": user["name"],
-        "message": f"完成了任務 #{task_id}",
-        "venue_id": task["venue_id"],
-        "venue_name": next((v["name"] for v in VENUES if v["id"] == task["venue_id"]), ""),
-        "timestamp": datetime.now().isoformat()
-    })
-    
-    return task
+        raise HTTPException(404, "任務不存在")
+
+    now = datetime.utcnow().isoformat()
+    await tasks_col.update_one(
+        {"task_id": task_id},
+        {"$set": {"status": "已處理", "completed_at": now}}
+    )
+    task["status"] = "已處理"
+    task["completed_at"] = now
+    return clean(task)
 
 @app.put("/api/tasks/{task_id}")
-def update_task(task_id: int, update: TaskUpdate, user: dict = Depends(get_current_user)):
-    task = next((t for t in TASKS if t["id"] == task_id), None)
+async def update_task(task_id: int, update: dict, user: dict = Depends(get_current_user)):
+    task = await tasks_col.find_one({"task_id": task_id})
     if not task:
-        raise HTTPException(status_code=404, detail="任務不存在")
-    
-    if update.notes is not None:
-        task["notes"] = update.notes
-    
-    return task
+        raise HTTPException(404, "任務不存在")
+
+    allowed = {"notes", "status", "assigned_manager"}
+    update_fields = {k: v for k, v in update.items() if k in allowed}
+    if update_fields:
+        await tasks_col.update_one({"task_id": task_id}, {"$set": update_fields})
+
+    updated = await tasks_col.find_one({"task_id": task_id})
+    return clean(updated)
+
+@app.post("/api/tasks/{task_id}/reply")
+async def reply_task(task_id: int, body: TaskReply, user: dict = Depends(get_current_user)):
+    task = await tasks_col.find_one({"task_id": task_id})
+    if not task:
+        raise HTTPException(404, "任務不存在")
+
+    # TODO: Send LINE message to customer via LINE Messaging API (Step 2)
+    customer_uid = task.get("customer_user_id")
+
+    await tasks_col.update_one(
+        {"task_id": task_id},
+        {"$set": {
+            "status": "已處理",
+            "completed_at": datetime.utcnow().isoformat(),
+            "notes": body.message
+        }}
+    )
+
+    return {"success": True, "message": "回覆已發送", "task_id": task_id}
+
+# ============ Knowledge CRUD ============
+
+@app.get("/api/venues/{venue_id}/knowledge")
+async def get_knowledge(venue_id: str, user: dict = Depends(get_current_user)):
+    items = await knowledge_col.find({"venue_id": venue_id}).sort("created_at", -1).to_list(500)
+    return {"knowledge": [clean(k) for k in items], "venue_id": venue_id}
+
+@app.post("/api/venues/{venue_id}/knowledge")
+async def create_knowledge(venue_id: str, body: KnowledgeCreate, user: dict = Depends(get_current_user)):
+    kid = await get_next_id("knowledge")
+    now = datetime.utcnow().isoformat()
+    doc = {
+        "id": kid,
+        "venue_id": venue_id,
+        "title": body.title,
+        "content": body.content,
+        "category": body.category,
+        "source_type": "manual",
+        "status": "approved",
+        "is_active": True,
+        "ai_confidence": None,
+        "batch_id": None,
+        "created_at": now,
+        "updated_at": now,
+    }
+    await knowledge_col.insert_one(doc)
+    return {"success": True, "knowledge": clean(doc)}
+
+@app.put("/api/venues/{venue_id}/knowledge/{kid}")
+async def update_knowledge(venue_id: str, kid: int, body: KnowledgeUpdate, user: dict = Depends(get_current_user)):
+    item = await knowledge_col.find_one({"id": kid, "venue_id": venue_id})
+    if not item:
+        raise HTTPException(404, "知識不存在")
+
+    update_fields = {"updated_at": datetime.utcnow().isoformat()}
+    if body.title is not None:
+        update_fields["title"] = body.title
+    if body.content is not None:
+        update_fields["content"] = body.content
+    if body.category is not None:
+        update_fields["category"] = body.category
+
+    # If editing a pending item, auto-approve
+    if item.get("status") == "pending":
+        update_fields["status"] = "approved"
+        update_fields["is_active"] = True
+
+    await knowledge_col.update_one({"id": kid}, {"$set": update_fields})
+    updated = await knowledge_col.find_one({"id": kid})
+    return {"success": True, "knowledge": clean(updated)}
+
+@app.delete("/api/venues/{venue_id}/knowledge/{kid}")
+async def delete_knowledge(venue_id: str, kid: int, user: dict = Depends(get_current_user)):
+    result = await knowledge_col.update_one(
+        {"id": kid, "venue_id": venue_id},
+        {"$set": {"is_active": False, "updated_at": datetime.utcnow().isoformat()}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(404, "知識不存在")
+    return {"success": True, "message": "已停用"}
+
+# ============ Knowledge Stats ============
+
+@app.get("/api/venues/{venue_id}/knowledge/stats")
+async def get_knowledge_stats(venue_id: str, user: dict = Depends(get_current_user)):
+    pipeline_overall = [
+        {"$match": {"venue_id": venue_id}},
+        {"$group": {
+            "_id": None,
+            "total": {"$sum": 1},
+            "active_count": {"$sum": {"$cond": [{"$eq": ["$is_active", True]}, 1, 0]}},
+            "inactive_count": {"$sum": {"$cond": [{"$eq": ["$is_active", False]}, 1, 0]}},
+            "approved_count": {"$sum": {"$cond": [{"$eq": ["$status", "approved"]}, 1, 0]}},
+            "draft_count": {"$sum": {"$cond": [{"$eq": ["$status", "pending"]}, 1, 0]}},
+            "rejected_count": {"$sum": {"$cond": [{"$eq": ["$status", "rejected"]}, 1, 0]}},
+            "manual_count": {"$sum": {"$cond": [{"$eq": ["$source_type", "manual"]}, 1, 0]}},
+            "ai_extracted_count": {"$sum": {"$cond": [{"$in": ["$source_type", ["ai_extracted", "ai"]]}, 1, 0]}},
+        }}
+    ]
+    overall_result = await knowledge_col.aggregate(pipeline_overall).to_list(1)
+    overall = overall_result[0] if overall_result else {
+        "total": 0, "active_count": 0, "inactive_count": 0,
+        "approved_count": 0, "draft_count": 0, "rejected_count": 0,
+        "manual_count": 0, "ai_extracted_count": 0
+    }
+    if "_id" in overall:
+        del overall["_id"]
+
+    pipeline_category = [
+        {"$match": {"venue_id": venue_id}},
+        {"$group": {
+            "_id": "$category",
+            "total": {"$sum": 1},
+            "active_count": {"$sum": {"$cond": [{"$eq": ["$is_active", True]}, 1, 0]}},
+        }}
+    ]
+    cat_result = await knowledge_col.aggregate(pipeline_category).to_list(20)
+    by_category = [{"category": c["_id"], "total": c["total"], "active_count": c["active_count"]} for c in cat_result]
+
+    return {"overall": overall, "by_category": by_category, "venue_id": venue_id}
+
+# ============ Knowledge AI Extract ============
+
+@app.post("/api/venues/{venue_id}/knowledge/extract")
+async def extract_knowledge(venue_id: str, body: ExtractRequest, user: dict = Depends(get_current_user)):
+    content = body.content or ""
+    if not content and body.file_url:
+        content = f"[File uploaded: {body.file_url}]"
+
+    if not content:
+        raise HTTPException(400, "請提供內容")
+
+    # Create batch
+    batch_id = await get_next_id("knowledge_batches")
+    now = datetime.utcnow().isoformat()
+
+    batch_doc = {
+        "id": batch_id,
+        "venue_id": venue_id,
+        "source_type": body.content_type,
+        "status": "processing",
+        "total_extracted": 0,
+        "total_approved": 0,
+        "pending_count": 0,
+        "rejected_count": 0,
+        "created_by": user["email"],
+        "error_message": None,
+        "created_at": now,
+        "completed_at": None,
+        "original_content": content,
+    }
+    await batches_col.insert_one(batch_doc)
+
+    # AI extraction using OpenAI
+    try:
+        api_key = await get_config_value("openai_api_key")
+        if not api_key:
+            raise Exception("OpenAI API key not configured")
+
+        client = openai.AsyncOpenAI(api_key=api_key)
+
+        system_prompt = """你是一個專業的知識提取助手。請從以下文字內容中提取獨立的知識點。
+
+每個知識點需包含：
+- title: 簡短標題（10-20字）
+- content: 完整內容（保留重要細節）
+- category: 分類，必須是以下之一：pricing（價格）、facility（設施）、policy（規則）、dining（餐飲）、service（服務）、transport（交通位置）、other（其他）
+
+回傳 JSON 陣列格式，例如：
+[{"title": "...", "content": "...", "category": "pricing"}]
+
+只回傳 JSON，不要其他文字。"""
+
+        response = await client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": content}
+            ],
+            temperature=0.3,
+            max_tokens=4000,
+        )
+
+        result_text = response.choices[0].message.content.strip()
+        # Parse JSON from response
+        if result_text.startswith("```"):
+            result_text = result_text.split("```")[1]
+            if result_text.startswith("json"):
+                result_text = result_text[4:]
+        extracted = json.loads(result_text)
+
+        # Save extracted knowledge items
+        for item in extracted:
+            kid = await get_next_id("knowledge")
+            await knowledge_col.insert_one({
+                "id": kid,
+                "venue_id": venue_id,
+                "title": item.get("title", ""),
+                "content": item.get("content", ""),
+                "category": item.get("category", "other"),
+                "source_type": "ai_extracted",
+                "status": "pending",
+                "is_active": False,
+                "ai_confidence": 0.9,
+                "batch_id": batch_id,
+                "created_at": now,
+                "updated_at": now,
+            })
+
+        await batches_col.update_one({"id": batch_id}, {"$set": {
+            "status": "completed",
+            "total_extracted": len(extracted),
+            "pending_count": len(extracted),
+            "completed_at": datetime.utcnow().isoformat(),
+        }})
+
+        return {
+            "success": True,
+            "batch_id": batch_id,
+            "message": f"已提取 {len(extracted)} 條知識點",
+            "status": "completed"
+        }
+
+    except Exception as e:
+        print(f"[Extract] Error: {e}")
+        await batches_col.update_one({"id": batch_id}, {"$set": {
+            "status": "completed",
+            "error_message": str(e),
+            "completed_at": datetime.utcnow().isoformat(),
+        }})
+        raise HTTPException(500, f"AI 提取失敗: {str(e)}")
+
+# ============ Knowledge Batches ============
+
+@app.get("/api/venues/{venue_id}/knowledge/batches")
+async def get_batches(venue_id: str, user: dict = Depends(get_current_user)):
+    batches = await batches_col.find({"venue_id": venue_id}).sort("created_at", -1).to_list(50)
+    return {"batches": [clean(b) for b in batches], "venue_id": venue_id}
+
+@app.get("/api/venues/{venue_id}/knowledge/batches/{batch_id}")
+async def get_batch_detail(venue_id: str, batch_id: int, user: dict = Depends(get_current_user)):
+    batch = await batches_col.find_one({"id": batch_id, "venue_id": venue_id})
+    if not batch:
+        raise HTTPException(404, "批次不存在")
+
+    items = await knowledge_col.find({"batch_id": batch_id, "venue_id": venue_id}).to_list(100)
+    result = clean(batch)
+    result["knowledge_items"] = [clean(k) for k in items]
+    return result
+
+# ============ Knowledge Approve/Reject ============
+
+@app.put("/api/venues/{venue_id}/knowledge/{kid}/approve")
+async def approve_knowledge(venue_id: str, kid: int, user: dict = Depends(get_current_user)):
+    result = await knowledge_col.update_one(
+        {"id": kid, "venue_id": venue_id},
+        {"$set": {"status": "approved", "is_active": True, "updated_at": datetime.utcnow().isoformat()}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(404, "知識不存在")
+
+    # Update batch counts
+    item = await knowledge_col.find_one({"id": kid})
+    if item and item.get("batch_id"):
+        bid = item["batch_id"]
+        await _update_batch_counts(bid, venue_id)
+
+    return {"success": True, "knowledge_id": kid, "status": "approved", "message": "知識已確認並生效"}
+
+@app.put("/api/venues/{venue_id}/knowledge/{kid}/reject")
+async def reject_knowledge(venue_id: str, kid: int, user: dict = Depends(get_current_user)):
+    result = await knowledge_col.update_one(
+        {"id": kid, "venue_id": venue_id},
+        {"$set": {"status": "rejected", "is_active": False, "updated_at": datetime.utcnow().isoformat()}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(404, "知識不存在")
+
+    item = await knowledge_col.find_one({"id": kid})
+    if item and item.get("batch_id"):
+        await _update_batch_counts(item["batch_id"], venue_id)
+
+    return {"success": True, "knowledge_id": kid, "status": "rejected", "message": "已拒絕此知識項目"}
+
+@app.post("/api/venues/{venue_id}/knowledge/batches/{batch_id}/approve-all")
+async def approve_all(venue_id: str, batch_id: int, user: dict = Depends(get_current_user)):
+    result = await knowledge_col.update_many(
+        {"batch_id": batch_id, "venue_id": venue_id, "status": "pending"},
+        {"$set": {"status": "approved", "is_active": True, "updated_at": datetime.utcnow().isoformat()}}
+    )
+    count = result.modified_count
+    await _update_batch_counts(batch_id, venue_id)
+    return {"success": True, "approved_count": count, "message": f"已確認 {count} 條知識項目"}
+
+
+async def _update_batch_counts(batch_id: int, venue_id: str):
+    """Recalculate batch counts"""
+    items = await knowledge_col.find({"batch_id": batch_id, "venue_id": venue_id}).to_list(100)
+    approved = sum(1 for i in items if i.get("status") == "approved")
+    pending = sum(1 for i in items if i.get("status") == "pending")
+    rejected = sum(1 for i in items if i.get("status") == "rejected")
+    await batches_col.update_one({"id": batch_id}, {"$set": {
+        "total_approved": approved,
+        "pending_count": pending,
+        "rejected_count": rejected,
+    }})
+
+# ============ Version Management (P2) ============
+
+@app.post("/api/venues/{venue_id}/knowledge/publish")
+async def publish_version(venue_id: str, body: PublishRequest, user: dict = Depends(get_current_user)):
+    # Get active knowledge
+    active = await knowledge_col.find({"venue_id": venue_id, "is_active": True, "status": "approved"}).to_list(500)
+    if not active:
+        raise HTTPException(400, "沒有任何生效中的知識可發佈")
+
+    # Determine version number
+    latest = await versions_col.find({"venue_id": venue_id}).sort("published_at", -1).limit(1).to_list(1)
+    if latest:
+        last_num = latest[0].get("version_number", "v1.0")
+        parts = last_num.replace("v", "").split(".")
+        major, minor = int(parts[0]), int(parts[1]) if len(parts) > 1 else 0
+        minor += 1
+        if minor > 9:
+            major += 1
+            minor = 0
+        new_version = f"v{major}.{minor}"
+        # Unset previous current
+        await versions_col.update_many({"venue_id": venue_id}, {"$set": {"is_current": False}})
+    else:
+        new_version = "v1.0"
+
+    vid = await get_next_id("knowledge_versions")
+    now = datetime.utcnow().isoformat()
+    version_id = f"ver_{vid}"
+
+    version_doc = {
+        "version_id": version_id,
+        "venue_id": venue_id,
+        "version_number": new_version,
+        "description": body.description,
+        "change_summary": body.change_summary,
+        "knowledge_count": len(active),
+        "published_by": user["email"],
+        "published_by_name": user["name"],
+        "published_at": now,
+        "is_current": True,
+        "rolled_back": False,
+    }
+    await versions_col.insert_one(version_doc)
+
+    # Snapshot knowledge items
+    for k in active:
+        await version_items_col.insert_one({
+            "version_id": version_id,
+            "knowledge_id": k["id"],
+            "venue_id": venue_id,
+            "category": k.get("category"),
+            "title": k.get("title"),
+            "content": k.get("content"),
+            "source_type": k.get("source_type"),
+            "original_created_at": k.get("created_at"),
+            "snapshot_at": now,
+        })
+
+    return {
+        "success": True,
+        "version": clean(version_doc),
+        "message": f"版本 {new_version} 已發佈，AI 將開始使用新知識"
+    }
+
+@app.get("/api/venues/{venue_id}/knowledge/versions")
+async def get_versions(venue_id: str, user: dict = Depends(get_current_user)):
+    versions = await versions_col.find({"venue_id": venue_id}).sort("published_at", -1).to_list(50)
+    result = []
+    for i, v in enumerate(versions):
+        v_clean = clean(v)
+        v_clean["can_rollback"] = (i == 1)  # Only previous version
+        result.append(v_clean)
+    return {"versions": result, "total": len(result)}
+
+@app.get("/api/venues/{venue_id}/knowledge/versions/{version_id}")
+async def get_version_detail(venue_id: str, version_id: str, user: dict = Depends(get_current_user)):
+    version = await versions_col.find_one({"version_id": version_id, "venue_id": venue_id})
+    if not version:
+        raise HTTPException(404, "版本不存在")
+
+    items = await version_items_col.find({"version_id": version_id}).to_list(500)
+    result = clean(version)
+    result["knowledge_items"] = [clean(i) for i in items]
+    return result
+
+@app.post("/api/venues/{venue_id}/knowledge/versions/{version_id}/rollback")
+async def rollback_version(venue_id: str, version_id: str, body: RollbackRequest, user: dict = Depends(get_current_user)):
+    target = await versions_col.find_one({"version_id": version_id, "venue_id": venue_id})
+    if not target:
+        raise HTTPException(404, "版本不存在")
+
+    # Check can_rollback (only previous version for basic plan)
+    versions = await versions_col.find({"venue_id": venue_id}).sort("published_at", -1).to_list(50)
+    if len(versions) < 2 or versions[1].get("version_id") != version_id:
+        raise HTTPException(403, "基礎版僅支援回滾至上一個版本")
+
+    current = versions[0]
+
+    # Restore knowledge from snapshot
+    snapshot_items = await version_items_col.find({"version_id": version_id}).to_list(500)
+
+    # Deactivate all current knowledge
+    await knowledge_col.update_many(
+        {"venue_id": venue_id},
+        {"$set": {"is_active": False}}
+    )
+
+    # Reactivate snapshot items
+    for item in snapshot_items:
+        await knowledge_col.update_one(
+            {"id": item["knowledge_id"]},
+            {"$set": {"is_active": True, "status": "approved"}}
+        )
+
+    # Update version flags
+    await versions_col.update_many({"venue_id": venue_id}, {"$set": {"is_current": False}})
+    await versions_col.update_one({"version_id": version_id}, {"$set": {"is_current": True}})
+    await versions_col.update_one(
+        {"version_id": current["version_id"]},
+        {"$set": {"rolled_back": True, "rolled_back_at": datetime.utcnow().isoformat(), "rollback_reason": body.reason}}
+    )
+
+    return {
+        "success": True,
+        "message": f"已回滾到版本 {target['version_number']}",
+        "rollback_info": {
+            "from_version": {"version_id": current["version_id"], "version_number": current["version_number"]},
+            "to_version": {"version_id": version_id, "version_number": target["version_number"]},
+        },
+        "current_version": clean(target)
+    }
+
+# ============ Admin ============
+
+@app.post("/api/admin/refresh-config")
+async def refresh_config(user: dict = Depends(get_current_user)):
+    if user.get("role") != "admin":
+        raise HTTPException(403, "權限不足")
+    config = await load_config()
+    return {"success": True, "keys_loaded": len(config), "message": "設定已從 Notion 重新載入"}
 
 @app.get("/api/managers")
-def get_managers(user: dict = Depends(get_current_user)):
-    if user["role"] != "admin":
-        raise HTTPException(status_code=403, detail="權限不足")
-    return [{k: v for k, v in u.items() if k != "password"} for u in USERS.values()]
+async def get_managers(user: dict = Depends(get_current_user)):
+    users = await users_col.find({}).to_list(50)
+    return [{"email": u["email"], "name": u["name"], "role": u["role"]} for u in users]
 
-@app.post("/api/managers")
-def create_manager(manager: ManagerCreate, user: dict = Depends(get_current_user)):
-    if user["role"] != "admin":
-        raise HTTPException(status_code=403, detail="權限不足")
-    
-    if manager.email in USERS:
-        raise HTTPException(status_code=400, detail="此 Email 已存在")
-    
-    new_user = {
-        "id": f"user_{len(USERS) + 1:03d}",
-        "name": manager.name,
-        "email": manager.email,
-        "password": manager.password,
-        "role": manager.role
-    }
-    USERS[manager.email] = new_user
-    
-    return {k: v for k, v in new_user.items() if k != "password"}
+# ============ Venue Config (compatibility) ============
 
-@app.get("/api/pms/{venue_id}/availability")
-def get_pms_availability(
-    venue_id: str, 
-    start_date: str = Query(...),
-    end_date: str = Query(...),
-    user: dict = Depends(get_current_user)
-):
-    venue = next((v for v in VENUES if v["id"] == venue_id), None)
+@app.get("/api/venues/{venue_id}/config")
+async def get_venue_config(venue_id: str, user: dict = Depends(get_current_user)):
+    venue = await venues_col.find_one({"id": venue_id})
     if not venue:
-        raise HTTPException(status_code=404, detail="場域不存在")
-    
+        raise HTTPException(404, "場域不存在")
     return {
         "venue_id": venue_id,
-        "venue_name": venue["name"],
-        "query_period": {"start_date": start_date, "end_date": end_date},
-        "available_rooms": [
-            {"room_type": "標準雙人房", "room_code": "STD-D", "available_count": 3, "price_per_night": 3200},
-            {"room_type": "豪華景觀房", "room_code": "DLX-V", "available_count": 2, "price_per_night": 4800},
-            {"room_type": "總統套房", "room_code": "PRES", "available_count": 1, "price_per_night": 12000}
-        ],
-        "note": "此為模擬資料"
+        "ai_model": "gpt-4o-mini",
+        "ai_knowledge_base_url": "",
+        "greeting_message": f"歡迎來到{venue['name']}！",
+        "handoff_keywords": ["真人", "客服", "人工", "管家"]
     }
 
-# ============ WebSocket ============
-
-async def broadcast_event(event_type: str, payload: dict):
-    message = json.dumps({"type": event_type, "payload": payload})
-    disconnected = []
-    for client in connected_clients:
-        try:
-            await client.send_text(message)
-        except:
-            disconnected.append(client)
-    for client in disconnected:
-        if client in connected_clients:
-            connected_clients.remove(client)
-
-@app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket, token: str = Query(None)):
-    user = verify_token(token) if token else None
-    if not user:
-        await websocket.close(code=4001)
-        return
-    
-    await websocket.accept()
-    connected_clients.append(websocket)
-    
-    online_managers = [{"id": user["id"], "name": user["name"], "role": user["role"]}]
-    for u in USERS.values():
-        if u["id"] != user["id"] and u["role"] == "manager":
-            online_managers.append({"id": u["id"], "name": u["name"], "role": u["role"]})
-            break
-    
-    await websocket.send_text(json.dumps({
-        "type": "online_managers",
-        "payload": {"managers": online_managers}
-    }))
-    
-    try:
-        while True:
-            await websocket.receive_text()
-    except WebSocketDisconnect:
-        if websocket in connected_clients:
-            connected_clients.remove(websocket)
 
 if __name__ == "__main__":
     import uvicorn
