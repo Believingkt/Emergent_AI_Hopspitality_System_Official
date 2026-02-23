@@ -13,6 +13,18 @@ import os
 import json
 import openai
 
+# Load app_config.json as fallback for missing env vars
+_app_config = {}
+_config_path = os.path.join(os.path.dirname(__file__), "app_config.json")
+if os.path.exists(_config_path):
+    with open(_config_path) as f:
+        _app_config = json.load(f)
+    # Set missing env vars from config file
+    for key, value in _app_config.items():
+        if not os.environ.get(key):
+            os.environ[key] = value
+            print(f"[Config] Loaded {key} from app_config.json")
+
 from database import (
     db, users_col, venues_col, tasks_col, knowledge_col,
     batches_col, config_col, counters_col, versions_col,
