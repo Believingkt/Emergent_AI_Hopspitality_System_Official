@@ -767,6 +767,84 @@ export const AILearningTab = () => {
         </div>
       </div>
 
+      {/* AI 模型選擇 */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* T1 模型 - 目前使用中 */}
+        <div className="bg-[#0d1117] rounded-2xl p-5 border-2 border-[#FF6B35]/40 relative overflow-hidden">
+          <div className="absolute top-3 right-3">
+            <Badge className="bg-[#22c55e] text-white border-0 text-xs px-3">使用中</Badge>
+          </div>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#FF6B35] to-[#ff8c5a] flex items-center justify-center shadow-lg shadow-[#FF6B35]/20">
+              <Bot className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h3 className="text-white font-bold text-lg">T1 標準接單模型</h3>
+              <p className="text-[#8b949e] text-xs">基礎 AI 銷售助手</p>
+            </div>
+          </div>
+          <div className="space-y-2 mb-4">
+            <div className="flex items-start gap-2">
+              <CheckCircle2 className="w-4 h-4 text-[#22c55e] mt-0.5 flex-shrink-0" />
+              <span className="text-sm text-[#c9d1d9]">自動回覆客戶常見問題（價格、房型、設施）</span>
+            </div>
+            <div className="flex items-start gap-2">
+              <CheckCircle2 className="w-4 h-4 text-[#22c55e] mt-0.5 flex-shrink-0" />
+              <span className="text-sm text-[#c9d1d9]">引導客戶完成預約流程（詢問→報價→匯款）</span>
+            </div>
+            <div className="flex items-start gap-2">
+              <CheckCircle2 className="w-4 h-4 text-[#22c55e] mt-0.5 flex-shrink-0" />
+              <span className="text-sm text-[#c9d1d9]">超出能力範圍時自動轉交真人管家</span>
+            </div>
+            <div className="flex items-start gap-2">
+              <CheckCircle2 className="w-4 h-4 text-[#22c55e] mt-0.5 flex-shrink-0" />
+              <span className="text-sm text-[#c9d1d9]">基於場域知識庫回答，可透過學習持續優化</span>
+            </div>
+          </div>
+          <div className="bg-[#FF6B35]/10 rounded-lg p-3 border border-[#FF6B35]/20">
+            <p className="text-xs text-[#FF6B35]">💡 適合大部分旅宿場景，搭配知識庫學習即可處理 80% 以上客戶問題</p>
+          </div>
+        </div>
+
+        {/* T2 模型 - 需升級 */}
+        <div className="bg-[#0d1117] rounded-2xl p-5 border-2 border-[#27272a] relative overflow-hidden opacity-80">
+          <div className="absolute top-3 right-3">
+            <Badge className="bg-amber-500/15 text-amber-400 border-amber-500/30 text-xs px-3">需升級</Badge>
+          </div>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#8b5cf6] to-[#a78bfa] flex items-center justify-center shadow-lg shadow-[#8b5cf6]/20">
+              <Sparkles className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h3 className="text-white font-bold text-lg">T2 智慧銷售模型</h3>
+              <p className="text-[#8b949e] text-xs">進階 AI 銷售顧問</p>
+            </div>
+          </div>
+          <div className="space-y-2 mb-4">
+            <div className="flex items-start gap-2">
+              <Sparkles className="w-4 h-4 text-[#8b5cf6] mt-0.5 flex-shrink-0" />
+              <span className="text-sm text-[#c9d1d9]">更精準的意圖辨識，理解複雜多輪對話</span>
+            </div>
+            <div className="flex items-start gap-2">
+              <Sparkles className="w-4 h-4 text-[#8b5cf6] mt-0.5 flex-shrink-0" />
+              <span className="text-sm text-[#c9d1d9]">主動推薦加購服務（餐飲、體驗活動、接駁）</span>
+            </div>
+            <div className="flex items-start gap-2">
+              <Sparkles className="w-4 h-4 text-[#8b5cf6] mt-0.5 flex-shrink-0" />
+              <span className="text-sm text-[#c9d1d9]">動態報價策略，依據淡旺季自動調整話術</span>
+            </div>
+            <div className="flex items-start gap-2">
+              <Sparkles className="w-4 h-4 text-[#8b5cf6] mt-0.5 flex-shrink-0" />
+              <span className="text-sm text-[#c9d1d9]">客戶情緒感知，自動調整回覆語氣和節奏</span>
+            </div>
+          </div>
+          <Button disabled className="w-full bg-[#8b5cf6]/20 text-[#8b5cf6] border border-[#8b5cf6]/30 cursor-not-allowed">
+            <Lock className="w-4 h-4 mr-2" />
+            聯繫我們升級至專業版
+          </Button>
+        </div>
+      </div>
+
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         {/* Left Column - Learning & Rules */}
