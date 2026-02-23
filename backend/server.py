@@ -13,15 +13,19 @@ import os
 import json
 import openai
 
-# Load app_config.json as fallback for missing env vars
+# Load app_config.json - ALWAYS override critical settings
 _app_config = {}
 _config_path = os.path.join(os.path.dirname(__file__), "app_config.json")
 if os.path.exists(_config_path):
     with open(_config_path) as f:
         _app_config = json.load(f)
-    # Set missing env vars from config file
+    # Critical keys: always override (Emergent sets DB_NAME=test_database which is wrong)
+    _always_override = {"DB_NAME", "JWT_SECRET", "NOTION_API_KEY", "NOTION_PAGE_ID"}
     for key, value in _app_config.items():
-        if not os.environ.get(key):
+        if key in _always_override:
+            os.environ[key] = value
+            print(f"[Config] Set {key} from app_config.json")
+        elif not os.environ.get(key):
             os.environ[key] = value
             print(f"[Config] Loaded {key} from app_config.json")
 
