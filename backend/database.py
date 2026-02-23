@@ -33,8 +33,18 @@ def _resolve_db_name(url):
         print(f"[Database] Using DB from username '{username}': {db_name}")
         return db_name
     
-    # Method 4: Fall back to DB_NAME env var
+    # Method 4: Fall back to DB_NAME env var (but NEVER use test_database on Atlas)
     db_name = os.environ.get("DB_NAME", "lakeze_platform")
+    
+    # Safety: if DB_NAME is "test_database" and we're on Atlas, derive from URL
+    if db_name == "test_database" and "mongodb.net" in url:
+        # Try to get username from URL as database name
+        user_match = re.search(r'mongodb(?:\+srv)?://([^:]+):', url)
+        if user_match:
+            db_name = user_match.group(1).strip().replace("-", "_")
+            print(f"[Database] Override test_database → {db_name} (from Atlas username)")
+            return db_name
+    
     print(f"[Database] Using DB from env: {db_name}")
     return db_name
 
