@@ -1,38 +1,20 @@
 """MongoDB database connection and helpers"""
 import os
-from urllib.parse import urlparse
 from motor.motor_asyncio import AsyncIOMotorClient
 
 MONGO_URL = os.environ.get("MONGO_URL", "mongodb://localhost:27017")
 
-# Extract database name from MONGO_URL if present, otherwise use DB_NAME env var
-def _get_db_name():
-    """Parse DB name from MONGO_URL connection string, fallback to DB_NAME env"""
-    # First check if DB_NAME is explicitly set (from app_config.json override)
-    db_name_env = os.environ.get("DB_NAME", "")
-
-    # Try to extract from MONGO_URL
-    try:
-        parsed = urlparse(MONGO_URL)
-        db_from_url = parsed.path.strip("/").split("?")[0] if parsed.path else ""
-        if db_from_url and db_from_url != "":
-            print(f"[Database] Using DB name from MONGO_URL: {db_from_url}")
-            return db_from_url
-    except Exception as e:
-        print(f"[Database] URL parse error: {e}")
-
-    # Use DB_NAME from env (which may have been overridden by app_config.json)
-    if db_name_env:
-        print(f"[Database] Using DB name from env: {db_name_env}")
-        return db_name_env
-
-    print("[Database] Using default DB name: lakeze_platform")
-    return "lakeze_platform"
-
-DB_NAME = _get_db_name()
-
 client = AsyncIOMotorClient(MONGO_URL)
-db = client[DB_NAME]
+
+# Use the database specified in MONGO_URL (Atlas requires this)
+# Fallback to DB_NAME env var only for local development
+try:
+    db = client.get_default_database()
+    print(f"[Database] Using DB from MONGO_URL: {db.name}")
+except Exception:
+    DB_NAME = os.environ.get("DB_NAME", "lakeze_platform")
+    db = client[DB_NAME]
+    print(f"[Database] Using DB from env: {DB_NAME}")
 
 # Collections
 users_col = db["users"]
@@ -72,5 +54,4 @@ async def init_indexes():
         await versions_col.create_index("venue_id")
         print("[Database] Indexes created successfully")
     except Exception as e:
-        # Don't crash on index creation failure (e.g., Atlas permission issues)
         print(f"[Database] Index creation warning (non-fatal): {e}")
