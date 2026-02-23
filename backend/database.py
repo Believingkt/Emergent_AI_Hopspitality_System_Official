@@ -8,9 +8,12 @@ MONGO_URL = os.environ.get("MONGO_URL", "mongodb://localhost:27017")
 # Extract database name from MONGO_URL if present, otherwise use DB_NAME env var
 def _get_db_name():
     """Parse DB name from MONGO_URL connection string, fallback to DB_NAME env"""
+    # First check if DB_NAME is explicitly set (from app_config.json override)
+    db_name_env = os.environ.get("DB_NAME", "")
+
+    # Try to extract from MONGO_URL
     try:
         parsed = urlparse(MONGO_URL)
-        # Path contains the database name (e.g., /mydb or /mydb?options)
         db_from_url = parsed.path.strip("/").split("?")[0] if parsed.path else ""
         if db_from_url and db_from_url != "":
             print(f"[Database] Using DB name from MONGO_URL: {db_from_url}")
@@ -18,9 +21,13 @@ def _get_db_name():
     except Exception as e:
         print(f"[Database] URL parse error: {e}")
 
-    db_name = os.environ.get("DB_NAME", "lakeze_platform")
-    print(f"[Database] Using DB name from env: {db_name}")
-    return db_name
+    # Use DB_NAME from env (which may have been overridden by app_config.json)
+    if db_name_env:
+        print(f"[Database] Using DB name from env: {db_name_env}")
+        return db_name_env
+
+    print("[Database] Using default DB name: lakeze_platform")
+    return "lakeze_platform"
 
 DB_NAME = _get_db_name()
 
