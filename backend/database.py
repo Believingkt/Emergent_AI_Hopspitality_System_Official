@@ -5,44 +5,42 @@ from motor.motor_asyncio import AsyncIOMotorClient
 
 MONGO_URL = os.environ.get("MONGO_URL", "mongodb://localhost:27017")
 
-def _extract_db_from_url(url):
-    """Extract database name from MongoDB URL using multiple methods"""
-    # Method 1: Try regex for mongodb+srv:// or mongodb:// URLs
-    # Format: mongodb+srv://user:pass@host/DATABASE?options
-    # or: mongodb://user:pass@host:port/DATABASE?options
+def _resolve_db_name(url):
+    """Determine the correct database name from MONGO_URL"""
+    
+    # Method 1: Extract DB name from URL path (mongodb://host/DATABASE)
     match = re.search(r'mongodb(?:\+srv)?://[^/]+/([^?/]+)', url)
-    if match:
+    if match and match.group(1).strip():
         db_name = match.group(1).strip()
-        if db_name:
-            return db_name
+        print(f"[Database] Using DB from URL path: {db_name}")
+        return db_name
     
-    # Method 2: Check authSource parameter (sometimes the authorized DB is there)
-    match = re.search(r'authSource=([^&]+)', url)
+    # Method 2: For Emergent Atlas - derive from appName parameter
+    # Pattern: appName=model-integrate → database = model_integrate
+    match = re.search(r'appName=([^&]+)', url)
     if match:
-        return match.group(1).strip()
+        app_name = match.group(1).strip()
+        db_name = app_name.replace("-", "_")
+        print(f"[Database] Using DB from appName '{app_name}': {db_name}")
+        return db_name
     
-    return None
+    # Method 3: Derive from username in URL
+    # Pattern: mongodb+srv://USERNAME:pass@host → database = USERNAME with - replaced by _
+    match = re.search(r'mongodb(?:\+srv)?://([^:]+):', url)
+    if match:
+        username = match.group(1).strip()
+        db_name = username.replace("-", "_")
+        print(f"[Database] Using DB from username '{username}': {db_name}")
+        return db_name
+    
+    # Method 4: Fall back to DB_NAME env var
+    db_name = os.environ.get("DB_NAME", "lakeze_platform")
+    print(f"[Database] Using DB from env: {db_name}")
+    return db_name
 
-# Step 1: Try to extract DB from MONGO_URL
-_db_from_url = _extract_db_from_url(MONGO_URL)
-
-# Step 2: Create client
+DB_NAME = _resolve_db_name(MONGO_URL)
 client = AsyncIOMotorClient(MONGO_URL)
-
-# Step 3: Determine which database to use
-if _db_from_url:
-    db = client[_db_from_url]
-    print(f"[Database] Using DB from MONGO_URL: {_db_from_url}")
-else:
-    # Try get_default_database first
-    try:
-        db = client.get_default_database()
-        print(f"[Database] Using default DB: {db.name}")
-    except Exception:
-        # Last resort: use DB_NAME env var
-        DB_NAME = os.environ.get("DB_NAME", "lakeze_platform")
-        db = client[DB_NAME]
-        print(f"[Database] Using DB from env: {DB_NAME}")
+db = client[DB_NAME]
 
 # Collections
 users_col = db["users"]
