@@ -1,6 +1,7 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { LayoutDashboard, Settings, LogOut, User } from 'lucide-react';
+import { useTheme } from '../../context/ThemeContext';
+import { LayoutDashboard, Settings, LogOut, User, Sun, Moon } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Separator } from '../ui/separator';
 import { Avatar, AvatarFallback } from '../ui/avatar';
@@ -15,6 +16,7 @@ export const Sidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout, isAdmin } = useAuth();
+  const { theme, toggleTheme, isDark } = useTheme();
 
   const handleLogout = () => {
     logout();
