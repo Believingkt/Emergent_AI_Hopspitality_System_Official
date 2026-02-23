@@ -51,9 +51,18 @@ JWT_ALGORITHM = "HS256"
 @app.on_event("startup")
 async def startup():
     print("[Server] Starting up...")
-    await init_indexes()
-    await migrate()
-    await load_config()
+    try:
+        await init_indexes()
+    except Exception as e:
+        print(f"[Server] Index creation skipped: {e}")
+    try:
+        await migrate()
+    except Exception as e:
+        print(f"[Server] Migration skipped: {e}")
+    try:
+        await load_config()
+    except Exception as e:
+        print(f"[Server] Config loading skipped: {e}")
     print("[Server] Ready!")
 
 # ============ Pydantic Models ============
