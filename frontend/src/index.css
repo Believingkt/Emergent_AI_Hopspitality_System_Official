@@ -241,6 +241,39 @@
 [data-theme="light"] [data-state="active"][class*="TabsTrigger"] {
   color: inherit !important;
 }
+
+/* ========== Login Page - Always Dark Theme ========== */
+[data-theme="light"] [data-testid="login-page"] {
+  background-color: #09090b !important;
+  color: #fafafa !important;
+}
+[data-theme="light"] [data-testid="login-page"] * {
+  /* Reset all light overrides inside login page */
+}
+[data-theme="light"] [data-testid="login-page"] .text-white { color: #ffffff !important; }
+[data-theme="light"] [data-testid="login-page"] .text-\[\#fafafa\] { color: #fafafa !important; }
+[data-theme="light"] [data-testid="login-page"] .text-\[\#c9d1d9\] { color: #c9d1d9 !important; }
+[data-theme="light"] [data-testid="login-page"] .text-\[\#8b949e\] { color: #8b949e !important; }
+[data-theme="light"] [data-testid="login-page"] .text-\[\#a1a1aa\] { color: #a1a1aa !important; }
+[data-theme="light"] [data-testid="login-page"] .text-\[\#52525b\] { color: #52525b !important; }
+[data-theme="light"] [data-testid="login-page"] .text-\[\#FF6B35\] { color: #FF6B35 !important; }
+[data-theme="light"] [data-testid="login-page"] .text-\[\#22c55e\] { color: #22c55e !important; }
+[data-theme="light"] [data-testid="login-page"] .text-\[\#00B4D8\] { color: #00B4D8 !important; }
+[data-theme="light"] [data-testid="login-page"] .bg-\[\#09090b\] { background-color: #09090b !important; }
+[data-theme="light"] [data-testid="login-page"] .bg-\[\#0d1117\] { background-color: #0d1117 !important; box-shadow: none !important; }
+[data-theme="light"] [data-testid="login-page"] .bg-\[\#18181b\] { background-color: #18181b !important; }
+[data-theme="light"] [data-testid="login-page"] .bg-\[\#27272a\] { background-color: #27272a !important; }
+[data-theme="light"] [data-testid="login-page"] .border-\[\#27272a\] { border-color: #27272a !important; }
+[data-theme="light"] [data-testid="login-page"] .border-\[\#3f3f46\] { border-color: #3f3f46 !important; }
+[data-theme="light"] [data-testid="login-page"] input {
+  background-color: #27272a !important;
+  border-color: #3f3f46 !important;
+  color: #fafafa !important;
+}
+[data-theme="light"] [data-testid="login-page"] input::placeholder {
+  color: #52525b !important;
+}
+
 * {
   margin: 0;
   padding: 0;
