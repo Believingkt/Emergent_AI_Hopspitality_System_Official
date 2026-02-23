@@ -301,34 +301,6 @@ const CustomerCard = ({ customer, token, onRefresh, showPaymentActions = false, 
                 </div>
               )}
 
-              {/* 回覆區 */}
-              {showReplyInput ? (
-                <div className="flex gap-2">
-                  <Textarea
-                    value={replyText}
-                    onChange={(e) => setReplyText(e.target.value)}
-                    placeholder="輸入回覆內容..."
-                    className="flex-1 bg-[#0d1117] border-[#27272a] text-white min-h-[60px] text-sm resize-none"
-                  />
-                  <div className="flex flex-col gap-2">
-                    <Button onClick={handleSendReply} disabled={isReplying} size="sm" className="bg-[#FF6B35] hover:bg-[#E55A2B] text-white">
-                      {isReplying ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                    </Button>
-                    <Button onClick={() => setShowReplyInput(false)} size="sm" variant="ghost" className="text-[#8b949e]">
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <Button
-                  onClick={() => setShowReplyInput(true)}
-                  variant="outline"
-                  className="w-full border-[#27272a] text-[#8b949e] hover:text-white hover:border-[#FF6B35]"
-                >
-                  <Send className="w-4 h-4 mr-2" />
-                  回覆此客戶
-                </Button>
-              )}
             </div>
           )}
         </div>
