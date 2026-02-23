@@ -32,7 +32,10 @@ async def migrate():
         return
 
     print("[Migration] Starting data migration...")
-    await init_indexes()
+    try:
+        await init_indexes()
+    except Exception as e:
+        print(f"[Migration] Index creation warning: {e}")
 
     with open(SEED_FILE, "r") as f:
         data = json.load(f)
