@@ -101,3 +101,97 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: "多場域 AI 管家協作平台 - Emergent 自建後端版本。已完成 Step 1：MongoDB 後端 + Notion 配置 + Manus 資料遷移。待開發：LINE Messaging 串接、Notion 知識庫串接。"
+
+backend:
+  - task: "MongoDB 後端 + 資料遷移"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+        - agent: "main"
+        - comment: "完成 FastAPI + MongoDB 後端，從 Manus 遷移 47 tasks, 36 knowledge, 10 batches, 2 users"
+
+  - task: "Notion Config Loader"
+    implemented: true
+    working: true
+    file: "backend/config_loader.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+        - agent: "main"
+        - comment: "啟動時從 Notion 讀取 5 個 API Keys (Claude, OpenAI, LINE Token/Secret/ID) 並緩存到 MongoDB"
+
+  - task: "Knowledge CRUD + AI Extract"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+        - agent: "main"
+        - comment: "知識庫完整 CRUD + OpenAI AI 萃取 + 批次審核 + 版本管理(P2)"
+
+  - task: "LINE Messaging 串接"
+    implemented: false
+    working: "NA"
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: "NA"
+        - agent: "main"
+        - comment: "Step 2 待開發：收發 LINE 訊息 + Webhook 即時同步"
+
+  - task: "Notion 知識庫串接"
+    implemented: false
+    working: "NA"
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+        - working: "NA"
+        - agent: "main"
+        - comment: "Step 3 待開發：從 Notion 頁面讀取知識作為知識庫來源"
+
+frontend:
+  - task: "完整前端 UI"
+    implemented: true
+    working: true
+    file: "frontend/src/"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+        - agent: "main"
+        - comment: "登入、儀表板(4 tabs)、設定頁面、手機版，全部正常"
+
+metadata:
+  created_by: "main_agent"
+  version: "2.0"
+  test_sequence: 0
+  run_ui: false
+
+test_plan:
+  current_focus:
+    - "LINE Messaging 串接"
+    - "Notion 知識庫串接"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+    - agent: "main"
+    - message: "Step 1 完成。後端已從 mock 升級為 MongoDB 真實後端。Notion 配置載入正常。資料已從 Manus 遷移。下一步：Step 2 LINE 串接、Step 3 Notion 串接。"
