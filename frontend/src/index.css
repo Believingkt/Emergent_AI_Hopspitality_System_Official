@@ -130,13 +130,117 @@
   background: linear-gradient(180deg, rgba(0, 180, 216, 0.06) 0%, transparent 100%);
 }
 
-/* Light theme - Message bubbles keep their colors (don't override) */
-[data-theme="light"] .bg-\[\#1e3a5f\] { background-color: #e0f2fe !important; }
-[data-theme="light"] .border-\[\#2d5a87\] { border-color: #7dd3fc !important; }
+/* Light theme - Message bubbles */
+[data-theme="light"] .bg-\[\#1e3a5f\] { background-color: #dbeafe !important; }
+[data-theme="light"] .border-\[\#2d5a87\] { border-color: #93c5fd !important; }
 [data-theme="light"] .bg-\[\#1a2f3d\] { background-color: #ecfdf5 !important; }
 [data-theme="light"] .bg-\[\#1a3d2e\] { background-color: #f0fdf4 !important; }
 [data-theme="light"] .text-\[\#e0f7fa\] { color: #065f46 !important; }
 [data-theme="light"] .text-\[\#e8f5e9\] { color: #14532d !important; }
+
+/* Light theme - Fix inactive tab opacity */
+[data-theme="light"] [data-state="inactive"] {
+  opacity: 1 !important;
+}
+[data-theme="light"] [data-state="inactive"] > div {
+  background-color: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+  opacity: 0.85 !important;
+}
+
+/* Light theme - Fix all semi-transparent dark backgrounds */
+[data-theme="light"] .bg-\[\#FF6B35\]\/10,
+[data-theme="light"] .bg-\[\#FF6B35\]\/15 { background-color: rgba(255, 107, 53, 0.08) !important; }
+[data-theme="light"] .bg-\[\#22c55e\]\/5,
+[data-theme="light"] .bg-\[\#22c55e\]\/10,
+[data-theme="light"] .bg-\[\#22c55e\]\/15 { background-color: rgba(34, 197, 94, 0.08) !important; }
+[data-theme="light"] .bg-\[\#00B4D8\]\/5,
+[data-theme="light"] .bg-\[\#00B4D8\]\/10,
+[data-theme="light"] .bg-\[\#00B4D8\]\/15 { background-color: rgba(0, 180, 216, 0.08) !important; }
+[data-theme="light"] .bg-amber-500\/10,
+[data-theme="light"] .bg-amber-500\/15 { background-color: rgba(245, 158, 11, 0.08) !important; }
+[data-theme="light"] .bg-red-500\/15 { background-color: rgba(239, 68, 68, 0.08) !important; }
+[data-theme="light"] .bg-\[\#8b5cf6\]\/20 { background-color: rgba(139, 92, 246, 0.08) !important; }
+
+/* Light theme - Stronger text colors for readability */
+[data-theme="light"] .text-\[\#FF6B35\] { color: #d4520f !important; }
+[data-theme="light"] .text-\[\#22c55e\] { color: #16a34a !important; }
+[data-theme="light"] .text-\[\#00B4D8\] { color: #0284c7 !important; }
+[data-theme="light"] .text-amber-400,
+[data-theme="light"] .text-amber-500 { color: #b45309 !important; }
+[data-theme="light"] .text-red-400 { color: #dc2626 !important; }
+[data-theme="light"] .text-\[\#8b5cf6\] { color: #7c3aed !important; }
+
+/* Light theme - Borders for colored variants */
+[data-theme="light"] .border-\[\#FF6B35\]\/20,
+[data-theme="light"] .border-\[\#FF6B35\]\/30,
+[data-theme="light"] .border-\[\#FF6B35\]\/40 { border-color: rgba(255, 107, 53, 0.25) !important; }
+[data-theme="light"] .border-\[\#22c55e\]\/20,
+[data-theme="light"] .border-\[\#22c55e\]\/30,
+[data-theme="light"] .border-\[\#22c55e\]\/40 { border-color: rgba(34, 197, 94, 0.25) !important; }
+[data-theme="light"] .border-\[\#00B4D8\]\/20,
+[data-theme="light"] .border-\[\#00B4D8\]\/30,
+[data-theme="light"] .border-\[\#00B4D8\]\/40 { border-color: rgba(0, 180, 216, 0.25) !important; }
+[data-theme="light"] .border-amber-500\/20,
+[data-theme="light"] .border-amber-500\/30 { border-color: rgba(245, 158, 11, 0.25) !important; }
+[data-theme="light"] .border-\[\#8b5cf6\]\/30 { border-color: rgba(139, 92, 246, 0.25) !important; }
+
+/* Light theme - Cards with subtle shadow instead of dark borders */
+[data-theme="light"] .bg-\[\#0d1117\] {
+  background-color: #ffffff !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06) !important;
+}
+
+/* Light theme - Sidebar */
+[data-theme="light"] [data-testid="sidebar"] {
+  background-color: #ffffff !important;
+  border-right-color: #e2e8f0 !important;
+}
+
+/* Light theme - Header */
+[data-theme="light"] [data-testid="header"] {
+  background: rgba(255, 255, 255, 0.92) !important;
+  border-bottom-color: #e2e8f0 !important;
+}
+
+/* Light theme - Select/dropdown */
+[data-theme="light"] [class*="SelectTrigger"],
+[data-theme="light"] [class*="SelectContent"] {
+  background-color: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+  color: #1e293b !important;
+}
+
+/* Light theme - Badge text stays readable */
+[data-theme="light"] .bg-\[\#22c55e\] { background-color: #22c55e !important; }
+[data-theme="light"] .bg-\[\#FF6B35\] { background-color: #FF6B35 !important; }
+[data-theme="light"] .bg-\[\#00B4D8\] { background-color: #00B4D8 !important; }
+
+/* Light theme - Keep white text on colored badges */
+[data-theme="light"] .bg-\[\#22c55e\] .text-white,
+[data-theme="light"] .bg-\[\#FF6B35\] .text-white,
+[data-theme="light"] .bg-\[\#00B4D8\] .text-white,
+[data-theme="light"] .bg-\[\#22c55e\] > *,
+[data-theme="light"] .bg-\[\#FF6B35\] > * { color: #ffffff !important; }
+
+/* Light theme - Gradient backgrounds for version banner etc */
+[data-theme="light"] .bg-gradient-to-r { background-color: #f8fafc !important; }
+[data-theme="light"] .bg-gradient-to-br { /* keep gradient colors */ }
+
+/* Light theme - Tooltip overrides */
+[data-theme="light"] [role="tooltip"] {
+  background-color: #1e293b !important;
+  color: #ffffff !important;
+  border-color: #334155 !important;
+}
+
+/* Light theme - Avatar text stays white */
+[data-theme="light"] [class*="AvatarFallback"] { color: #ffffff !important; }
+
+/* Light theme - Tab active colors stay vibrant */  
+[data-theme="light"] [data-state="active"][class*="TabsTrigger"] {
+  color: inherit !important;
+}
 * {
   margin: 0;
   padding: 0;
