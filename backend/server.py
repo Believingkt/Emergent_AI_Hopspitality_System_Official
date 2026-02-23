@@ -165,7 +165,163 @@ async def get_tasks(venue_id: Optional[str] = None, user: dict = Depends(get_cur
     tasks = await tasks_col.find(query).sort("created_at", -1).to_list(200)
     return {"tasks": [clean(t) for t in tasks]}
 
-@app.post("/api/tasks/{task_id}/claim")
+@app.get("/api/tasks/grouped")
+async def get_grouped_tasks(venue_id: Optional[str] = None, user: dict = Depends(get_current_user)):
+    """Group tasks by customer_user_id, return merged conversation per customer"""
+    query = {"venue_id": venue_id} if venue_id else {}
+    all_tasks = await tasks_col.find(query).sort("created_at", 1).to_list(500)
+
+    groups = {}
+    for t in all_tasks:
+        uid = t.get("customer_user_id", "unknown")
+        if uid not in groups:
+            groups[uid] = {
+                "customer_user_id": uid,
+                "customer_name": None,
+                "customer_phone": None,
+                "customer_info": {},
+                "customer_stage": "inquiry",
+                "venue_id": t.get("venue_id"),
+                "status": "待處理",
+                "messages": [],
+                "task_ids": [],
+                "first_message_at": t.get("created_at"),
+                "last_message_at": t.get("created_at"),
+                "payment_confirmed": False,
+                "payment_amount": None,
+                "payment_confirmed_at": None,
+            }
+
+        g = groups[uid]
+        g["task_ids"].append(t.get("task_id"))
+        g["last_message_at"] = t.get("created_at") or g["last_message_at"]
+
+        # Update customer info with latest non-null values
+        info = t.get("customer_info") or {}
+        if info.get("customer_name"):
+            g["customer_name"] = info["customer_name"]
+        if info.get("customer_phone"):
+            g["customer_phone"] = info["customer_phone"]
+        if t.get("customer_name"):
+            g["customer_name"] = t["customer_name"]
+
+        # Merge customer_info (keep latest non-null)
+        for key in ["date", "num_adults", "num_children", "room_type", "total_price", "payment_confirmed"]:
+            if info.get(key) is not None:
+                g["customer_info"][key] = info[key]
+
+        # Payment fields
+        if info.get("payment_confirmed"):
+            g["payment_confirmed"] = True
+        if info.get("payment_amount"):
+            g["payment_amount"] = info["payment_amount"]
+        if info.get("payment_confirmed_at"):
+            g["payment_confirmed_at"] = info["payment_confirmed_at"]
+
+        # Customer stage (use latest)
+        if t.get("customer_stage"):
+            g["customer_stage"] = t["customer_stage"]
+
+        # Status priority: 待處理 > 處理中 > 已處理
+        if t.get("status") == "待處理" and g["status"] != "待處理":
+            g["status"] = "待處理"
+        elif t.get("status") == "處理中" and g["status"] == "已處理":
+            g["status"] = "處理中"
+
+        # Build conversation messages
+        if t.get("customer_message"):
+            g["messages"].append({
+                "sender_type": "customer",
+                "content": t["customer_message"],
+                "timestamp": t.get("created_at"),
+                "task_id": t.get("task_id"),
+            })
+        if t.get("ai_response"):
+            g["messages"].append({
+                "sender_type": "ai",
+                "content": t["ai_response"],
+                "timestamp": t.get("created_at"),
+                "task_id": t.get("task_id"),
+            })
+        if t.get("notes") and t.get("status") == "已處理":
+            g["messages"].append({
+                "sender_type": "manager",
+                "content": t["notes"],
+                "timestamp": t.get("completed_at") or t.get("created_at"),
+                "task_id": t.get("task_id"),
+            })
+
+    result = sorted(groups.values(), key=lambda x: x["last_message_at"] or "", reverse=True)
+    return {"customers": result}
+
+@app.get("/api/tasks/{task_id}/conversations")
+async def get_task_conversations(task_id: int, user: dict = Depends(get_current_user)):
+    """Get conversation history for a specific task's customer"""
+    task = await tasks_col.find_one({"task_id": task_id})
+    if not task:
+        raise HTTPException(404, "任務不存在")
+
+    uid = task.get("customer_user_id")
+    all_tasks = await tasks_col.find({"customer_user_id": uid}).sort("created_at", 1).to_list(200)
+
+    messages = []
+    for t in all_tasks:
+        if t.get("customer_message"):
+            messages.append({
+                "sender_type": "customer",
+                "content": t["customer_message"],
+                "timestamp": t.get("created_at"),
+                "task_id": t.get("task_id"),
+            })
+        if t.get("ai_response"):
+            messages.append({
+                "sender_type": "ai",
+                "content": t["ai_response"],
+                "timestamp": t.get("created_at"),
+                "task_id": t.get("task_id"),
+            })
+        if t.get("notes") and t.get("status") == "已處理":
+            messages.append({
+                "sender_type": "manager",
+                "content": t["notes"],
+                "timestamp": t.get("completed_at") or t.get("created_at"),
+                "task_id": t.get("task_id"),
+            })
+
+    return {"messages": messages, "customer_user_id": uid, "total": len(messages)}
+
+@app.post("/api/venues/{venue_id}/customers/{customer_user_id}/confirm-payment")
+async def confirm_payment(
+    venue_id: str,
+    customer_user_id: str,
+    body: dict = None,
+    user: dict = Depends(get_current_user)
+):
+    """Confirm payment for a customer"""
+    body = body or {}
+    now = datetime.utcnow().isoformat()
+    payment_amount = body.get("payment_amount", 0)
+
+    # Update all tasks for this customer
+    result = await tasks_col.update_many(
+        {"customer_user_id": customer_user_id, "venue_id": venue_id},
+        {"$set": {
+            "customer_info.payment_confirmed": True,
+            "customer_info.payment_amount": payment_amount,
+            "customer_info.payment_confirmed_at": now,
+            "status": "已處理",
+            "completed_at": now,
+        }}
+    )
+
+    if result.matched_count == 0:
+        raise HTTPException(404, "找不到該客戶的任務")
+
+    return {
+        "success": True,
+        "message": f"已確認匯款，共更新 {result.modified_count} 筆任務",
+        "payment_confirmed_at": now,
+    }
 async def claim_task(task_id: int, user: dict = Depends(get_current_user)):
     task = await tasks_col.find_one({"task_id": task_id})
     if not task:
