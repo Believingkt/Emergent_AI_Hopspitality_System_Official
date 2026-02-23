@@ -24,14 +24,14 @@ def _resolve_db_name(url):
         print(f"[Database] Using DB from appName '{app_name}': {db_name}")
         return db_name
     
-    # Method 3: Derive from username in URL
-    # Pattern: mongodb+srv://USERNAME:pass@host → database = USERNAME with - replaced by _
-    match = re.search(r'mongodb(?:\+srv)?://([^:]+):', url)
-    if match:
-        username = match.group(1).strip()
-        db_name = username.replace("-", "_")
-        print(f"[Database] Using DB from username '{username}': {db_name}")
-        return db_name
+    # Method 3: Derive from username in URL (Atlas/cloud only)
+    if "mongodb.net" in url:
+        match = re.search(r'mongodb(?:\+srv)?://([^:]+):', url)
+        if match:
+            username = match.group(1).strip()
+            db_name = username.replace("-", "_")
+            print(f"[Database] Using DB from Atlas username '{username}': {db_name}")
+            return db_name
     
     # Method 4: Fall back to DB_NAME env var (but NEVER use test_database on Atlas)
     db_name = os.environ.get("DB_NAME", "lakeze_platform")
