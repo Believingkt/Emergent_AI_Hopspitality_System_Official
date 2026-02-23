@@ -71,9 +71,33 @@ export const Sidebar = () => {
         </TooltipProvider>
       </nav>
 
-      {/* User & Logout */}
+      {/* User & Theme & Logout */}
       <div className="flex flex-col items-center gap-2">
         <Separator className="w-8 bg-[#27272a] mb-2" />
+
+        {/* Theme Toggle */}
+        <TooltipProvider delayDuration={0}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleTheme}
+                className={`w-10 h-10 rounded-lg transition-all duration-300 ${
+                  isDark 
+                    ? 'text-amber-400 hover:bg-amber-500/20 hover:text-amber-300'
+                    : 'text-[#00B4D8] hover:bg-[#00B4D8]/20 hover:text-[#00B4D8]'
+                }`}
+                data-testid="theme-toggle"
+              >
+                {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right" className="bg-[#27272a] text-white border-[#3f3f46]">
+              {isDark ? '切換淺色模式' : '切換深色模式'}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
         
         <TooltipProvider delayDuration={0}>
           <Tooltip>
