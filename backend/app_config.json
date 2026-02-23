@@ -1,6 +1,5 @@
 {
   "NOTION_API_KEY": "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",
   "NOTION_PAGE_ID": "30e38b4015e180babdbec0d823869eaf",
-  "DB_NAME": "lakeze_platform",
   "JWT_SECRET": "lakeze-secret-key-2025-secure"
 }
