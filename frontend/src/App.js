@@ -1,7 +1,9 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import React from "react";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { VenueProvider } from "./context/VenueContext";
 import { WebSocketProvider } from "./context/WebSocketContext";
+import { ThemeProvider } from "./context/ThemeContext";
 import { Toaster } from "./components/ui/sonner";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
