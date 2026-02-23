@@ -144,7 +144,7 @@
 
 ## 已知問題
 - **CORS 問題**：預覽環境 URL 需要在後端 FRONTEND_URL 中配置
-- 需要設定：`FRONTEND_URL=https://manager.lakeze.co,https://model-integrate.preview.emergentagent.com`
+- 需要設定：`FRONTEND_URL=https://manager.lakeze.co,https://repo-data-pull.preview.emergentagent.com`
 
 ## API 規格文件
 - `/app/memory/P1_API_Requirements_for_Manus.md` - P1 API 需求文件（AI 知識萃取）
