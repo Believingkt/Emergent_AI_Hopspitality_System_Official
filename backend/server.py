@@ -19,8 +19,8 @@ _config_path = os.path.join(os.path.dirname(__file__), "app_config.json")
 if os.path.exists(_config_path):
     with open(_config_path) as f:
         _app_config = json.load(f)
-    # Critical keys: always override (Emergent sets DB_NAME=test_database which is wrong)
-    _always_override = {"DB_NAME", "JWT_SECRET", "NOTION_API_KEY", "NOTION_PAGE_ID"}
+    # Critical keys: always override (deployment may not have these)
+    _always_override = {"JWT_SECRET", "NOTION_API_KEY", "NOTION_PAGE_ID"}
     for key, value in _app_config.items():
         if key in _always_override:
             os.environ[key] = value
