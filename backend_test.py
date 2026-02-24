@@ -822,7 +822,7 @@ class BackendTester:
             )
 
     def run_all_tests(self):
-        """Run all backend tests"""
+        """Run all backend tests with focus on PDF upload"""
         self.log("Starting Lakeze Backend API Tests...")
         self.log(f"Backend URL: {BACKEND_URL}")
         
@@ -836,7 +836,26 @@ class BackendTester:
             # Get existing venues first
             existing_venues = self.test_get_venues()
             
-            # Create new venue
+            # === PRIMARY FOCUS: PDF UPLOAD TESTING ===
+            self.log("\n" + "="*50)
+            self.log("PRIMARY FOCUS: PDF UPLOAD API TESTING")
+            self.log("="*50)
+            
+            # Test PDF upload for sensan_inn (as per requirements)
+            pdf_result = self.test_pdf_upload("sensan_inn")
+            
+            # Test error cases
+            self.test_pdf_error_cases("sensan_inn")
+            
+            # Verify uploaded knowledge appears in GET endpoint
+            self.test_verify_uploaded_knowledge("sensan_inn")
+            
+            # === EXISTING API VERIFICATION ===
+            self.log("\n" + "="*50)
+            self.log("EXISTING API VERIFICATION")
+            self.log("="*50)
+            
+            # Create new venue to test venue CRUD
             new_venue = self.test_create_venue()
             
             if new_venue and new_venue.get("id"):
@@ -853,7 +872,7 @@ class BackendTester:
                     self.test_verify_avatar_in_venues(venue_id, avatar_url)
                 
             # Test other endpoints
-            self.test_knowledge_endpoints()
+            self.test_knowledge_endpoints()  # Now tests sensan_inn specifically
             self.test_tasks_endpoints()
         
         # Print final results
