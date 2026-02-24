@@ -60,12 +60,19 @@ const AI_MODELS = [
 
 export default function SettingsPage() {
   const { token, isAdmin } = useAuth();
-  const { venues, getVenueConfig, updateVenueConfig, fetchVenues } = useVenue();
+  const { venues, getVenueConfig, updateVenueConfig, updateVenue, uploadAvatar, fetchVenues } = useVenue();
   
   const [selectedVenue, setSelectedVenue] = useState(null);
   const [venueConfig, setVenueConfig] = useState(null);
   const [configLoading, setConfigLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  // Venue profile editing
+  const [editingName, setEditingName] = useState(false);
+  const [venueName, setVenueName] = useState('');
+  const [savingName, setSavingName] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const avatarInputRef = useRef(null);
 
   const [managers, setManagers] = useState([]);
   const [managersLoading, setManagersLoading] = useState(false);
