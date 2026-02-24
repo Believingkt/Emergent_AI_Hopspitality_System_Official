@@ -59,9 +59,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-JWT_SECRET = os.environ.get("JWT_SECRET")
+JWT_SECRET = os.environ.get("JWT_SECRET", "")
 if not JWT_SECRET:
-    raise ValueError("JWT_SECRET environment variable is required")
+    # Generate a deterministic secret from MONGO_URL for production environments
+    # that don't explicitly set JWT_SECRET
+    import hashlib
+    mongo_url = os.environ.get("MONGO_URL", "default-fallback-key")
+    JWT_SECRET = hashlib.sha256(f"lakeze-jwt-{mongo_url}".encode()).hexdigest()
+    print("[Config] JWT_SECRET auto-generated from MONGO_URL (set JWT_SECRET env var for explicit control)")
 JWT_ALGORITHM = "HS256"
 
 # ============ Startup ============
