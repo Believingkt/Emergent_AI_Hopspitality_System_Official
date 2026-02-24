@@ -73,7 +73,8 @@ JWT_ALGORITHM = "HS256"
 
 @app.on_event("startup")
 async def startup():
-    print("[Server] Starting up...")
+    from database import DB_NAME
+    print(f"[Server] Starting up... (DB: {DB_NAME})")
     try:
         await init_indexes()
     except Exception as e:
@@ -81,12 +82,24 @@ async def startup():
     try:
         await migrate()
     except Exception as e:
-        print(f"[Server] Migration skipped: {e}")
+        print(f"[Server] Migration error: {e}")
     try:
         await load_config()
     except Exception as e:
         print(f"[Server] Config loading skipped: {e}")
-    print("[Server] Ready!")
+    
+    # Verify users exist after migration
+    try:
+        user_count = await users_col.count_documents({})
+        print(f"[Server] Ready! Users in DB: {user_count}")
+        if user_count == 0:
+            print("[Server] WARNING: No users in database! Attempting to create default users...")
+            from migrate import ensure_default_passwords
+            await ensure_default_passwords()
+            user_count = await users_col.count_documents({})
+            print(f"[Server] After password fix: {user_count} users")
+    except Exception as e:
+        print(f"[Server] User count check failed: {e}")
 
 # ============ Pydantic Models ============
 
