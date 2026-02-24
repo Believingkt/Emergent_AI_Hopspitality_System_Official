@@ -190,7 +190,116 @@ async def get_me(user: dict = Depends(get_current_user)):
 @app.get("/api/venues")
 async def get_venues(user: dict = Depends(get_current_user)):
     venues = await venues_col.find({}).to_list(100)
-    return {"venues": [{"id": v["id"], "name": v["name"], "description": v.get("description", "")} for v in venues]}
+    return {"venues": [{
+        "id": v["id"], 
+        "name": v["name"], 
+        "description": v.get("description", ""),
+        "avatar_url": v.get("avatar_url", ""),
+        "created_at": v.get("created_at", "")
+    } for v in venues]}
+
+@app.post("/api/venues")
+async def create_venue(user: dict = Depends(get_current_user)):
+    """Create a new venue with default name"""
+    if user.get("role") != "admin":
+        raise HTTPException(403, "只有管理員可以新增場域")
+    
+    venue_id = str(uuid.uuid4())[:8]
+    new_venue = {
+        "id": venue_id,
+        "name": "新場域",
+        "description": "",
+        "avatar_url": "",
+        "created_at": datetime.utcnow().isoformat(),
+        "config": {
+            "ai_model": "T1",
+            "greeting_message": "歡迎來到新場域！",
+            "handoff_keywords": ["真人", "客服", "人工", "管家"]
+        }
+    }
+    await venues_col.insert_one(new_venue)
+    return {
+        "success": True,
+        "venue": {
+            "id": venue_id,
+            "name": "新場域",
+            "description": "",
+            "avatar_url": "",
+            "created_at": new_venue["created_at"]
+        }
+    }
+
+class VenueUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+
+@app.put("/api/venues/{venue_id}")
+async def update_venue(venue_id: str, body: VenueUpdate, user: dict = Depends(get_current_user)):
+    """Update venue name and description"""
+    if user.get("role") != "admin":
+        raise HTTPException(403, "只有管理員可以修改場域")
+    
+    venue = await venues_col.find_one({"id": venue_id})
+    if not venue:
+        raise HTTPException(404, "場域不存在")
+    
+    update_data = {}
+    if body.name is not None:
+        update_data["name"] = body.name
+    if body.description is not None:
+        update_data["description"] = body.description
+    
+    if update_data:
+        await venues_col.update_one({"id": venue_id}, {"$set": update_data})
+    
+    updated = await venues_col.find_one({"id": venue_id})
+    return {
+        "success": True,
+        "venue": {
+            "id": updated["id"],
+            "name": updated["name"],
+            "description": updated.get("description", ""),
+            "avatar_url": updated.get("avatar_url", ""),
+        }
+    }
+
+@app.post("/api/venues/{venue_id}/avatar")
+async def upload_venue_avatar(venue_id: str, file: UploadFile = File(...), user: dict = Depends(get_current_user)):
+    """Upload venue avatar image"""
+    if user.get("role") != "admin":
+        raise HTTPException(403, "只有管理員可以修改場域")
+    
+    venue = await venues_col.find_one({"id": venue_id})
+    if not venue:
+        raise HTTPException(404, "場域不存在")
+    
+    # Validate file type
+    allowed_types = ["image/jpeg", "image/png", "image/webp", "image/gif"]
+    if file.content_type not in allowed_types:
+        raise HTTPException(400, "只支援 JPG、PNG、WebP、GIF 格式的圖片")
+    
+    # Generate unique filename
+    ext = file.filename.split(".")[-1] if "." in file.filename else "png"
+    filename = f"venue_{venue_id}_{uuid.uuid4().hex[:8]}.{ext}"
+    filepath = os.path.join(UPLOAD_DIR, filename)
+    
+    # Save file
+    with open(filepath, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+    
+    # Delete old avatar if exists
+    old_avatar = venue.get("avatar_url", "")
+    if old_avatar:
+        old_filename = old_avatar.split("/")[-1]
+        old_path = os.path.join(UPLOAD_DIR, old_filename)
+        if os.path.exists(old_path):
+            os.remove(old_path)
+    
+    # Update venue with new avatar URL
+    avatar_url = f"/api/uploads/{filename}"
+    await venues_col.update_one({"id": venue_id}, {"$set": {"avatar_url": avatar_url}})
+    
+    return {"success": True, "avatar_url": avatar_url}
 
 # ============ Tasks ============
 
