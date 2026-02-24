@@ -168,6 +168,44 @@ export const LineOACredentials = ({ venueId, token }) => {
           </Badge>
         )}
       </div>
+
+      {/* 工程師設定提示 */}
+      <div className="bg-[#FF6B35]/10 border-2 border-[#FF6B35]/30 rounded-xl p-4">
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-xl bg-[#FF6B35]/15 flex items-center justify-center flex-shrink-0">
+            <Wrench className="w-5 h-5 text-[#FF6B35]" />
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              <p className="font-bold text-[#FF6B35] text-sm">需由工程師協助設定</p>
+              <Badge className="bg-[#FF6B35]/15 text-[#FF6B35] border-0 text-xs">
+                <AlertTriangle className="w-3 h-3 mr-1" />
+                重要
+              </Badge>
+            </div>
+            <p className="text-[#c9d1d9] text-sm leading-relaxed">
+              LINE OA 憑證涉及系統安全性，建議由專業工程師進行設定。
+            </p>
+            <div className="mt-3 bg-[#0d1117] rounded-lg p-3 space-y-2">
+              <p className="text-white text-sm font-medium">操作步驟：</p>
+              <div className="space-y-1.5">
+                <div className="flex items-start gap-2">
+                  <span className="text-[#FF6B35] font-bold text-xs mt-0.5 flex-shrink-0">1.</span>
+                  <p className="text-[#8b949e] text-xs">前往 <span className="text-white font-medium">LINE Official Account Manager</span>，將工程師新增為該 LINE OA 的管理員</p>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-[#FF6B35] font-bold text-xs mt-0.5 flex-shrink-0">2.</span>
+                  <p className="text-[#8b949e] text-xs">工程師至 <span className="text-white font-medium">LINE Developers Console</span> 取得所需憑證</p>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-[#FF6B35] font-bold text-xs mt-0.5 flex-shrink-0">3.</span>
+                  <p className="text-[#8b949e] text-xs">由工程師在下方填入正確的憑證資訊，並設定 Webhook URL</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
       
       <Separator className="bg-[#27272a]" />
       
