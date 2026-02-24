@@ -1225,6 +1225,363 @@ async def get_venue_config(venue_id: str, user: dict = Depends(get_current_user)
         "handoff_keywords": ["真人", "客服", "人工", "管家"]
     }
 
+# ============ LINE Credentials (per-venue) ============
+
+@app.get("/api/venues/{venue_id}/line-credentials")
+async def get_line_credentials(venue_id: str, user: dict = Depends(get_current_user)):
+    """Get LINE OA credentials for a venue"""
+    venue = await venues_col.find_one({"id": venue_id})
+    if not venue:
+        raise HTTPException(404, "場域不存在")
+    
+    creds = venue.get("line_credentials", {})
+    return {"credentials": creds, "venue_id": venue_id}
+
+@app.put("/api/venues/{venue_id}/line-credentials")
+async def update_line_credentials(venue_id: str, body: dict, user: dict = Depends(get_current_user)):
+    """Update LINE OA credentials for a venue"""
+    if user.get("role") != "admin":
+        raise HTTPException(403, "只有管理員可以修改憑證")
+    
+    venue = await venues_col.find_one({"id": venue_id})
+    if not venue:
+        raise HTTPException(404, "場域不存在")
+    
+    creds = {
+        "channel_access_token": body.get("channel_access_token", ""),
+        "user_id": body.get("user_id", ""),
+        "channel_id": body.get("channel_id", ""),
+        "channel_secret": body.get("channel_secret", ""),
+    }
+    
+    await venues_col.update_one({"id": venue_id}, {"$set": {"line_credentials": creds}})
+    return {"success": True, "message": "LINE OA 憑證已更新"}
+
+# ============ LINE Webhook ============
+
+import hmac
+import hashlib
+import base64
+import httpx
+from fastapi import Request
+
+async def get_line_credentials_for_venue(venue_id: str) -> dict:
+    """Get LINE credentials for a venue, fallback to global config"""
+    venue = await venues_col.find_one({"id": venue_id})
+    if venue and venue.get("line_credentials"):
+        creds = venue["line_credentials"]
+        if creds.get("channel_access_token") and creds.get("channel_secret"):
+            return creds
+    
+    # Fallback to global config from Notion
+    config = await get_config()
+    return {
+        "channel_access_token": config.get("line_channel_access_token", ""),
+        "channel_secret": config.get("line_channel_secret", ""),
+        "channel_id": config.get("line_channel_id", ""),
+        "user_id": "",
+    }
+
+def verify_line_signature(body: bytes, signature: str, channel_secret: str) -> bool:
+    """Verify LINE webhook signature"""
+    if not channel_secret or not signature:
+        return False
+    hash_val = hmac.new(
+        channel_secret.encode("utf-8"),
+        body,
+        hashlib.sha256
+    ).digest()
+    expected = base64.b64encode(hash_val).decode("utf-8")
+    return hmac.compare_digest(expected, signature)
+
+async def line_reply_message(reply_token: str, messages: list, access_token: str):
+    """Send reply to LINE user"""
+    if not access_token or not reply_token:
+        print("[LINE] Missing access_token or reply_token, skip reply")
+        return False
+    
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.post(
+                "https://api.line.me/v2/bot/message/reply",
+                json={"replyToken": reply_token, "messages": messages},
+                headers={
+                    "Authorization": f"Bearer {access_token}",
+                    "Content-Type": "application/json"
+                }
+            )
+            if resp.status_code == 200:
+                print(f"[LINE] Reply sent successfully")
+                return True
+            else:
+                print(f"[LINE] Reply failed: {resp.status_code} {resp.text}")
+                return False
+    except Exception as e:
+        print(f"[LINE] Reply error: {e}")
+        return False
+
+async def line_push_message(user_id: str, messages: list, access_token: str):
+    """Push message to LINE user"""
+    if not access_token or not user_id:
+        print("[LINE] Missing access_token or user_id, skip push")
+        return False
+    
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.post(
+                "https://api.line.me/v2/bot/message/push",
+                json={"to": user_id, "messages": messages},
+                headers={
+                    "Authorization": f"Bearer {access_token}",
+                    "Content-Type": "application/json"
+                }
+            )
+            if resp.status_code == 200:
+                print(f"[LINE] Push sent to {user_id}")
+                return True
+            else:
+                print(f"[LINE] Push failed: {resp.status_code} {resp.text}")
+                return False
+    except Exception as e:
+        print(f"[LINE] Push error: {e}")
+        return False
+
+async def line_get_profile(user_id: str, access_token: str) -> dict:
+    """Get LINE user profile"""
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.get(
+                f"https://api.line.me/v2/bot/profile/{user_id}",
+                headers={"Authorization": f"Bearer {access_token}"}
+            )
+            if resp.status_code == 200:
+                return resp.json()
+    except Exception as e:
+        print(f"[LINE] Profile fetch error: {e}")
+    return {}
+
+@app.post("/api/webhook/{venue_id}")
+async def line_webhook(venue_id: str, request: Request):
+    """LINE Messaging API Webhook endpoint"""
+    body = await request.body()
+    signature = request.headers.get("X-Line-Signature", "")
+    
+    print(f"[LINE Webhook] Received for venue: {venue_id}")
+    
+    # Get venue credentials
+    creds = await get_line_credentials_for_venue(venue_id)
+    channel_secret = creds.get("channel_secret", "")
+    access_token = creds.get("channel_access_token", "")
+    
+    # Verify signature (skip if no secret configured - for testing)
+    if channel_secret:
+        if not verify_line_signature(body, signature, channel_secret):
+            print(f"[LINE Webhook] Invalid signature for venue {venue_id}")
+            raise HTTPException(403, "Invalid signature")
+    else:
+        print(f"[LINE Webhook] WARNING: No channel_secret configured for venue {venue_id}, skipping verification")
+    
+    # Parse events
+    try:
+        data = json.loads(body)
+    except json.JSONDecodeError:
+        raise HTTPException(400, "Invalid JSON")
+    
+    events = data.get("events", [])
+    print(f"[LINE Webhook] Processing {len(events)} events")
+    
+    for event in events:
+        event_type = event.get("type")
+        source = event.get("source", {})
+        user_id = source.get("userId", "")
+        reply_token = event.get("replyToken", "")
+        timestamp = event.get("timestamp", 0)
+        
+        if event_type == "message":
+            message = event.get("message", {})
+            msg_type = message.get("type", "")
+            msg_text = message.get("text", "")
+            
+            if msg_type == "text" and msg_text:
+                print(f"[LINE Webhook] Message from {user_id}: {msg_text[:50]}...")
+                
+                # Get user profile
+                profile = await line_get_profile(user_id, access_token) if access_token else {}
+                display_name = profile.get("displayName", "")
+                
+                # Create task in database
+                task_id = await get_next_id("tasks")
+                now = datetime.utcnow().isoformat()
+                
+                task_doc = {
+                    "task_id": task_id,
+                    "venue_id": venue_id,
+                    "agent_mode": "ai",
+                    "customer_user_id": user_id,
+                    "customer_name": display_name,
+                    "customer_message": msg_text,
+                    "ai_response": None,
+                    "customer_info": {
+                        "customer_name": display_name,
+                        "line_user_id": user_id,
+                        "source": "line_webhook",
+                    },
+                    "customer_stage": "inquiry",
+                    "status": "待處理",
+                    "assigned_manager": None,
+                    "claimed_at": None,
+                    "completed_at": None,
+                    "created_at": now,
+                    "cs_updated_at": now,
+                    "notes": None,
+                    "line_reply_token": reply_token,
+                }
+                
+                await tasks_col.insert_one(task_doc)
+                print(f"[LINE Webhook] Created task {task_id} for {display_name or user_id}")
+                
+                # Try AI response using knowledge base
+                try:
+                    ai_response = await generate_ai_reply(venue_id, user_id, msg_text)
+                    if ai_response:
+                        # Update task with AI response
+                        await tasks_col.update_one(
+                            {"task_id": task_id},
+                            {"$set": {"ai_response": ai_response, "agent_mode": "ai"}}
+                        )
+                        
+                        # Send AI reply via LINE
+                        if access_token and reply_token:
+                            await line_reply_message(
+                                reply_token,
+                                [{"type": "text", "text": ai_response}],
+                                access_token
+                            )
+                except Exception as e:
+                    print(f"[LINE Webhook] AI reply error: {e}")
+            
+            elif msg_type in ["image", "video", "audio", "file", "sticker"]:
+                # Non-text messages: save as task but don't AI reply
+                task_id = await get_next_id("tasks")
+                now = datetime.utcnow().isoformat()
+                
+                content_desc = f"[{msg_type}]"
+                if msg_type == "sticker":
+                    content_desc = f"[貼圖: {message.get('packageId', '')}/{message.get('stickerId', '')}]"
+                
+                await tasks_col.insert_one({
+                    "task_id": task_id,
+                    "venue_id": venue_id,
+                    "agent_mode": "ai",
+                    "customer_user_id": user_id,
+                    "customer_name": "",
+                    "customer_message": content_desc,
+                    "ai_response": None,
+                    "customer_info": {"source": "line_webhook"},
+                    "customer_stage": "inquiry",
+                    "status": "待處理",
+                    "assigned_manager": None,
+                    "created_at": now,
+                    "cs_updated_at": now,
+                    "notes": None,
+                })
+                print(f"[LINE Webhook] Created task {task_id} for {msg_type} message")
+        
+        elif event_type == "follow":
+            print(f"[LINE Webhook] New follower: {user_id}")
+            # Send welcome message
+            if access_token and reply_token:
+                venue = await venues_col.find_one({"id": venue_id})
+                venue_name = venue.get("name", "我們的場域") if venue else "我們的場域"
+                welcome_msg = f"歡迎來到{venue_name}！🎉\n有任何問題歡迎直接傳訊息，我會盡快為您服務！"
+                await line_reply_message(
+                    reply_token,
+                    [{"type": "text", "text": welcome_msg}],
+                    access_token
+                )
+        
+        elif event_type == "unfollow":
+            print(f"[LINE Webhook] Unfollowed: {user_id}")
+    
+    return {"status": "ok"}
+
+async def generate_ai_reply(venue_id: str, user_id: str, message: str) -> str:
+    """Generate AI reply based on venue knowledge base"""
+    try:
+        api_key = await get_config_value("openai_api_key")
+        if not api_key:
+            print("[AI Reply] No OpenAI API key configured")
+            return ""
+        
+        # Get venue knowledge
+        knowledge_items = await knowledge_col.find({
+            "venue_id": venue_id,
+            "is_active": True
+        }).to_list(50)
+        
+        if not knowledge_items:
+            print(f"[AI Reply] No knowledge for venue {venue_id}")
+            return ""
+        
+        # Build knowledge context
+        knowledge_text = "\n".join([
+            f"【{k.get('title', '')}】{k.get('content', '')}" 
+            for k in knowledge_items
+        ])
+        
+        # Get recent conversation history
+        recent_tasks = await tasks_col.find({
+            "customer_user_id": user_id,
+            "venue_id": venue_id
+        }).sort("created_at", -1).to_list(10)
+        
+        conversation_history = []
+        for t in reversed(recent_tasks):
+            if t.get("customer_message"):
+                conversation_history.append({"role": "user", "content": t["customer_message"]})
+            if t.get("ai_response"):
+                conversation_history.append({"role": "assistant", "content": t["ai_response"]})
+        
+        # Add current message
+        conversation_history.append({"role": "user", "content": message})
+        
+        # Get venue info
+        venue = await venues_col.find_one({"id": venue_id})
+        venue_name = venue.get("name", "場域") if venue else "場域"
+        
+        system_prompt = f"""你是「{venue_name}」的 AI 銷售助手小森，透過 LINE 與客戶對話。
+
+你的知識庫：
+{knowledge_text[:4000]}
+
+對話原則：
+- 友善、專業、簡潔
+- 主動引導客戶了解產品和服務
+- 如果客戶有明確訂房/訂購意願，引導提供：姓名、電話、日期、人數
+- 如果遇到無法回答的問題，告知會請管家協助
+- 回覆使用繁體中文
+- 不要使用 Markdown 格式，直接用純文字回覆
+- 回覆控制在 200 字以內"""
+
+        client_ai = openai.AsyncOpenAI(api_key=api_key)
+        response = await client_ai.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                *conversation_history
+            ],
+            temperature=0.7,
+            max_tokens=500,
+        )
+        
+        reply = response.choices[0].message.content.strip()
+        print(f"[AI Reply] Generated for {venue_id}: {reply[:50]}...")
+        return reply
+        
+    except Exception as e:
+        print(f"[AI Reply] Error: {e}")
+        return ""
+
 
 if __name__ == "__main__":
     import uvicorn
