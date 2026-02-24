@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { Sidebar } from '../components/layout/Sidebar';
 import { Header } from '../components/layout/Header';
@@ -13,6 +13,7 @@ import { Label } from '../components/ui/label';
 import { Badge } from '../components/ui/badge';
 import { ScrollArea } from '../components/ui/scroll-area';
 import { Separator } from '../components/ui/separator';
+import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import {
   Select,
   SelectContent,
@@ -41,7 +42,12 @@ import {
   Mail,
   User,
   Shield,
-  Lock
+  Lock,
+  Camera,
+  Pencil,
+  Check,
+  X,
+  ImagePlus
 } from 'lucide-react';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
