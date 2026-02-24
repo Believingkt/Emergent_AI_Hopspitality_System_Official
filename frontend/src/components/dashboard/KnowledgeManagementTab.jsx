@@ -183,6 +183,14 @@ export const KnowledgeManagementTab = () => {
   const [formData, setFormData] = useState({ title: '', content: '', category: 'other' });
   const [isSubmitting, setIsSubmitting] = useState(false);
   
+  // PDF 上傳狀態
+  const [showPdfDialog, setShowPdfDialog] = useState(false);
+  const [pdfFile, setPdfFile] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadResult, setUploadResult] = useState(null);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const pdfInputRef = useRef(null);
+  
   const venueId = currentVenue?.id || 'sensan_inn';
 
   // 載入知識列表
