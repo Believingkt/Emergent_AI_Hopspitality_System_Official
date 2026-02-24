@@ -25,6 +25,8 @@ async def migrate():
     """Run full data migration from seed_data.json"""
     if await is_migrated():
         print("[Migration] Data already exists, skipping")
+        # Always ensure default passwords are correct
+        await ensure_default_passwords()
         return
 
     if not os.path.exists(SEED_FILE):
