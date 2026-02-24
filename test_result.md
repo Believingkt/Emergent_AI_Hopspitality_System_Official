@@ -225,7 +225,6 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Venue CRUD + Avatar Upload"
     - "訂金金額輸入UI改善"
     - "場域新增功能"
   stuck_tasks: []
