@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "多場域 AI 管家協作平台 - Emergent 自建後端版本。已完成 Step 1：MongoDB 後端 + Notion 配置 + Manus 資料遷移。待開發：LINE Messaging 串接、Notion 知識庫串接。"
+user_problem_statement: "多場域 AI 管家協作平台 - Emergent 自建後端版本。已完成 Step 1：MongoDB 後端 + Notion 配置 + Manus 資料遷移。新需求：1) 改善訂金金額輸入UI避免與對話混淆 2) 新增場域功能（含付費提示、頭貼上傳、名稱編輯、引導設定）"
 
 backend:
   - task: "MongoDB 後端 + 資料遷移"
@@ -141,6 +141,18 @@ backend:
         - agent: "main"
         - comment: "知識庫完整 CRUD + OpenAI AI 萃取 + 批次審核 + 版本管理(P2)"
 
+  - task: "Venue CRUD + Avatar Upload"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: true
+        - agent: "main"
+        - comment: "新增 POST /api/venues (建立場域), PUT /api/venues/{id} (更新名稱), POST /api/venues/{id}/avatar (上傳頭貼), GET /api/venues 返回 avatar_url"
+
   - task: "LINE Messaging 串接"
     implemented: false
     working: "NA"
@@ -178,20 +190,45 @@ frontend:
         - agent: "main"
         - comment: "登入、儀表板(4 tabs)、設定頁面、手機版，全部正常"
 
+  - task: "訂金金額輸入UI改善"
+    implemented: true
+    working: true
+    file: "frontend/src/components/dashboard/HandoffAnalysis.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: true
+        - agent: "main"
+        - comment: "將訂金確認從簡單input+button改為卡片式設計：NT$貨幣前綴、大字體金額輸入、明確標題「確認訂金匯款」、與對話區域完全區隔"
+
+  - task: "場域新增功能"
+    implemented: true
+    working: true
+    file: "frontend/src/components/layout/Header.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: true
+        - agent: "main"
+        - comment: "Header場域選擇器含頭貼+新增按鈕、付費提示Dialog、建立成功引導(3步驟)、設定頁場域名稱編輯+頭貼上傳"
+
 metadata:
   created_by: "main_agent"
-  version: "2.0"
-  test_sequence: 0
+  version: "3.0"
+  test_sequence: 1
   run_ui: false
 
 test_plan:
   current_focus:
-    - "LINE Messaging 串接"
-    - "Notion 知識庫串接"
+    - "Venue CRUD + Avatar Upload"
+    - "訂金金額輸入UI改善"
+    - "場域新增功能"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
 agent_communication:
     - agent: "main"
-    - message: "Step 1 完成。後端已從 mock 升級為 MongoDB 真實後端。Notion 配置載入正常。資料已從 Manus 遷移。下一步：Step 2 LINE 串接、Step 3 Notion 串接。"
+    - message: "新增了3個功能：1) Venue CRUD API (POST/PUT/avatar upload) 2) 訂金輸入UI卡片式重設計 3) Header場域選擇器含頭貼+新增+引導+設定頁編輯。請測試後端新增的 venue CRUD API endpoints。登入帳號: kenneth@lakeze.com / lakeze2026"
