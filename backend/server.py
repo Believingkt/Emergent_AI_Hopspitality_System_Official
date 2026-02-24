@@ -57,7 +57,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-JWT_SECRET = os.environ.get("JWT_SECRET", "lakeze-secret-key-2025-secure")
+JWT_SECRET = os.environ.get("JWT_SECRET")
+if not JWT_SECRET:
+    raise ValueError("JWT_SECRET environment variable is required")
 JWT_ALGORITHM = "HS256"
 
 # ============ Startup ============
