@@ -162,11 +162,14 @@ backend:
     file: "backend/server.py, frontend/src/components/dashboard/KnowledgeManagementTab.jsx"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: true
         - agent: "main"
         - comment: "新增 POST /api/venues/{id}/knowledge/upload-pdf (PDF解析+AI分類), 前端新增「上傳PDF」按鈕含拖曳上傳Dialog, 空白知識庫引導頁面含兩大入口(PDF/手動)"
+        - working: true
+        - agent: "testing"
+        - comment: "✅ PDF知識上傳API完整測試通過 - POST /api/venues/sensan_inn/knowledge/upload-pdf 成功上傳測試PDF並正確提取知識項目。響應包含所需字段：success, batch_id, filename, total_extracted, knowledge_items。AI智能分類正常運作，知識項目正確標記為source_type='pdf'。錯誤處理正確：非PDF檔案和空檔案均正確拒絕(400錯誤)。上傳的知識正確出現在GET /api/venues/sensan_inn/knowledge端點中。OpenAI整合正常，從Notion載入5組API金鑰。"
 
   - task: "LINE Messaging 串接"
     implemented: false
