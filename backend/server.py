@@ -600,8 +600,20 @@ async def reply_task(task_id: int, body: TaskReply, user: dict = Depends(get_cur
     if not task:
         raise HTTPException(404, "任務不存在")
 
-    # TODO: Send LINE message to customer via LINE Messaging API (Step 2)
     customer_uid = task.get("customer_user_id")
+    venue_id = task.get("venue_id")
+    
+    # Send LINE message to customer
+    line_sent = False
+    if customer_uid and venue_id:
+        creds = await get_line_credentials_for_venue(venue_id)
+        access_token = creds.get("channel_access_token", "")
+        if access_token:
+            line_sent = await line_push_message(
+                customer_uid,
+                [{"type": "text", "text": body.message}],
+                access_token
+            )
 
     await tasks_col.update_one(
         {"task_id": task_id},
@@ -612,7 +624,12 @@ async def reply_task(task_id: int, body: TaskReply, user: dict = Depends(get_cur
         }}
     )
 
-    return {"success": True, "message": "回覆已發送", "task_id": task_id}
+    return {
+        "success": True, 
+        "message": "回覆已發送" if line_sent else "回覆已記錄（LINE 發送未成功）",
+        "task_id": task_id,
+        "line_sent": line_sent
+    }
 
 # ============ Knowledge CRUD ============
 
