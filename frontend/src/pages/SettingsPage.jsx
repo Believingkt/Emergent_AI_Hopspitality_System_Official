@@ -101,10 +101,53 @@ export default function SettingsPage() {
   // Fetch venue config when selected
   const handleVenueSelect = async (venue) => {
     setSelectedVenue(venue);
+    setVenueName(venue.name || '');
+    setEditingName(false);
     setConfigLoading(true);
     const config = await getVenueConfig(venue.id);
     setVenueConfig(config);
     setConfigLoading(false);
+  };
+
+  // Save venue name
+  const handleSaveName = async () => {
+    if (!selectedVenue || !venueName.trim()) return;
+    setSavingName(true);
+    const result = await updateVenue(selectedVenue.id, { name: venueName.trim() });
+    if (result.success) {
+      toast.success('場域名稱已更新');
+      setSelectedVenue(prev => ({ ...prev, name: venueName.trim() }));
+      setEditingName(false);
+      await fetchVenues();
+    } else {
+      toast.error(result.error);
+    }
+    setSavingName(false);
+  };
+
+  // Handle avatar upload
+  const handleAvatarUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedVenue) return;
+    
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('圖片大小不能超過 5MB');
+      return;
+    }
+    
+    setUploadingAvatar(true);
+    const result = await uploadAvatar(selectedVenue.id, file);
+    if (result.success) {
+      toast.success('場域頭貼已更新');
+      setSelectedVenue(prev => ({ ...prev, avatar_url: result.avatar_url }));
+      await fetchVenues();
+    } else {
+      toast.error(result.error);
+    }
+    setUploadingAvatar(false);
+    // Reset input
+    if (avatarInputRef.current) avatarInputRef.current.value = '';
   };
 
   // Save venue config
