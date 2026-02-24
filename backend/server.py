@@ -1422,28 +1422,64 @@ async def line_webhook(venue_id: str, request: Request):
             if msg_type == "text" and msg_text:
                 print(f"[LINE Webhook] Message from {user_id}: {msg_text[:50]}...")
                 
+                # Handle ##reset command
+                if msg_text.strip() == "##reset":
+                    deleted = await tasks_col.delete_many({
+                        "customer_user_id": user_id,
+                        "venue_id": venue_id
+                    })
+                    print(f"[LINE Webhook] Reset: deleted {deleted.deleted_count} tasks for {user_id}")
+                    
+                    if access_token and reply_token:
+                        await line_reply_message(
+                            reply_token,
+                            [{"type": "text", "text": "對話已重置！所有對話記錄和記憶已清除。\n請重新開始您的對話 😊"}],
+                            access_token
+                        )
+                    continue
+                
                 # Get user profile
                 profile = await line_get_profile(user_id, access_token) if access_token else {}
                 display_name = profile.get("displayName", "")
                 
+                # Preserve existing customer_stage (don't reset payment/confirming back to inquiry)
+                existing_stage = "inquiry"
+                existing_tasks = await tasks_col.find({
+                    "customer_user_id": user_id,
+                    "venue_id": venue_id
+                }).sort("created_at", -1).to_list(1)
+                
+                if existing_tasks:
+                    prev_stage = existing_tasks[0].get("customer_stage")
+                    if prev_stage in ["payment", "confirming"]:
+                        existing_stage = prev_stage
+                
+                # Also preserve customer_info from previous tasks
+                existing_info = {}
+                if existing_tasks:
+                    existing_info = existing_tasks[0].get("customer_info") or {}
+                
                 # Create task in database
                 task_id = await get_next_id("tasks")
                 now = datetime.utcnow().isoformat()
+                
+                customer_info = {
+                    **existing_info,
+                    "customer_name": display_name or existing_info.get("customer_name", ""),
+                    "line_user_id": user_id,
+                    "source": "line_webhook",
+                }
                 
                 task_doc = {
                     "task_id": task_id,
                     "venue_id": venue_id,
                     "agent_mode": "ai",
                     "customer_user_id": user_id,
-                    "customer_name": display_name,
+                    "customer_name": display_name or (existing_info.get("customer_name", "")),
                     "customer_message": msg_text,
                     "ai_response": None,
-                    "customer_info": {
-                        "customer_name": display_name,
-                        "line_user_id": user_id,
-                        "source": "line_webhook",
-                    },
-                    "customer_stage": "inquiry",
+                    "customer_info": customer_info,
+                    "customer_stage": existing_stage,
                     "status": "待處理",
                     "assigned_manager": None,
                     "claimed_at": None,
@@ -1455,7 +1491,7 @@ async def line_webhook(venue_id: str, request: Request):
                 }
                 
                 await tasks_col.insert_one(task_doc)
-                print(f"[LINE Webhook] Created task {task_id} for {display_name or user_id}")
+                print(f"[LINE Webhook] Created task {task_id} for {display_name or user_id} (stage={existing_stage})")
                 
                 # Try AI response using knowledge base
                 try:
@@ -1478,7 +1514,17 @@ async def line_webhook(venue_id: str, request: Request):
                     print(f"[LINE Webhook] AI reply error: {e}")
             
             elif msg_type in ["image", "video", "audio", "file", "sticker"]:
-                # Non-text messages: save as task but don't AI reply
+                # Non-text messages: preserve stage
+                existing_stage = "inquiry"
+                existing_tasks = await tasks_col.find({
+                    "customer_user_id": user_id,
+                    "venue_id": venue_id
+                }).sort("created_at", -1).to_list(1)
+                if existing_tasks:
+                    prev_stage = existing_tasks[0].get("customer_stage")
+                    if prev_stage in ["payment", "confirming"]:
+                        existing_stage = prev_stage
+                
                 task_id = await get_next_id("tasks")
                 now = datetime.utcnow().isoformat()
                 
@@ -1495,14 +1541,14 @@ async def line_webhook(venue_id: str, request: Request):
                     "customer_message": content_desc,
                     "ai_response": None,
                     "customer_info": {"source": "line_webhook"},
-                    "customer_stage": "inquiry",
+                    "customer_stage": existing_stage,
                     "status": "待處理",
                     "assigned_manager": None,
                     "created_at": now,
                     "cs_updated_at": now,
                     "notes": None,
                 })
-                print(f"[LINE Webhook] Created task {task_id} for {msg_type} message")
+                print(f"[LINE Webhook] Created task {task_id} for {msg_type} message (stage={existing_stage})")
         
         elif event_type == "follow":
             print(f"[LINE Webhook] New follower: {user_id}")
