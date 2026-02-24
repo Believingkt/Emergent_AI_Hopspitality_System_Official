@@ -156,6 +156,18 @@ backend:
         - agent: "testing"
         - comment: "✅ 完整測試通過 - 所有 Venue CRUD API 正常工作: 登入驗證、場域取得、新增場域(預設名稱'新場域')、更新名稱描述、頭貼上傳(/api/uploads/)、avatar_url 正確返回。其他 API 如 Knowledge CRUD、Tasks 群組查詢也正常。共27項測試全通過。"
 
+  - task: "Knowledge PDF Upload + Empty State Onboarding"
+    implemented: true
+    working: true
+    file: "backend/server.py, frontend/src/components/dashboard/KnowledgeManagementTab.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: true
+        - agent: "main"
+        - comment: "新增 POST /api/venues/{id}/knowledge/upload-pdf (PDF解析+AI分類), 前端新增「上傳PDF」按鈕含拖曳上傳Dialog, 空白知識庫引導頁面含兩大入口(PDF/手動)"
+
   - task: "LINE Messaging 串接"
     implemented: false
     working: "NA"
