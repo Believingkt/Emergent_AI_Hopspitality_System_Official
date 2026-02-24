@@ -560,6 +560,70 @@ export const KnowledgeManagementTab = () => {
           <Loader2 className="w-10 h-10 animate-spin text-[#FF6B35]" />
           <p className="text-[#8b949e]">正在載入知識庫...</p>
         </div>
+      ) : filteredKnowledge.length === 0 && !searchQuery && statusFilter === 'active' && categoryFilter === 'all' ? (
+        /* 空白狀態引導 */
+        <div className="bg-gradient-to-br from-[#0d1117] to-[#18181b] rounded-2xl border-2 border-[#27272a] p-8">
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#22c55e] to-[#00B4D8] flex items-center justify-center mx-auto mb-4">
+              <BookOpen className="w-8 h-8 text-white" />
+            </div>
+            <h3 className="text-2xl font-bold text-white mb-2">建立你的 AI 知識庫</h3>
+            <p className="text-[#8b949e] max-w-md mx-auto">
+              讓 AI 了解你的場域資訊，才能幫你精準接單。先簡單上傳，後續再慢慢完善！
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto mb-8">
+            {/* 上傳 PDF */}
+            <div 
+              onClick={() => { setPdfFile(null); setUploadResult(null); setShowPdfDialog(true); }}
+              className="group cursor-pointer bg-[#8B5CF6]/5 border-2 border-dashed border-[#8B5CF6]/30 rounded-2xl p-6 hover:border-[#8B5CF6] hover:bg-[#8B5CF6]/10 transition-all duration-300 text-center"
+            >
+              <div className="w-14 h-14 rounded-xl bg-[#8B5CF6]/15 flex items-center justify-center mx-auto mb-4 group-hover:bg-[#8B5CF6]/25 transition-colors">
+                <FileUp className="w-7 h-7 text-[#8B5CF6]" />
+              </div>
+              <h4 className="text-white font-bold text-lg mb-1">上傳 PDF 檔案</h4>
+              <p className="text-[#8b949e] text-sm mb-3">
+                上傳場域簡介、價目表、<br/>規則說明等現有文件
+              </p>
+              <Badge className="bg-[#8B5CF6]/15 text-[#8B5CF6] border-0 text-xs">
+                <Sparkles className="w-3 h-3 mr-1" />
+                AI 自動整理分類
+              </Badge>
+            </div>
+
+            {/* 手動新增 */}
+            <div 
+              onClick={() => { setFormData({ title: '', content: '', category: 'other' }); setShowAddDialog(true); }}
+              className="group cursor-pointer bg-[#22c55e]/5 border-2 border-dashed border-[#22c55e]/30 rounded-2xl p-6 hover:border-[#22c55e] hover:bg-[#22c55e]/10 transition-all duration-300 text-center"
+            >
+              <div className="w-14 h-14 rounded-xl bg-[#22c55e]/15 flex items-center justify-center mx-auto mb-4 group-hover:bg-[#22c55e]/25 transition-colors">
+                <Pencil className="w-7 h-7 text-[#22c55e]" />
+              </div>
+              <h4 className="text-white font-bold text-lg mb-1">手動新增知識</h4>
+              <p className="text-[#8b949e] text-sm mb-3">
+                逐條輸入場域資訊，<br/>精確控制每一條知識
+              </p>
+              <Badge className="bg-[#22c55e]/15 text-[#22c55e] border-0 text-xs">
+                <CheckCircle2 className="w-3 h-3 mr-1" />
+                即時生效
+              </Badge>
+            </div>
+          </div>
+
+          {/* 提示 */}
+          <div className="bg-[#FF6B35]/5 border border-[#FF6B35]/20 rounded-xl p-4 max-w-2xl mx-auto">
+            <div className="flex items-start gap-3">
+              <Lightbulb className="w-5 h-5 text-[#FF6B35] flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-[#FF6B35] font-medium text-sm">快速上手建議</p>
+                <p className="text-[#8b949e] text-xs mt-1">
+                  建議先上傳現有的場域資料（如官網資訊、價目表 PDF），AI 會自動整理成知識條目。之後可以隨時編輯、補充，讓 AI 越來越懂你的場域！
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
       ) : filteredKnowledge.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-64 space-y-4 bg-[#0d1117] rounded-2xl border-2 border-[#27272a]">
           <BookOpen className="w-16 h-16 text-[#27272a]" />
