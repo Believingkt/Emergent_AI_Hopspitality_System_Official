@@ -251,3 +251,5 @@ agent_communication:
     - message: "新增 PDF 知識上傳功能(含AI智能分類)和空白知識庫引導。後端: POST /api/venues/{id}/knowledge/upload-pdf。前端: 上傳PDF按鈕+拖曳Dialog+空白引導頁。登入: kenneth@lakeze.com / lakeze2026"
     - agent: "testing"
     - message: "✅ 後端測試完成 - 所有27項測試通過: Venue CRUD APIs (建立/更新/頭貼上傳)、認證、Knowledge管理、Tasks查詢 全部正常運作。系統穩定無重大問題。"
+    - agent: "testing"
+    - message: "✅ PDF上傳API完整驗證完成 - 47項測試全部通過。重點驗證: POST /api/venues/sensan_inn/knowledge/upload-pdf 成功上傳PDF並提取知識, AI分類正常, 錯誤處理正確, OpenAI整合穩定。現有API(health, venues CRUD, auth, knowledge, tasks)全部正常運作。系統已就緒!"
