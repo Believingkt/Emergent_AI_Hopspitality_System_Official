@@ -42,6 +42,13 @@ from migrate import migrate
 
 app = FastAPI(title="Lakeze 多場域 AI 管家協作平台")
 
+# Ensure uploads directory exists
+UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "uploads")
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+# Mount static files for uploads
+app.mount("/api/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
