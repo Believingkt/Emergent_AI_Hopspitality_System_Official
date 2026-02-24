@@ -21,6 +21,51 @@ async def is_migrated() -> bool:
     return count > 0
 
 
+async def ensure_default_passwords():
+    """Ensure default user accounts have correct password hashes.
+    This runs on every startup to fix any corrupted password hashes."""
+    
+    if not os.path.exists(SEED_FILE):
+        return
+    
+    with open(SEED_FILE, "r") as f:
+        data = json.load(f)
+    
+    users = data.get("users", [])
+    for u in users:
+        email = u["email"]
+        password = u["password"]
+        
+        user = await users_col.find_one({"email": email})
+        if not user:
+            # User doesn't exist, create it
+            await users_col.insert_one({
+                "email": email,
+                "name": u["name"],
+                "password_hash": hash_password(password),
+                "role": u["role"],
+                "created_at": datetime.utcnow().isoformat()
+            })
+            print(f"[Password] Created user: {email}")
+            continue
+        
+        # Verify current password hash works
+        current_hash = user.get("password_hash", "")
+        try:
+            if current_hash and bcrypt.checkpw(password.encode(), current_hash.encode()):
+                continue  # Password is correct, skip
+        except Exception:
+            pass  # Hash is corrupted, will be reset below
+        
+        # Password hash is missing or corrupted, reset it
+        new_hash = hash_password(password)
+        await users_col.update_one(
+            {"email": email},
+            {"$set": {"password_hash": new_hash}}
+        )
+        print(f"[Password] Fixed password hash for: {email}")
+
+
 async def migrate():
     """Run full data migration from seed_data.json"""
     if await is_migrated():
