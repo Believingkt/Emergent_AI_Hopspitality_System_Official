@@ -147,11 +147,14 @@ backend:
     file: "backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: true
         - agent: "main"
         - comment: "新增 POST /api/venues (建立場域), PUT /api/venues/{id} (更新名稱), POST /api/venues/{id}/avatar (上傳頭貼), GET /api/venues 返回 avatar_url"
+        - working: true
+        - agent: "testing"
+        - comment: "✅ 完整測試通過 - 所有 Venue CRUD API 正常工作: 登入驗證、場域取得、新增場域(預設名稱'新場域')、更新名稱描述、頭貼上傳(/api/uploads/)、avatar_url 正確返回。其他 API 如 Knowledge CRUD、Tasks 群組查詢也正常。共27項測試全通過。"
 
   - task: "LINE Messaging 串接"
     implemented: false
