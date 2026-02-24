@@ -2,45 +2,63 @@
 import os
 import re
 from motor.motor_asyncio import AsyncIOMotorClient
-from urllib.parse import urlparse
 
 MONGO_URL = os.environ.get("MONGO_URL", "mongodb://localhost:27017")
 
 def _resolve_db_name(url):
     """Determine the correct database name from MONGO_URL.
-    For Emergent Atlas deployments, use the database from the connection string.
-    For local development, fall back to DB_NAME env var."""
     
-    # Check if this is an Atlas/cloud connection
-    is_atlas = "mongodb.net" in url or "mongodb+srv" in url
+    Priority:
+    1. Database name from URL path (e.g., mongodb+srv://user:pass@host/DBNAME)
+    2. appName parameter AS-IS (no transformation)
+    3. Username from URL AS-IS (for Atlas)
+    4. DB_NAME environment variable
+    5. Default fallback
+    """
     
-    # Method 1: Extract DB name from URL path (mongodb://host/DATABASE)
+    # Method 1: Extract DB name from URL path (mongodb://host/DATABASE?params)
     match = re.search(r'mongodb(?:\+srv)?://[^/]+/([^?/]+)', url)
     if match and match.group(1).strip():
         db_name = match.group(1).strip()
         print(f"[Database] Using DB from URL path: {db_name}")
         return db_name
     
-    # Method 2: For local/dev - use DB_NAME env var
+    # Method 2: Use appName parameter AS-IS (common in Emergent Atlas URLs)
+    match = re.search(r'appName=([^&]+)', url)
+    if match and match.group(1).strip():
+        db_name = match.group(1).strip()
+        print(f"[Database] Using DB from appName: {db_name}")
+        return db_name
+    
+    # Method 3: Use username from Atlas URL AS-IS
+    if "mongodb.net" in url or "mongodb+srv" in url:
+        match = re.search(r'mongodb(?:\+srv)?://([^:]+):', url)
+        if match and match.group(1).strip():
+            db_name = match.group(1).strip()
+            print(f"[Database] Using DB from Atlas username: {db_name}")
+            return db_name
+    
+    # Method 4: DB_NAME env var (for local development)
     db_name = os.environ.get("DB_NAME", "")
     if db_name and db_name != "test_database":
         print(f"[Database] Using DB from env: {db_name}")
         return db_name
     
-    # Method 3: Default fallback
+    # Method 5: Default fallback
     fallback = "lakeze_platform"
     print(f"[Database] Using default DB: {fallback}")
     return fallback
 
-DB_NAME = _resolve_db_name(MONGO_URL)
+
 client = AsyncIOMotorClient(MONGO_URL)
 
-# For Atlas connections, try to use the default database from connection string first
+# Resolve database: try get_default_database first, then manual resolution
 try:
     db = client.get_default_database()
     DB_NAME = db.name
     print(f"[Database] Connected to default database: {DB_NAME}")
 except Exception:
+    DB_NAME = _resolve_db_name(MONGO_URL)
     db = client[DB_NAME]
     print(f"[Database] Connected to database: {DB_NAME}")
 
