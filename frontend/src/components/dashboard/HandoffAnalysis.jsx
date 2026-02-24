@@ -274,29 +274,55 @@ const CustomerCard = ({ customer, token, onRefresh, showPaymentActions = false, 
           {/* 操作區 */}
           {!isPaidView && (
             <div className="p-4 border-t border-[#27272a] space-y-3">
-              {/* 確認匯款按鈕 */}
+              {/* 確認匯款區塊 - 獨立卡片式設計 */}
               {showPaymentActions && !customer.payment_confirmed && (
-                <div className="bg-[#22c55e]/5 rounded-xl p-4 border border-[#22c55e]/20">
-                  <div className="flex items-center gap-2 mb-3">
-                    <DollarSign className="w-4 h-4 text-[#22c55e]" />
-                    <span className="text-[#22c55e] text-sm font-semibold">確認匯款</span>
+                <div className="bg-gradient-to-br from-[#0a1a10] to-[#0d1117] rounded-2xl p-5 border-2 border-[#22c55e]/30 shadow-lg shadow-[#22c55e]/5">
+                  {/* 標題列 */}
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-[#22c55e] flex items-center justify-center">
+                        <Banknote className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <h4 className="text-white font-bold text-base">確認訂金匯款</h4>
+                        <p className="text-[#8b949e] text-xs">請輸入客戶實際匯款的訂金金額</p>
+                      </div>
+                    </div>
+                    <Badge className="bg-[#22c55e]/15 text-[#22c55e] border-0 text-xs px-3 py-1">
+                      <DollarSign className="w-3 h-3 mr-1" />
+                      待確認
+                    </Badge>
                   </div>
-                  <div className="flex gap-2">
-                    <input
-                      type="number"
-                      placeholder="輸入匯款金額"
-                      value={paymentAmount}
-                      onChange={(e) => setPaymentAmount(e.target.value)}
-                      className="flex-1 bg-[#0d1117] border border-[#27272a] rounded-lg px-3 py-2 text-white text-sm placeholder:text-[#52525b] focus:border-[#22c55e] outline-none"
-                    />
-                    <Button
-                      onClick={handleConfirmPayment}
-                      disabled={isConfirmingPayment}
-                      className="bg-[#22c55e] hover:bg-[#16a34a] text-white"
-                    >
-                      {isConfirmingPayment ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-1" />}
-                      確認收到
-                    </Button>
+
+                  {/* 金額輸入區 */}
+                  <div className="bg-[#0d1117] rounded-xl border border-[#27272a] p-4">
+                    <label className="text-[#8b949e] text-xs font-medium mb-2 block">訂金金額</label>
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center flex-1 bg-[#161b22] border-2 border-[#27272a] rounded-xl overflow-hidden focus-within:border-[#22c55e] transition-colors">
+                        <span className="text-[#22c55e] font-bold text-lg px-4 py-3 bg-[#22c55e]/10 border-r border-[#27272a]">NT$</span>
+                        <input
+                          type="number"
+                          placeholder="0"
+                          value={paymentAmount}
+                          onChange={(e) => setPaymentAmount(e.target.value)}
+                          className="flex-1 bg-transparent px-4 py-3 text-white text-xl font-bold placeholder:text-[#3f3f46] outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        />
+                      </div>
+                      <Button
+                        onClick={handleConfirmPayment}
+                        disabled={isConfirmingPayment || !paymentAmount}
+                        className="bg-[#22c55e] hover:bg-[#16a34a] text-white font-bold px-6 py-3 h-auto rounded-xl shadow-lg shadow-[#22c55e]/20 disabled:opacity-40 disabled:shadow-none transition-all"
+                      >
+                        {isConfirmingPayment ? (
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                        ) : (
+                          <>
+                            <CheckCircle2 className="w-5 h-5 mr-2" />
+                            確認收款
+                          </>
+                        )}
+                      </Button>
+                    </div>
                   </div>
                 </div>
               )}
