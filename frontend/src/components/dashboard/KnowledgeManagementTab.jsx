@@ -849,6 +849,147 @@ export const KnowledgeManagementTab = () => {
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* PDF 上傳對話框 */}
+      <Dialog open={showPdfDialog} onOpenChange={(open) => { if (!isUploading) { setShowPdfDialog(open); setPdfFile(null); setUploadResult(null); } }}>
+        <DialogContent className="bg-[#18181b] border-[#27272a] text-white max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileUp className="w-5 h-5 text-[#8B5CF6]" />
+              上傳 PDF 知識文件
+            </DialogTitle>
+            <DialogDescription className="text-[#8b949e]">
+              上傳場域相關的 PDF 文件，AI 會自動擷取並分類知識
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-4">
+            {!uploadResult ? (
+              <div className="space-y-4">
+                {/* 拖曳上傳區 */}
+                <div
+                  onDrop={handleDrop}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onClick={() => !isUploading && pdfInputRef.current?.click()}
+                  className={`relative border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all duration-300 ${
+                    isDragOver 
+                      ? 'border-[#8B5CF6] bg-[#8B5CF6]/10' 
+                      : isUploading
+                        ? 'border-[#FF6B35]/50 bg-[#FF6B35]/5 cursor-wait'
+                        : pdfFile
+                          ? 'border-[#22c55e]/50 bg-[#22c55e]/5'
+                          : 'border-[#27272a] hover:border-[#8B5CF6]/50 hover:bg-[#8B5CF6]/5'
+                  }`}
+                >
+                  <input
+                    ref={pdfInputRef}
+                    type="file"
+                    accept="application/pdf"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handlePdfUpload(file);
+                    }}
+                  />
+                  
+                  {isUploading ? (
+                    <div className="space-y-3">
+                      <Loader2 className="w-10 h-10 animate-spin text-[#FF6B35] mx-auto" />
+                      <p className="text-white font-medium">AI 正在分析文件內容...</p>
+                      <p className="text-[#8b949e] text-sm">解析 PDF → 提取知識 → 智能分類</p>
+                      <div className="w-48 h-2 bg-[#27272a] rounded-full mx-auto overflow-hidden">
+                        <div className="h-full bg-gradient-to-r from-[#FF6B35] to-[#8B5CF6] rounded-full animate-pulse" style={{width: '60%'}} />
+                      </div>
+                    </div>
+                  ) : pdfFile ? (
+                    <div className="space-y-2">
+                      <FileText className="w-10 h-10 text-[#22c55e] mx-auto" />
+                      <p className="text-white font-medium">{pdfFile.name}</p>
+                      <p className="text-[#8b949e] text-sm">{(pdfFile.size / 1024).toFixed(0)} KB</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <Upload className="w-10 h-10 text-[#8b949e] mx-auto" />
+                      <div>
+                        <p className="text-white font-medium">拖曳 PDF 檔案到此處</p>
+                        <p className="text-[#8b949e] text-sm mt-1">或點擊選擇檔案（最大 10MB）</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                {/* 支援說明 */}
+                <div className="bg-[#0d1117] rounded-xl p-3 space-y-1.5">
+                  <p className="text-[#8b949e] text-xs font-medium">適合上傳的文件：</p>
+                  <div className="flex flex-wrap gap-2">
+                    {['價目表', '場域簡介', '房型說明', '注意事項', '交通指南', '餐飲菜單'].map(item => (
+                      <span key={item} className="text-xs bg-[#27272a] text-[#a1a1aa] px-2 py-1 rounded-md">{item}</span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : uploadResult.error ? (
+              /* 上傳失敗 */
+              <div className="text-center space-y-4 py-4">
+                <div className="w-14 h-14 rounded-full bg-red-500/15 flex items-center justify-center mx-auto">
+                  <XCircle className="w-7 h-7 text-red-400" />
+                </div>
+                <div>
+                  <p className="text-white font-medium">上傳失敗</p>
+                  <p className="text-[#8b949e] text-sm mt-1">{uploadResult.error}</p>
+                </div>
+                <Button
+                  onClick={() => { setPdfFile(null); setUploadResult(null); }}
+                  variant="outline"
+                  className="border-[#27272a] text-[#8b949e] hover:text-white"
+                >
+                  重新上傳
+                </Button>
+              </div>
+            ) : (
+              /* 上傳成功 */
+              <div className="space-y-4 py-2">
+                <div className="text-center">
+                  <div className="w-14 h-14 rounded-full bg-[#22c55e]/15 flex items-center justify-center mx-auto mb-3">
+                    <CheckCircle2 className="w-7 h-7 text-[#22c55e]" />
+                  </div>
+                  <p className="text-white font-bold text-lg">匯入完成！</p>
+                  <p className="text-[#8b949e] text-sm mt-1">
+                    從 <span className="text-white">{uploadResult.filename}</span> 中成功提取
+                  </p>
+                </div>
+                
+                <div className="bg-[#22c55e]/5 border border-[#22c55e]/20 rounded-xl p-4 text-center">
+                  <p className="text-[#22c55e] text-3xl font-bold">{uploadResult.total_extracted}</p>
+                  <p className="text-[#8b949e] text-sm">條知識已自動生效</p>
+                </div>
+
+                <div className="bg-[#0d1117] rounded-xl p-3">
+                  <div className="flex items-start gap-2">
+                    <Lightbulb className="w-4 h-4 text-[#FF6B35] flex-shrink-0 mt-0.5" />
+                    <p className="text-[#8b949e] text-xs">
+                      這些知識已自動生效，AI 下次對話時會使用。你可以隨時在知識列表中編輯或調整分類。
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+          
+          {uploadResult && !uploadResult.error && (
+            <DialogFooter>
+              <Button
+                onClick={() => { setShowPdfDialog(false); setPdfFile(null); setUploadResult(null); }}
+                className="w-full bg-[#22c55e] hover:bg-[#16a34a] text-white"
+              >
+                <CheckCircle2 className="w-4 h-4 mr-2" />
+                完成
+              </Button>
+            </DialogFooter>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* Footer Note */}
       <div className="flex items-center gap-2 text-xs text-[#52525b]">
         <AlertTriangle className="w-3 h-3" />
