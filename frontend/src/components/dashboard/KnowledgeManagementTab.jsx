@@ -345,6 +345,68 @@ export const KnowledgeManagementTab = () => {
     setShowDeleteDialog(true);
   };
 
+  // PDF 上傳處理
+  const handlePdfUpload = async (file) => {
+    if (!file) return;
+    if (file.type !== 'application/pdf') {
+      toast.error('只支援 PDF 格式的檔案');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('檔案大小不能超過 10MB');
+      return;
+    }
+    
+    setPdfFile(file);
+    setIsUploading(true);
+    setUploadResult(null);
+    
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const response = await axios.post(
+        `${API_URL}/api/venues/${venueId}/knowledge/upload-pdf`,
+        formData,
+        { 
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data'
+          },
+          timeout: 60000
+        }
+      );
+      
+      setUploadResult(response.data);
+      toast.success(`成功從 PDF 提取 ${response.data.total_extracted} 條知識！`);
+      fetchKnowledge();
+      fetchStats();
+    } catch (err) {
+      const errMsg = err.response?.data?.detail || '上傳失敗，請稍後再試';
+      toast.error(errMsg);
+      setUploadResult({ error: errMsg });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleDrop = useCallback((e) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) handlePdfUpload(file);
+  }, [venueId, token]);
+
+  const handleDragOver = useCallback((e) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  }, []);
+
   // 過濾後的知識列表
   const filteredKnowledge = knowledge.filter(item => {
     if (searchQuery) {
