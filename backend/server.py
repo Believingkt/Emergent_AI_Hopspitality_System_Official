@@ -759,6 +759,169 @@ async def extract_knowledge(venue_id: str, body: ExtractRequest, user: dict = De
         }})
         raise HTTPException(500, f"AI 提取失敗: {str(e)}")
 
+# ============ Knowledge PDF Upload ============
+
+@app.post("/api/venues/{venue_id}/knowledge/upload-pdf")
+async def upload_pdf_knowledge(venue_id: str, file: UploadFile = File(...), user: dict = Depends(get_current_user)):
+    """Upload a PDF file, extract text, and use AI to create knowledge entries"""
+    import pdfplumber
+    import io
+    
+    # Validate file type
+    if file.content_type not in ["application/pdf"]:
+        raise HTTPException(400, "只支援 PDF 格式的檔案")
+    
+    # Validate file size (max 10MB)
+    contents = await file.read()
+    if len(contents) > 10 * 1024 * 1024:
+        raise HTTPException(400, "檔案大小不能超過 10MB")
+    
+    # Extract text from PDF
+    try:
+        pdf_text = ""
+        with pdfplumber.open(io.BytesIO(contents)) as pdf:
+            for page in pdf.pages:
+                page_text = page.extract_text()
+                if page_text:
+                    pdf_text += page_text + "\n\n"
+        
+        if not pdf_text.strip():
+            raise HTTPException(400, "無法從 PDF 中擷取文字，可能是掃描檔或圖片 PDF")
+        
+        # Truncate if too long (keep first ~8000 chars for API limits)
+        if len(pdf_text) > 8000:
+            pdf_text = pdf_text[:8000] + "\n\n[...文件內容已截斷，建議分批上傳]"
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(400, f"PDF 解析失敗: {str(e)}")
+    
+    # Save original file
+    ext = file.filename.split(".")[-1] if "." in file.filename else "pdf"
+    saved_filename = f"knowledge_{venue_id}_{uuid.uuid4().hex[:8]}.{ext}"
+    saved_path = os.path.join(UPLOAD_DIR, saved_filename)
+    with open(saved_path, "wb") as f:
+        f.write(contents)
+    
+    # Create batch record
+    batch_id = await get_next_id("knowledge_batches")
+    now = datetime.utcnow().isoformat()
+    batch_doc = {
+        "id": batch_id,
+        "venue_id": venue_id,
+        "source_type": "pdf",
+        "source_filename": file.filename,
+        "status": "processing",
+        "total_extracted": 0,
+        "total_approved": 0,
+        "pending_count": 0,
+        "rejected_count": 0,
+        "created_by": user["email"],
+        "error_message": None,
+        "created_at": now,
+        "completed_at": None,
+        "original_content": pdf_text[:2000],
+    }
+    await batches_col.insert_one(batch_doc)
+    
+    # AI extraction
+    try:
+        api_key = await get_config_value("openai_api_key")
+        if not api_key:
+            raise Exception("OpenAI API key not configured. 請先在設定中配置 API Key。")
+        
+        client = openai.AsyncOpenAI(api_key=api_key)
+        
+        system_prompt = """你是一個專業的知識提取助手。請從以下 PDF 文件內容中提取獨立的知識點。
+
+每個知識點需包含：
+- title: 簡短標題（10-20字）
+- content: 完整內容（保留重要細節，用通順的中文描述）
+- category: 分類，必須是以下之一：pricing（價格）、facility（設施）、rules（規則）、dining（餐飲）、service（服務）、location（交通位置）、other（其他）
+
+注意：
+- 把零散的資訊整理成有意義的知識條目
+- 每個知識點要完整獨立，不要互相依賴
+- 去除無關的頁首頁尾、頁碼等雜訊
+- 保留具體的數字、價格、時間等重要資訊
+
+回傳 JSON 陣列格式，例如：
+[{"title": "...", "content": "...", "category": "pricing"}]
+
+只回傳 JSON，不要其他文字。"""
+        
+        response = await client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": f"以下是 PDF 文件「{file.filename}」的內容：\n\n{pdf_text}"}
+            ],
+            temperature=0.3,
+            max_tokens=4000,
+        )
+        
+        result_text = response.choices[0].message.content.strip()
+        if result_text.startswith("```"):
+            result_text = result_text.split("```")[1]
+            if result_text.startswith("json"):
+                result_text = result_text[4:]
+        extracted = json.loads(result_text)
+        
+        # Save extracted knowledge
+        created_items = []
+        for item in extracted:
+            kid = await get_next_id("knowledge")
+            doc = {
+                "id": kid,
+                "venue_id": venue_id,
+                "title": item.get("title", ""),
+                "content": item.get("content", ""),
+                "category": item.get("category", "other"),
+                "source_type": "pdf",
+                "source_filename": file.filename,
+                "status": "approved",
+                "is_active": True,
+                "ai_confidence": 0.85,
+                "batch_id": batch_id,
+                "created_at": now,
+                "updated_at": now,
+            }
+            await knowledge_col.insert_one(doc)
+            created_items.append(clean(doc))
+        
+        # Update batch
+        await batches_col.update_one({"id": batch_id}, {"$set": {
+            "status": "completed",
+            "total_extracted": len(created_items),
+            "total_approved": len(created_items),
+            "completed_at": datetime.utcnow().isoformat(),
+        }})
+        
+        return {
+            "success": True,
+            "batch_id": batch_id,
+            "filename": file.filename,
+            "total_extracted": len(created_items),
+            "knowledge_items": created_items,
+            "message": f"從 PDF 中成功提取 {len(created_items)} 條知識"
+        }
+        
+    except json.JSONDecodeError as e:
+        await batches_col.update_one({"id": batch_id}, {"$set": {
+            "status": "completed",
+            "error_message": f"AI 回傳格式錯誤: {str(e)}",
+            "completed_at": datetime.utcnow().isoformat(),
+        }})
+        raise HTTPException(500, "AI 分析結果格式錯誤，請重試")
+    except Exception as e:
+        print(f"[PDF Extract] Error: {e}")
+        await batches_col.update_one({"id": batch_id}, {"$set": {
+            "status": "completed",
+            "error_message": str(e),
+            "completed_at": datetime.utcnow().isoformat(),
+        }})
+        raise HTTPException(500, f"PDF 知識提取失敗: {str(e)}")
+
 # ============ Knowledge Batches ============
 
 @app.get("/api/venues/{venue_id}/knowledge/batches")
