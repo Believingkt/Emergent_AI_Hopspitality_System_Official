@@ -455,6 +455,19 @@ export const KnowledgeManagementTab = () => {
           </Button>
           <Button
             onClick={() => {
+              setPdfFile(null);
+              setUploadResult(null);
+              setShowPdfDialog(true);
+            }}
+            variant="outline"
+            className="border-[#8B5CF6]/30 text-[#8B5CF6] hover:bg-[#8B5CF6]/10 hover:text-[#8B5CF6]"
+            data-testid="upload-pdf-btn"
+          >
+            <FileUp className="w-4 h-4 mr-2" />
+            上傳 PDF
+          </Button>
+          <Button
+            onClick={() => {
               setFormData({ title: '', content: '', category: 'other' });
               setShowAddDialog(true);
             }}
