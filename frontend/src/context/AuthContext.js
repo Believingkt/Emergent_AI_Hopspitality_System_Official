@@ -24,21 +24,23 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
+      console.log(`[Auth] Attempting login for: ${email}, API: ${API_URL}`);
       const response = await axios.post(`${API_URL}/api/auth/login`, {
         email,
         password
       });
       
-      // Manus API: { access_token, user: {...} }
       const { access_token, user: userData } = response.data;
       
       localStorage.setItem('token', access_token);
       setToken(access_token);
       setUser(userData);
       
+      console.log(`[Auth] Login success: ${userData.email}`);
       return { success: true };
     } catch (error) {
-      const message = error.response?.data?.error || error.response?.data?.detail || '登入失敗，請檢查帳號密碼';
+      console.error('[Auth] Login failed:', error.response?.status, error.response?.data, error.message);
+      const message = error.response?.data?.detail || error.response?.data?.error || error.message || '登入失敗，請檢查帳號密碼';
       return { success: false, error: message };
     }
   };
