@@ -2,8 +2,9 @@
 from dotenv import load_dotenv
 load_dotenv()
 
-from fastapi import FastAPI, HTTPException, Depends, Header, Query
+from fastapi import FastAPI, HTTPException, Depends, Header, Query, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, EmailStr
 from typing import Optional, List
 from datetime import datetime, timedelta
@@ -11,6 +12,8 @@ import jwt
 import bcrypt
 import os
 import json
+import uuid
+import shutil
 import openai
 
 # Load app_config.json - ALWAYS override critical settings
