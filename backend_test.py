@@ -464,18 +464,278 @@ class BackendTester:
                 f"Request failed: {str(e)}"
             )
 
+    def create_test_pdf(self):
+        """Create a test PDF file for upload testing"""
+        try:
+            from reportlab.pdfgen import canvas
+            from reportlab.lib.pagesizes import letter
+            import tempfile
+            
+            # Create a temporary PDF file
+            pdf_buffer = io.BytesIO()
+            c = canvas.Canvas(pdf_buffer, pagesize=letter)
+            
+            # Add some test content
+            c.drawString(100, 750, "森山旅館 (Sensan Inn) - 服務資訊")
+            c.drawString(100, 720, "")
+            c.drawString(100, 690, "房價資訊：")
+            c.drawString(120, 670, "• 標準雙人房：NT$ 3,200/晚")
+            c.drawString(120, 650, "• 豪華套房：NT$ 4,800/晚")
+            c.drawString(120, 630, "• 家庭房：NT$ 5,500/晚")
+            c.drawString(100, 600, "")
+            c.drawString(100, 580, "設施服務：")
+            c.drawString(120, 560, "• 免費WiFi")
+            c.drawString(120, 540, "• 24小時櫃檯服務")
+            c.drawString(120, 520, "• 免費停車場")
+            c.drawString(120, 500, "• 溫泉浴池")
+            c.drawString(100, 470, "")
+            c.drawString(100, 450, "用餐時間：")
+            c.drawString(120, 430, "• 早餐：07:00-10:00")
+            c.drawString(120, 410, "• 晚餐：18:00-21:00")
+            c.drawString(100, 380, "")
+            c.drawString(100, 360, "退房政策：")
+            c.drawString(120, 340, "• 退房時間：11:00前")
+            c.drawString(120, 320, "• 取消須於入住前24小時通知")
+            
+            c.save()
+            pdf_buffer.seek(0)
+            return pdf_buffer
+            
+        except ImportError:
+            # Fallback: create simple text "PDF" if reportlab not available
+            self.log("reportlab not available, creating simple text file as fallback")
+            fallback_content = """森山旅館 (Sensan Inn) - 服務資訊
+
+房價資訊：
+• 標準雙人房：NT$ 3,200/晚
+• 豪華套房：NT$ 4,800/晚
+• 家庭房：NT$ 5,500/晚
+
+設施服務：
+• 免費WiFi
+• 24小時櫃檯服務  
+• 免費停車場
+• 溫泉浴池
+
+用餐時間：
+• 早餐：07:00-10:00
+• 晚餐：18:00-21:00
+
+退房政策：
+• 退房時間：11:00前
+• 取消須於入住前24小時通知"""
+            
+            return io.BytesIO(fallback_content.encode('utf-8'))
+        except Exception as e:
+            self.log(f"Failed to create test PDF: {e}", is_error=True)
+            return None
+
+    def test_pdf_upload(self, venue_id="sensan_inn"):
+        """Test PDF knowledge upload endpoint - PRIMARY FOCUS"""
+        self.log(f"Testing PDF Upload for venue: {venue_id}")
+        if not self.token:
+            self.assert_test(False, "PDF Upload Test", "No token available")
+            return None
+            
+        try:
+            # Create test PDF
+            pdf_data = self.create_test_pdf()
+            if not pdf_data:
+                self.assert_test(False, "PDF Upload Test", "Failed to create test PDF")
+                return None
+            
+            files = {
+                'file': ('sensan_inn_info.pdf', pdf_data, 'application/pdf')
+            }
+            
+            self.log(f"Uploading PDF to: {API_BASE}/venues/{venue_id}/knowledge/upload-pdf")
+            response = requests.post(
+                f"{API_BASE}/venues/{venue_id}/knowledge/upload-pdf",
+                headers=self.get_auth_headers(),
+                files=files,
+                timeout=30  # Increased timeout for AI processing
+            )
+            
+            success = self.assert_test(
+                response.status_code == 200,
+                "PDF Upload Endpoint",
+                f"Status: {response.status_code}, Response: {response.text[:500]}"
+            )
+            
+            pdf_result = None
+            if success:
+                data = response.json()
+                pdf_result = data
+                
+                # Check required response fields
+                required_fields = ["success", "batch_id", "filename", "total_extracted", "knowledge_items"]
+                for field in required_fields:
+                    self.assert_test(
+                        field in data,
+                        f"PDF Upload - {field} Field",
+                        f"Field present: {field in data}, Value: {data.get(field)}"
+                    )
+                
+                self.assert_test(
+                    data.get("success") is True,
+                    "PDF Upload Success Flag",
+                    f"Success: {data.get('success')}"
+                )
+                
+                total_extracted = data.get("total_extracted", 0)
+                self.assert_test(
+                    total_extracted > 0,
+                    "PDF Knowledge Extraction",
+                    f"Extracted {total_extracted} knowledge items"
+                )
+                
+                knowledge_items = data.get("knowledge_items", [])
+                if knowledge_items:
+                    # Check first knowledge item structure
+                    item = knowledge_items[0]
+                    item_fields = ["id", "title", "content", "category", "source_type"]
+                    for field in item_fields:
+                        self.assert_test(
+                            field in item,
+                            f"PDF Knowledge Item - {field} Field",
+                            f"Field present: {field in item}, Sample: {str(item.get(field, ''))[:50]}"
+                        )
+                    
+                    self.assert_test(
+                        item.get("source_type") == "pdf",
+                        "PDF Source Type",
+                        f"Source type: {item.get('source_type')}"
+                    )
+                
+            return pdf_result
+            
+        except Exception as e:
+            self.assert_test(
+                False,
+                "PDF Upload Endpoint",
+                f"Request failed: {str(e)}"
+            )
+            return None
+
+    def test_pdf_error_cases(self, venue_id="sensan_inn"):
+        """Test PDF upload error cases"""
+        self.log("Testing PDF upload error cases...")
+        if not self.token:
+            self.assert_test(False, "PDF Error Cases", "No token available")
+            return
+            
+        try:
+            # Test 1: Upload non-PDF file
+            self.log("Testing non-PDF file upload...")
+            text_data = io.BytesIO(b"This is not a PDF file")
+            files = {
+                'file': ('not_a_pdf.txt', text_data, 'text/plain')
+            }
+            
+            response = requests.post(
+                f"{API_BASE}/venues/{venue_id}/knowledge/upload-pdf",
+                headers=self.get_auth_headers(),
+                files=files,
+                timeout=10
+            )
+            
+            self.assert_test(
+                response.status_code == 400,
+                "Non-PDF File Rejection",
+                f"Status: {response.status_code}, Expected 400 for non-PDF"
+            )
+            
+            # Test 2: Empty file
+            self.log("Testing empty file upload...")
+            empty_data = io.BytesIO(b"")
+            files = {
+                'file': ('empty.pdf', empty_data, 'application/pdf')
+            }
+            
+            response = requests.post(
+                f"{API_BASE}/venues/{venue_id}/knowledge/upload-pdf",
+                headers=self.get_auth_headers(),
+                files=files,
+                timeout=10
+            )
+            
+            # Should fail with either 400 or some error about empty file
+            self.assert_test(
+                response.status_code >= 400,
+                "Empty File Rejection",
+                f"Status: {response.status_code}, Response: {response.text[:300]}"
+            )
+            
+        except Exception as e:
+            self.assert_test(
+                False,
+                "PDF Error Cases",
+                f"Request failed: {str(e)}"
+            )
+
+    def test_verify_uploaded_knowledge(self, venue_id="sensan_inn"):
+        """Verify uploaded PDF knowledge appears in knowledge endpoint"""
+        self.log(f"Verifying uploaded knowledge appears in GET /venues/{venue_id}/knowledge")
+        if not self.token:
+            self.assert_test(False, "Verify Uploaded Knowledge", "No token available")
+            return
+            
+        try:
+            response = requests.get(
+                f"{API_BASE}/venues/{venue_id}/knowledge",
+                headers=self.get_auth_headers(),
+                timeout=10
+            )
+            
+            success = self.assert_test(
+                response.status_code == 200,
+                "Get Knowledge After Upload",
+                f"Status: {response.status_code}"
+            )
+            
+            if success:
+                data = response.json()
+                knowledge_items = data.get("knowledge", [])
+                
+                self.assert_test(
+                    len(knowledge_items) > 0,
+                    "Knowledge Items Present",
+                    f"Found {len(knowledge_items)} knowledge items"
+                )
+                
+                # Look for PDF-sourced items
+                pdf_items = [k for k in knowledge_items if k.get("source_type") == "pdf"]
+                self.assert_test(
+                    len(pdf_items) > 0,
+                    "PDF-sourced Knowledge Items",
+                    f"Found {len(pdf_items)} PDF-sourced items out of {len(knowledge_items)} total"
+                )
+                
+                if pdf_items:
+                    # Check that items have proper structure
+                    item = pdf_items[0]
+                    self.assert_test(
+                        bool(item.get("title")) and bool(item.get("content")),
+                        "PDF Knowledge Item Content",
+                        f"Title: '{item.get('title')}', Content length: {len(item.get('content', ''))}"
+                    )
+                
+        except Exception as e:
+            self.assert_test(
+                False,
+                "Verify Uploaded Knowledge",
+                f"Request failed: {str(e)}"
+            )
+
     def test_knowledge_endpoints(self):
         """Test knowledge CRUD endpoints"""
         self.log("Testing knowledge endpoints...")
         
-        if not self.created_venues:
-            self.assert_test(False, "Knowledge Tests", "No created venue for testing")
-            return
-            
-        venue_id = self.created_venues[0]
+        # Test with sensan_inn venue (as per requirements)
+        venue_id = "sensan_inn"
         
         try:
-            # Test GET knowledge (empty initially)
+            # Test GET knowledge for sensan_inn
             response = requests.get(
                 f"{API_BASE}/venues/{venue_id}/knowledge",
                 headers=self.get_auth_headers(),
@@ -488,11 +748,11 @@ class BackendTester:
                 f"Status: {response.status_code}"
             )
             
-            # Test CREATE knowledge
+            # Test CREATE knowledge manually
             knowledge_payload = {
-                "title": "測試知識",
-                "content": "這是一個測試知識項目的內容",
-                "category": "other"
+                "title": "森山旅館測試知識",
+                "content": "這是一個森山旅館的測試知識項目內容",
+                "category": "service"
             }
             
             response = requests.post(
