@@ -178,13 +178,39 @@ async def root():
 
 @app.post("/api/auth/login")
 async def login(req: LoginRequest):
-    user = await users_col.find_one({"email": req.email})
+    try:
+        user = await users_col.find_one({"email": req.email})
+    except Exception as db_err:
+        print(f"[Login] Database error when finding user '{req.email}': {db_err}")
+        raise HTTPException(status_code=500, detail=f"資料庫連線錯誤: {str(db_err)[:100]}")
+    
     if not user:
-        raise HTTPException(status_code=401, detail="登入失敗，請檢查帳號密碼")
-    if not verify_password(req.password, user["password_hash"]):
-        raise HTTPException(status_code=401, detail="登入失敗，請檢查帳號密碼")
+        # Check if ANY users exist in database
+        try:
+            user_count = await users_col.count_documents({})
+            print(f"[Login] User '{req.email}' not found. Total users in DB: {user_count}")
+            if user_count == 0:
+                print("[Login] WARNING: No users in database! Migration may have failed.")
+        except Exception as e:
+            print(f"[Login] Cannot count users: {e}")
+        raise HTTPException(status_code=401, detail="帳號不存在或密碼錯誤")
+    
+    if not user.get("password_hash"):
+        print(f"[Login] User '{req.email}' has no password_hash field!")
+        raise HTTPException(status_code=401, detail="帳號密碼設定異常，請聯繫管理員")
+    
+    try:
+        if not verify_password(req.password, user["password_hash"]):
+            print(f"[Login] Wrong password for '{req.email}'")
+            raise HTTPException(status_code=401, detail="帳號不存在或密碼錯誤")
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[Login] Password verification error for '{req.email}': {e}")
+        raise HTTPException(status_code=401, detail="密碼驗證異常，請聯繫管理員")
 
     token = create_token(user["email"])
+    print(f"[Login] Success: {user['email']} ({user.get('role', 'unknown')})")
     return {
         "access_token": token,
         "user": {"email": user["email"], "name": user["name"], "role": user["role"]}
