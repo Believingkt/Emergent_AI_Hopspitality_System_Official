@@ -252,25 +252,42 @@ export default function SettingsPage() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <ScrollArea className="h-[400px]">
+                      <ScrollArea className="h-[500px]">
                         <div className="space-y-2">
                           {venues.map((venue) => (
                             <div
                               key={venue.id}
                               onClick={() => handleVenueSelect(venue)}
-                              className={`p-4 rounded-lg cursor-pointer transition-all duration-300 ${
+                              className={`p-3 rounded-xl cursor-pointer transition-all duration-300 flex items-center gap-3 ${
                                 selectedVenue?.id === venue.id
                                   ? 'bg-[#FF6B35] text-white'
                                   : 'bg-[#27272a]/50 hover:bg-[#27272a] text-white'
                               }`}
                               data-testid={`venue-item-${venue.id}`}
                             >
-                              <div className="font-medium">{venue.name}</div>
-                              <div className={`text-sm mt-1 ${
-                                selectedVenue?.id === venue.id ? 'text-white/70' : 'text-[#a1a1aa]'
-                              }`}>
-                                ID: {venue.id}
+                              {venue.avatar_url ? (
+                                <Avatar className="w-10 h-10">
+                                  <AvatarImage src={`${API_URL}${venue.avatar_url}`} alt={venue.name} />
+                                  <AvatarFallback className="bg-[#FF6B35]/20 text-[#FF6B35] text-sm">{venue.name?.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                              ) : (
+                                <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                                  selectedVenue?.id === venue.id ? 'bg-white/20' : 'bg-[#27272a]'
+                                }`}>
+                                  <Building2 className="w-5 h-5" />
+                                </div>
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <div className="font-medium truncate">{venue.name}</div>
+                                <div className={`text-xs mt-0.5 truncate ${
+                                  selectedVenue?.id === venue.id ? 'text-white/60' : 'text-[#8b949e]'
+                                }`}>
+                                  {venue.description || `ID: ${venue.id}`}
+                                </div>
                               </div>
+                              {selectedVenue?.id === venue.id && (
+                                <Check className="w-4 h-4 flex-shrink-0" />
+                              )}
                             </div>
                           ))}
                         </div>
@@ -280,7 +297,106 @@ export default function SettingsPage() {
                 </div>
 
                 {/* Venue Config */}
-                <div className="col-span-8">
+                <div className="col-span-8 space-y-6">
+                  {/* Venue Profile Card */}
+                  {selectedVenue && (
+                    <Card className="border-[#27272a] bg-[#18181b] rounded-xl">
+                      <CardContent className="p-6">
+                        <div className="flex items-center gap-6">
+                          {/* Avatar */}
+                          <div className="relative group">
+                            <input
+                              ref={avatarInputRef}
+                              type="file"
+                              accept="image/jpeg,image/png,image/webp,image/gif"
+                              className="hidden"
+                              onChange={handleAvatarUpload}
+                            />
+                            {selectedVenue.avatar_url ? (
+                              <Avatar className="w-20 h-20 cursor-pointer" onClick={() => avatarInputRef.current?.click()}>
+                                <AvatarImage src={`${API_URL}${selectedVenue.avatar_url}`} alt={selectedVenue.name} />
+                                <AvatarFallback className="bg-[#FF6B35]/20 text-[#FF6B35] text-2xl">{selectedVenue.name?.charAt(0)}</AvatarFallback>
+                              </Avatar>
+                            ) : (
+                              <div 
+                                onClick={() => avatarInputRef.current?.click()}
+                                className="w-20 h-20 rounded-full bg-[#27272a] border-2 border-dashed border-[#3f3f46] flex items-center justify-center cursor-pointer hover:border-[#FF6B35] hover:bg-[#FF6B35]/10 transition-all"
+                              >
+                                <ImagePlus className="w-8 h-8 text-[#52525b]" />
+                              </div>
+                            )}
+                            {/* Upload overlay */}
+                            <div 
+                              onClick={() => avatarInputRef.current?.click()}
+                              className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                            >
+                              {uploadingAvatar ? (
+                                <Loader2 className="w-6 h-6 text-white animate-spin" />
+                              ) : (
+                                <Camera className="w-6 h-6 text-white" />
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Name */}
+                          <div className="flex-1">
+                            {editingName ? (
+                              <div className="flex items-center gap-2">
+                                <Input
+                                  value={venueName}
+                                  onChange={(e) => setVenueName(e.target.value)}
+                                  className="bg-[#27272a]/50 border-[#27272a] text-white text-xl font-bold rounded-lg h-12"
+                                  autoFocus
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleSaveName();
+                                    if (e.key === 'Escape') { setEditingName(false); setVenueName(selectedVenue.name); }
+                                  }}
+                                />
+                                <Button
+                                  size="icon"
+                                  onClick={handleSaveName}
+                                  disabled={savingName || !venueName.trim()}
+                                  className="bg-[#22c55e] hover:bg-[#16a34a] text-white h-12 w-12 rounded-lg"
+                                >
+                                  {savingName ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                                </Button>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  onClick={() => { setEditingName(false); setVenueName(selectedVenue.name); }}
+                                  className="text-[#8b949e] hover:text-white h-12 w-12 rounded-lg"
+                                >
+                                  <X className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-3">
+                                <h2 className="text-2xl font-bold text-white">{selectedVenue.name}</h2>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  onClick={() => { setEditingName(true); setVenueName(selectedVenue.name); }}
+                                  className="text-[#8b949e] hover:text-white h-8 w-8 rounded-lg"
+                                >
+                                  <Pencil className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            )}
+                            <p className="text-[#8b949e] text-sm mt-1">
+                              {selectedVenue.avatar_url ? '點擊頭貼可更換圖片' : '點擊左側圓圈上傳場域頭貼'}
+                            </p>
+                            {selectedVenue.name === '新場域' && (
+                              <Badge className="bg-amber-500/15 text-amber-400 border-0 text-xs mt-2">
+                                建議：請更換為您的品牌名稱
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Venue Config Card */}
                   <Card className="border-[#27272a] bg-[#18181b] rounded-xl">
                     <CardHeader className="pb-3">
                       <div className="flex items-center justify-between">
