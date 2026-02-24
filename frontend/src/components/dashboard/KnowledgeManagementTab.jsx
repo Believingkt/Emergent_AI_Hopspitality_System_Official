@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -24,7 +24,12 @@ import {
   BarChart3,
   Tag,
   FileText,
-  AlertTriangle
+  AlertTriangle,
+  Upload,
+  FileUp,
+  Sparkles,
+  ArrowRight,
+  Lightbulb
 } from 'lucide-react';
 import {
   Select,
