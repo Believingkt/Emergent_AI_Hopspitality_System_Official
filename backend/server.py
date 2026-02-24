@@ -164,7 +164,26 @@ def clean(doc):
 
 @app.get("/api/health")
 async def health():
-    return {"status": "healthy", "service": "lakeze-backend", "db": "mongodb"}
+    # Enhanced health check with database diagnostics
+    from database import DB_NAME
+    try:
+        user_count = await users_col.count_documents({})
+        venue_count = await venues_col.count_documents({})
+        db_status = "connected"
+    except Exception as e:
+        user_count = -1
+        venue_count = -1
+        db_status = f"error: {str(e)[:100]}"
+    
+    return {
+        "status": "healthy" if db_status == "connected" else "unhealthy",
+        "service": "lakeze-backend",
+        "db": "mongodb",
+        "db_name": DB_NAME,
+        "db_status": db_status,
+        "users_count": user_count,
+        "venues_count": venue_count
+    }
 
 @app.get("/api/")
 async def api_root():
