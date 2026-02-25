@@ -585,13 +585,13 @@ export const KnowledgeManagementTab = () => {
               <div className="w-14 h-14 rounded-xl bg-[#8B5CF6]/15 flex items-center justify-center mx-auto mb-4 group-hover:bg-[#8B5CF6]/25 transition-colors">
                 <FileUp className="w-7 h-7 text-[#8B5CF6]" />
               </div>
-              <h4 className="text-white font-bold text-lg mb-1">上傳 PDF 檔案</h4>
+              <h4 className="text-white font-bold text-lg mb-1">上傳檔案</h4>
               <p className="text-[#8b949e] text-sm mb-3">
                 上傳場域簡介、價目表、<br/>規則說明等現有文件
               </p>
               <Badge className="bg-[#8B5CF6]/15 text-[#8B5CF6] border-0 text-xs">
                 <Sparkles className="w-3 h-3 mr-1" />
-                AI 自動整理分類
+                Claude AI 智能分析
               </Badge>
             </div>
 
