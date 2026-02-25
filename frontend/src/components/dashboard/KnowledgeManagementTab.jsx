@@ -248,7 +248,84 @@ export const KnowledgeManagementTab = () => {
   useEffect(() => {
     fetchKnowledge();
     fetchStats();
+    fetchVersions();
   }, [token, venueId, statusFilter, categoryFilter]);
+
+  // 載入版本列表
+  const fetchVersions = async () => {
+    if (!token || !venueId) return;
+    try {
+      const resp = await axios.get(`${API_URL}/api/venues/${venueId}/knowledge/versions`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setVersions(resp.data.versions || []);
+    } catch { /* ignore */ }
+  };
+
+  // 發布版本（快照）
+  const handlePublish = async (description = '') => {
+    setIsPublishing(true);
+    try {
+      const resp = await axios.post(
+        `${API_URL}/api/venues/${venueId}/knowledge/publish`,
+        { description: description || '手動發布', change_summary: '' },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success(`版本 ${resp.data.version?.version_number} 已發布！`);
+      setHasUnpublishedChanges(false);
+      setLastUploadCount(0);
+      fetchVersions();
+    } catch (err) {
+      toast.error('發布失敗：' + (err.response?.data?.detail || '請稍後再試'));
+    }
+    setIsPublishing(false);
+  };
+
+  // 回滾到上一版本
+  const handleRollback = async () => {
+    if (versions.length < 2) {
+      toast.error('沒有可回滾的版本');
+      return;
+    }
+    const currentVer = versions.find(v => v.is_current);
+    const prevVer = versions.find(v => !v.is_current && !v.rolled_back);
+    if (!prevVer) {
+      toast.error('找不到可回滾的版本');
+      return;
+    }
+    
+    if (!window.confirm(`確定要回滾到 ${prevVer.version_number}（${prevVer.description || ''}）嗎？\n目前的知識會恢復到該版本的狀態。`)) return;
+    
+    setIsRollingBack(true);
+    try {
+      await axios.post(
+        `${API_URL}/api/venues/${venueId}/knowledge/versions/${prevVer.version_id}/rollback`,
+        { reason: '使用者手動回滾' },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success(`已回滾到 ${prevVer.version_number}`);
+      setHasUnpublishedChanges(false);
+      setLastUploadCount(0);
+      fetchKnowledge();
+      fetchStats();
+      fetchVersions();
+    } catch (err) {
+      toast.error('回滾失敗：' + (err.response?.data?.detail || '請稍後再試'));
+    }
+    setIsRollingBack(false);
+  };
+
+  // Auto-snapshot before upload
+  const autoSnapshotBeforeUpload = async () => {
+    try {
+      await axios.post(
+        `${API_URL}/api/venues/${venueId}/knowledge/publish`,
+        { description: '上傳前自動快照', change_summary: '系統自動備份' },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      console.log('[Version] Auto-snapshot created before upload');
+    } catch { /* first time, no knowledge to snapshot - that's ok */ }
+  };
 
   // 新增知識
   const handleAdd = async () => {
