@@ -6,6 +6,7 @@ import { HandoffAnalysis } from '../components/dashboard/HandoffAnalysis';
 import { ManagerSchedule } from '../components/dashboard/ManagerSchedule';
 import { AILearningTab } from '../components/dashboard/AILearningTab';
 import { KnowledgeManagementTab } from '../components/dashboard/KnowledgeManagementTab';
+import { BookingManagementTab } from '../components/dashboard/BookingManagementTab';
 import { useVenue } from '../context/VenueContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { ScrollArea } from '../components/ui/scroll-area';
