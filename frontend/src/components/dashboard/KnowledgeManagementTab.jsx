@@ -914,8 +914,8 @@ export const KnowledgeManagementTab = () => {
                     <div className="space-y-3">
                       <Upload className="w-10 h-10 text-[#8b949e] mx-auto" />
                       <div>
-                        <p className="text-white font-medium">拖曳 PDF 檔案到此處</p>
-                        <p className="text-[#8b949e] text-sm mt-1">或點擊選擇檔案（最大 10MB）</p>
+                        <p className="text-white font-medium">拖曳檔案到此處</p>
+                        <p className="text-[#8b949e] text-sm mt-1">或點擊選擇檔案（PDF/Word/圖片/ZIP，最大 10MB）</p>
                       </div>
                     </div>
                   )}
