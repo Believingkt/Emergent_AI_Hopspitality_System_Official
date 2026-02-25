@@ -1569,7 +1569,10 @@ async def line_webhook(venue_id: str, request: Request):
     return {"status": "ok"}
 
 async def generate_ai_reply(venue_id: str, user_id: str, message: str) -> str:
-    """Generate AI reply based on venue knowledge base"""
+    """Generate AI reply based on venue knowledge base + PMS real-time data"""
+    from pms_client import get_pms_client
+    import re as re_module
+    
     try:
         api_key = await get_config_value("openai_api_key")
         if not api_key:
@@ -1582,15 +1585,82 @@ async def generate_ai_reply(venue_id: str, user_id: str, message: str) -> str:
             "is_active": True
         }).to_list(50)
         
-        if not knowledge_items:
-            print(f"[AI Reply] No knowledge for venue {venue_id}")
-            return ""
-        
         # Build knowledge context
         knowledge_text = "\n".join([
             f"【{k.get('title', '')}】{k.get('content', '')}" 
             for k in knowledge_items
-        ])
+        ]) if knowledge_items else "（尚無知識庫資料）"
+        
+        # Check if user is asking about availability/pricing/booking
+        availability_keywords = ["空房", "有房", "房間", "價格", "多少錢", "住", "訂房", "預訂", "庫存", 
+                                  "可以訂", "還有", "幾間", "房型", "包棟", "雙人", "四人", "費用",
+                                  "明天", "後天", "週末", "今天", "下週", "空位"]
+        
+        msg_lower = message.lower()
+        needs_pms = any(kw in msg_lower for kw in availability_keywords)
+        
+        pms_context = ""
+        if needs_pms:
+            try:
+                pms = await get_pms_client(venue_id, venues_col)
+                
+                # Try to extract dates from message, default to today+1 to today+2
+                tomorrow = (datetime.utcnow() + timedelta(hours=8, days=1)).strftime("%Y/%m/%d")
+                day_after = (datetime.utcnow() + timedelta(hours=8, days=2)).strftime("%Y/%m/%d")
+                
+                check_in = tomorrow
+                check_out = day_after
+                
+                # Simple date extraction from message
+                date_patterns = [
+                    r'(\d{1,2})[/.-](\d{1,2})',  # MM/DD or M/D
+                    r'(\d{4})[/.-](\d{1,2})[/.-](\d{1,2})',  # YYYY/MM/DD
+                ]
+                
+                for pattern in date_patterns:
+                    match = re_module.search(pattern, message)
+                    if match:
+                        groups = match.groups()
+                        if len(groups) == 3:
+                            check_in = f"{groups[0]}/{groups[1].zfill(2)}/{groups[2].zfill(2)}"
+                        elif len(groups) == 2:
+                            year = (datetime.utcnow() + timedelta(hours=8)).year
+                            check_in = f"{year}/{groups[0].zfill(2)}/{groups[1].zfill(2)}"
+                        break
+                
+                if "今天" in message or "今晚" in message:
+                    check_in = (datetime.utcnow() + timedelta(hours=8)).strftime("%Y/%m/%d")
+                    check_out = (datetime.utcnow() + timedelta(hours=8, days=1)).strftime("%Y/%m/%d")
+                elif "明天" in message:
+                    check_in = (datetime.utcnow() + timedelta(hours=8, days=1)).strftime("%Y/%m/%d")
+                    check_out = (datetime.utcnow() + timedelta(hours=8, days=2)).strftime("%Y/%m/%d")
+                elif "後天" in message:
+                    check_in = (datetime.utcnow() + timedelta(hours=8, days=2)).strftime("%Y/%m/%d")
+                    check_out = (datetime.utcnow() + timedelta(hours=8, days=3)).strftime("%Y/%m/%d")
+                elif "週末" in message or "周末" in message:
+                    today = datetime.utcnow() + timedelta(hours=8)
+                    days_ahead = 5 - today.weekday()
+                    if days_ahead <= 0:
+                        days_ahead += 7
+                    saturday = today + timedelta(days=days_ahead)
+                    sunday = saturday + timedelta(days=1)
+                    check_in = saturday.strftime("%Y/%m/%d")
+                    check_out = sunday.strftime("%Y/%m/%d")
+                
+                # Query PMS
+                result = await pms.search_all(check_in, check_out)
+                rooms = pms.parse_rooms_summary(result)
+                
+                if rooms:
+                    pms_context = f"\n\n【即時房況查詢結果】（查詢日期：{check_in} ~ {check_out}）\n"
+                    pms_context += pms.format_for_ai(rooms)
+                    print(f"[AI Reply] PMS data: {len(rooms)} rooms for {check_in}~{check_out}")
+                else:
+                    pms_context = f"\n\n【即時房況】查詢 {check_in} ~ {check_out}：目前查無可用房型。"
+                    
+            except Exception as pms_err:
+                print(f"[AI Reply] PMS query error: {pms_err}")
+                pms_context = "\n\n（PMS 系統暫時無法查詢，請稍後再試或聯繫管家）"
         
         # Get recent conversation history
         recent_tasks = await tasks_col.find({
@@ -1612,19 +1682,23 @@ async def generate_ai_reply(venue_id: str, user_id: str, message: str) -> str:
         venue = await venues_col.find_one({"id": venue_id})
         venue_name = venue.get("name", "場域") if venue else "場域"
         
-        system_prompt = f"""你是「{venue_name}」的 AI 銷售助手小森，透過 LINE 與客戶對話。
+        system_prompt = f"""你是「{venue_name}」的 AI 銷售助手，透過 LINE 與客戶對話。
 
 你的知識庫：
-{knowledge_text[:4000]}
+{knowledge_text[:3000]}
+{pms_context}
 
 對話原則：
 - 友善、專業、簡潔
-- 主動引導客戶了解產品和服務
-- 如果客戶有明確訂房/訂購意願，引導提供：姓名、電話、日期、人數
+- 當客戶詢問空房、價格時，使用上方【即時房況查詢結果】的真實數據回覆
+- 回覆時把重要資訊（房型、價格、庫存）清楚列出
+- 如果有訂房連結，告知客戶可以點擊連結直接訂房
+- 如果客戶有明確訂房意願，引導他使用訂房連結或提供：姓名、電話、日期、人數
 - 如果遇到無法回答的問題，告知會請管家協助
 - 回覆使用繁體中文
-- 不要使用 Markdown 格式，直接用純文字回覆
-- 回覆控制在 200 字以內"""
+- 不要使用 Markdown 格式（不要用 ** # - 等符號），直接用純文字和換行排版
+- 回覆控制在 300 字以內
+- 價格用 NT$ 或 $ 表示，加上千分位逗號"""
 
         client_ai = openai.AsyncOpenAI(api_key=api_key)
         response = await client_ai.chat.completions.create(
@@ -1634,7 +1708,7 @@ async def generate_ai_reply(venue_id: str, user_id: str, message: str) -> str:
                 *conversation_history
             ],
             temperature=0.7,
-            max_tokens=500,
+            max_tokens=600,
         )
         
         reply = response.choices[0].message.content.strip()
@@ -1644,6 +1718,69 @@ async def generate_ai_reply(venue_id: str, user_id: str, message: str) -> str:
     except Exception as e:
         print(f"[AI Reply] Error: {e}")
         return ""
+
+# ============ PMS API Endpoints ============
+
+@app.get("/api/venues/{venue_id}/pms/search")
+async def pms_search(venue_id: str, check_in: str, check_out: str, user: dict = Depends(get_current_user)):
+    """Search PMS for room availability"""
+    from pms_client import get_pms_client
+    
+    pms = await get_pms_client(venue_id, venues_col)
+    result = await pms.search_all(check_in, check_out)
+    rooms = pms.parse_rooms_summary(result)
+    
+    return {
+        "success": result.get("Status", False),
+        "message": result.get("Message", ""),
+        "rooms": rooms,
+        "check_in": check_in,
+        "check_out": check_out,
+        "is_mock": pms.use_mock
+    }
+
+@app.get("/api/venues/{venue_id}/pms/config")
+async def get_pms_config(venue_id: str, user: dict = Depends(get_current_user)):
+    """Get PMS configuration for a venue"""
+    venue = await venues_col.find_one({"id": venue_id})
+    if not venue:
+        raise HTTPException(404, "場域不存在")
+    
+    config = venue.get("pms_config", {})
+    # Don't expose password
+    safe_config = {
+        "provider": config.get("provider", ""),
+        "cid_code": config.get("cid_code", ""),
+        "has_credentials": bool(config.get("account_id") and config.get("password")),
+        "use_production": config.get("use_production", False),
+        "uat_url": config.get("uat_url", PMS_UAT_URL),
+        "prod_url": config.get("prod_url", PMS_PROD_URL),
+    }
+    return {"config": safe_config, "venue_id": venue_id}
+
+@app.put("/api/venues/{venue_id}/pms/config")
+async def update_pms_config(venue_id: str, body: dict, user: dict = Depends(get_current_user)):
+    """Update PMS configuration for a venue"""
+    if user.get("role") != "admin":
+        raise HTTPException(403, "只有管理員可以修改 PMS 設定")
+    
+    venue = await venues_col.find_one({"id": venue_id})
+    if not venue:
+        raise HTTPException(404, "場域不存在")
+    
+    existing = venue.get("pms_config", {})
+    updated = {
+        "provider": body.get("provider", existing.get("provider", "travelmap")),
+        "uat_url": body.get("uat_url", existing.get("uat_url", PMS_UAT_URL)),
+        "prod_url": body.get("prod_url", existing.get("prod_url", PMS_PROD_URL)),
+        "cid_code": body.get("cid_code", existing.get("cid_code", "LakezeEvent")),
+        "account_id": body.get("account_id", existing.get("account_id", "")),
+        "password": body.get("password", existing.get("password", "")),
+        "use_production": body.get("use_production", existing.get("use_production", False)),
+    }
+    
+    await venues_col.update_one({"id": venue_id}, {"$set": {"pms_config": updated}})
+    return {"success": True, "message": "PMS 設定已更新"}
 
 
 if __name__ == "__main__":
