@@ -183,7 +183,7 @@ export const KnowledgeManagementTab = () => {
   const [formData, setFormData] = useState({ title: '', content: '', category: 'other' });
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // PDF 上傳狀態
+  // File upload state
   const [showPdfDialog, setShowPdfDialog] = useState(false);
   const [pdfFile, setPdfFile] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
