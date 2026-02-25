@@ -1720,6 +1720,203 @@ async def generate_ai_reply(venue_id: str, user_id: str, message: str) -> str:
         print(f"[AI Reply] Error: {e}")
         return ""
 
+# ============ Bookings ============
+
+class BookingCreate(BaseModel):
+    venue_id: str
+    room_code: str
+    room_name: str
+    rate_name: Optional[str] = ""
+    check_in: str
+    check_out: str
+    price_before_tax: float
+    price_after_tax: float
+    currency: str = "TWD"
+    max_occupancy: int = 2
+    guest_name: Optional[str] = ""
+    guest_phone: Optional[str] = ""
+    guest_email: Optional[str] = ""
+    num_adults: int = 2
+    num_children: int = 0
+    special_requests: Optional[str] = ""
+    line_user_id: Optional[str] = ""
+    booking_url: Optional[str] = ""
+    room_photo: Optional[str] = ""
+
+@app.post("/api/bookings")
+async def create_booking(body: BookingCreate):
+    """Create a new booking (public - no auth required, called from booking page)"""
+    booking_id = str(uuid.uuid4())[:12]
+    now = datetime.utcnow().isoformat()
+    
+    doc = {
+        "booking_id": booking_id,
+        "venue_id": body.venue_id,
+        "room_code": body.room_code,
+        "room_name": body.room_name,
+        "rate_name": body.rate_name,
+        "check_in": body.check_in,
+        "check_out": body.check_out,
+        "price_before_tax": body.price_before_tax,
+        "price_after_tax": body.price_after_tax,
+        "currency": body.currency,
+        "max_occupancy": body.max_occupancy,
+        "guest_name": body.guest_name,
+        "guest_phone": body.guest_phone,
+        "guest_email": body.guest_email,
+        "num_adults": body.num_adults,
+        "num_children": body.num_children,
+        "special_requests": body.special_requests,
+        "line_user_id": body.line_user_id,
+        "booking_url": body.booking_url,
+        "room_photo": body.room_photo,
+        "status": "pending",  # pending → paid → confirmed → cancelled
+        "payment_status": "unpaid",  # unpaid → processing → paid → refunded
+        "payment_method": None,
+        "payment_amount": None,
+        "payment_at": None,
+        "pms_synced": False,
+        "pms_confirmation_id": None,
+        "created_at": now,
+        "updated_at": now,
+    }
+    
+    await bookings_col.insert_one(doc)
+    print(f"[Booking] Created {booking_id} for {body.venue_id} / {body.room_name}")
+    return {"success": True, "booking_id": booking_id, "booking": clean(doc)}
+
+@app.get("/api/bookings/{booking_id}")
+async def get_booking(booking_id: str):
+    """Get booking detail (public - for booking page)"""
+    booking = await bookings_col.find_one({"booking_id": booking_id})
+    if not booking:
+        raise HTTPException(404, "訂單不存在")
+    
+    # Get venue info
+    venue = await venues_col.find_one({"id": booking["venue_id"]})
+    venue_info = {"name": venue["name"], "avatar_url": venue.get("avatar_url", "")} if venue else {}
+    
+    result = clean(booking)
+    result["venue_info"] = venue_info
+    return result
+
+@app.put("/api/bookings/{booking_id}/guest-info")
+async def update_booking_guest(booking_id: str, body: dict):
+    """Update guest info on booking (public - from booking page)"""
+    booking = await bookings_col.find_one({"booking_id": booking_id})
+    if not booking:
+        raise HTTPException(404, "訂單不存在")
+    if booking["status"] != "pending":
+        raise HTTPException(400, "此訂單已無法修改")
+    
+    update = {}
+    for field in ["guest_name", "guest_phone", "guest_email", "num_adults", "num_children", "special_requests"]:
+        if field in body:
+            update[field] = body[field]
+    update["updated_at"] = datetime.utcnow().isoformat()
+    
+    await bookings_col.update_one({"booking_id": booking_id}, {"$set": update})
+    return {"success": True}
+
+@app.post("/api/bookings/{booking_id}/pay")
+async def pay_booking(booking_id: str, body: dict = None):
+    """Process mock payment for a booking"""
+    booking = await bookings_col.find_one({"booking_id": booking_id})
+    if not booking:
+        raise HTTPException(404, "訂單不存在")
+    if booking["payment_status"] == "paid":
+        raise HTTPException(400, "此訂單已付款")
+    
+    now = datetime.utcnow().isoformat()
+    
+    # Mock payment processing
+    payment_method = (body or {}).get("payment_method", "credit_card")
+    
+    await bookings_col.update_one(
+        {"booking_id": booking_id},
+        {"$set": {
+            "status": "paid",
+            "payment_status": "paid",
+            "payment_method": payment_method,
+            "payment_amount": booking["price_after_tax"],
+            "payment_at": now,
+            "updated_at": now,
+        }}
+    )
+    
+    # Notify venue via LINE (if applicable)
+    venue_id = booking["venue_id"]
+    print(f"[Booking] Payment confirmed: {booking_id} / ${booking['price_after_tax']}")
+    
+    # Send LINE notification to customer
+    if booking.get("line_user_id"):
+        creds = await get_line_credentials_for_venue(venue_id)
+        access_token = creds.get("channel_access_token", "")
+        if access_token:
+            venue = await venues_col.find_one({"id": venue_id})
+            venue_name = venue.get("name", "") if venue else ""
+            confirm_msg = (
+                f"🎉 訂房確認成功！\n\n"
+                f"📍 {venue_name}\n"
+                f"🏠 {booking['room_name']}\n"
+                f"📅 {booking['check_in']} → {booking['check_out']}\n"
+                f"👤 {booking.get('guest_name', '')}\n"
+                f"💰 NT$ {booking['price_after_tax']:,.0f}\n\n"
+                f"訂單編號：{booking_id}\n"
+                f"感謝您的預訂！如有問題請直接傳訊息給我們 😊"
+            )
+            await line_push_message(
+                booking["line_user_id"],
+                [{"type": "text", "text": confirm_msg}],
+                access_token
+            )
+    
+    return {"success": True, "booking_id": booking_id, "status": "paid"}
+
+@app.get("/api/venues/{venue_id}/bookings")
+async def get_venue_bookings(venue_id: str, status: Optional[str] = None, user: dict = Depends(get_current_user)):
+    """Get all bookings for a venue (admin)"""
+    query = {"venue_id": venue_id}
+    if status and status != "all":
+        query["status"] = status
+    
+    bookings = await bookings_col.find(query).sort("created_at", -1).to_list(200)
+    
+    # Stats
+    all_bookings = await bookings_col.find({"venue_id": venue_id}).to_list(500)
+    stats = {
+        "total": len(all_bookings),
+        "pending": sum(1 for b in all_bookings if b["status"] == "pending"),
+        "paid": sum(1 for b in all_bookings if b["status"] == "paid"),
+        "confirmed": sum(1 for b in all_bookings if b["status"] == "confirmed"),
+        "cancelled": sum(1 for b in all_bookings if b["status"] == "cancelled"),
+        "total_revenue": sum(b.get("payment_amount", 0) or 0 for b in all_bookings if b["payment_status"] == "paid"),
+    }
+    
+    return {"bookings": [clean(b) for b in bookings], "stats": stats}
+
+@app.put("/api/venues/{venue_id}/bookings/{booking_id}/confirm")
+async def confirm_booking(venue_id: str, booking_id: str, user: dict = Depends(get_current_user)):
+    """Venue confirms a paid booking"""
+    result = await bookings_col.update_one(
+        {"booking_id": booking_id, "venue_id": venue_id, "status": "paid"},
+        {"$set": {"status": "confirmed", "updated_at": datetime.utcnow().isoformat()}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(404, "訂單不存在或狀態不符")
+    return {"success": True}
+
+@app.put("/api/venues/{venue_id}/bookings/{booking_id}/cancel")
+async def cancel_booking(venue_id: str, booking_id: str, user: dict = Depends(get_current_user)):
+    """Cancel a booking"""
+    result = await bookings_col.update_one(
+        {"booking_id": booking_id, "venue_id": venue_id},
+        {"$set": {"status": "cancelled", "updated_at": datetime.utcnow().isoformat()}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(404, "訂單不存在")
+    return {"success": True}
+
 # ============ PMS API Endpoints ============
 
 @app.get("/api/venues/{venue_id}/pms/search")
