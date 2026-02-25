@@ -195,6 +195,11 @@ export default function DashboardPage() {
               <TabsContent value="knowledge" className="mt-6">
                 <KnowledgeManagementTab />
               </TabsContent>
+
+              {/* Booking Management Tab */}
+              <TabsContent value="bookings" className="mt-6">
+                <BookingManagementTab />
+              </TabsContent>
             </Tabs>
           </div>
         </ScrollArea>
