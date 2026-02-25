@@ -1006,6 +1006,129 @@ async def upload_pdf_knowledge(venue_id: str, file: UploadFile = File(...), user
         }})
         raise HTTPException(500, f"PDF 知識提取失敗: {str(e)}")
 
+# ============ Universal File Upload (Claude AI) ============
+
+@app.post("/api/venues/{venue_id}/knowledge/upload-file")
+async def upload_file_knowledge(venue_id: str, file: UploadFile = File(...), user: dict = Depends(get_current_user)):
+    """Upload any supported file, extract content with Claude AI, create knowledge entries.
+    Supports: PDF, Word (.docx), Images (.jpg/.png/.webp), Markdown (.md), Text (.txt), ZIP
+    """
+    from knowledge_extractor import (
+        extract_text_from_file, claude_extract_knowledge, 
+        get_file_extension, SUPPORTED_EXTENSIONS
+    )
+    
+    ext = get_file_extension(file.filename or "")
+    if ext not in SUPPORTED_EXTENSIONS:
+        raise HTTPException(400, f"不支援的檔案格式 .{ext}。支援：PDF, Word, 圖片, Markdown, ZIP")
+    
+    # Read file
+    contents = await file.read()
+    max_size = 20 * 1024 * 1024  # 20MB for ZIP, 10MB for others
+    if ext == 'zip' and len(contents) > max_size:
+        raise HTTPException(400, "ZIP 檔案大小不能超過 20MB")
+    elif ext != 'zip' and len(contents) > 10 * 1024 * 1024:
+        raise HTTPException(400, "檔案大小不能超過 10MB")
+    
+    # Save original file
+    saved_filename = f"knowledge_{venue_id}_{uuid.uuid4().hex[:8]}.{ext}"
+    saved_path = os.path.join(UPLOAD_DIR, saved_filename)
+    with open(saved_path, "wb") as f:
+        f.write(contents)
+    
+    # Extract content
+    extraction = await extract_text_from_file(contents, file.filename)
+    if extraction.get("error") and not extraction.get("text") and not extraction.get("image_data"):
+        raise HTTPException(400, extraction["error"])
+    
+    # Create batch
+    batch_id = await get_next_id("knowledge_batches")
+    now = datetime.utcnow().isoformat()
+    await batches_col.insert_one({
+        "id": batch_id,
+        "venue_id": venue_id,
+        "source_type": extraction.get("type", ext),
+        "source_filename": file.filename,
+        "status": "processing",
+        "total_extracted": 0,
+        "total_approved": 0,
+        "pending_count": 0,
+        "rejected_count": 0,
+        "created_by": user["email"],
+        "error_message": None,
+        "created_at": now,
+        "completed_at": None,
+        "original_content": (extraction.get("text", ""))[:2000],
+    })
+    
+    # Claude AI extraction
+    try:
+        api_key = await get_config_value("claude_api_key")
+        if not api_key:
+            raise Exception("Claude API key 未設定")
+        
+        extracted = await claude_extract_knowledge(
+            text=extraction.get("text", ""),
+            image_data=extraction.get("image_data"),
+            images=extraction.get("images"),
+            api_key=api_key,
+            source_filename=file.filename,
+        )
+        
+        # Save extracted knowledge
+        created_items = []
+        for item in extracted:
+            kid = await get_next_id("knowledge")
+            doc = {
+                "id": kid,
+                "venue_id": venue_id,
+                "title": item.get("title", ""),
+                "content": item.get("content", ""),
+                "category": item.get("category", "other"),
+                "source_type": f"ai_{extraction.get('type', ext)}",
+                "source_filename": file.filename,
+                "status": "approved",
+                "is_active": True,
+                "ai_confidence": 0.9,
+                "batch_id": batch_id,
+                "created_at": now,
+                "updated_at": now,
+            }
+            await knowledge_col.insert_one(doc)
+            created_items.append(clean(doc))
+        
+        await batches_col.update_one({"id": batch_id}, {"$set": {
+            "status": "completed",
+            "total_extracted": len(created_items),
+            "total_approved": len(created_items),
+            "completed_at": datetime.utcnow().isoformat(),
+        }})
+        
+        print(f"[Upload] {file.filename} → {len(created_items)} knowledge items (Claude)")
+        return {
+            "success": True,
+            "batch_id": batch_id,
+            "filename": file.filename,
+            "file_type": extraction.get("type", ext),
+            "total_extracted": len(created_items),
+            "knowledge_items": created_items,
+            "message": f"從 {file.filename} 成功提取 {len(created_items)} 條知識"
+        }
+    
+    except json.JSONDecodeError:
+        await batches_col.update_one({"id": batch_id}, {"$set": {
+            "status": "completed", "error_message": "AI 回傳格式錯誤",
+            "completed_at": datetime.utcnow().isoformat(),
+        }})
+        raise HTTPException(500, "AI 分析結果格式錯誤，請重試")
+    except Exception as e:
+        print(f"[Upload] Error: {e}")
+        await batches_col.update_one({"id": batch_id}, {"$set": {
+            "status": "completed", "error_message": str(e),
+            "completed_at": datetime.utcnow().isoformat(),
+        }})
+        raise HTTPException(500, f"知識提取失敗: {str(e)}")
+
 # ============ Knowledge Batches ============
 
 @app.get("/api/venues/{venue_id}/knowledge/batches")
