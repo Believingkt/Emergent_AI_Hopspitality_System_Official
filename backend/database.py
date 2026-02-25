@@ -77,6 +77,9 @@ async def init_indexes():
         await batches_col.create_index("venue_id")
         await config_col.create_index("key", unique=True)
         await versions_col.create_index("venue_id")
+        await bookings_col.create_index("venue_id")
+        await bookings_col.create_index("booking_id", unique=True)
+        await bookings_col.create_index("status")
         print("[Database] Indexes created successfully")
     except Exception as e:
         print(f"[Database] Index creation warning (non-fatal): {e}")
