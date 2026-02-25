@@ -1725,48 +1725,107 @@ async def generate_ai_reply(venue_id: str, user_id: str, message: str) -> str:
             try:
                 pms = await get_pms_client(venue_id, venues_col)
                 
-                # Try to extract dates from message, default to today+1 to today+2
-                tomorrow = (datetime.utcnow() + timedelta(hours=8, days=1)).strftime("%Y/%m/%d")
-                day_after = (datetime.utcnow() + timedelta(hours=8, days=2)).strftime("%Y/%m/%d")
+                # Date parsing with natural language support
+                today = datetime.utcnow() + timedelta(hours=8)
+                check_in = (today + timedelta(days=1)).strftime("%Y/%m/%d")
+                check_out = (today + timedelta(days=2)).strftime("%Y/%m/%d")
                 
-                check_in = tomorrow
-                check_out = day_after
+                # Extract specific dates from message
+                # YYYY/MM/DD or YYYY-MM-DD
+                m = re_module.search(r'(\d{4})[/.-](\d{1,2})[/.-](\d{1,2})', message)
+                if m:
+                    check_in = f"{m.group(1)}/{m.group(2).zfill(2)}/{m.group(3).zfill(2)}"
+                    ci = datetime(int(m.group(1)), int(m.group(2)), int(m.group(3)))
+                    check_out = (ci + timedelta(days=1)).strftime("%Y/%m/%d")
+                else:
+                    # MM/DD or M/D
+                    m = re_module.search(r'(\d{1,2})[/.-](\d{1,2})', message)
+                    if m:
+                        month, day = int(m.group(1)), int(m.group(2))
+                        if 1 <= month <= 12 and 1 <= day <= 31:
+                            ci = today.replace(month=month, day=day)
+                            if ci < today:
+                                ci = ci.replace(year=ci.year + 1)
+                            check_in = ci.strftime("%Y/%m/%d")
+                            check_out = (ci + timedelta(days=1)).strftime("%Y/%m/%d")
                 
-                # Simple date extraction from message
-                date_patterns = [
-                    r'(\d{1,2})[/.-](\d{1,2})',  # MM/DD or M/D
-                    r'(\d{4})[/.-](\d{1,2})[/.-](\d{1,2})',  # YYYY/MM/DD
-                ]
-                
-                for pattern in date_patterns:
-                    match = re_module.search(pattern, message)
-                    if match:
-                        groups = match.groups()
-                        if len(groups) == 3:
-                            check_in = f"{groups[0]}/{groups[1].zfill(2)}/{groups[2].zfill(2)}"
-                        elif len(groups) == 2:
-                            year = (datetime.utcnow() + timedelta(hours=8)).year
-                            check_in = f"{year}/{groups[0].zfill(2)}/{groups[1].zfill(2)}"
-                        break
-                
+                # Natural language dates
                 if "今天" in message or "今晚" in message:
-                    check_in = (datetime.utcnow() + timedelta(hours=8)).strftime("%Y/%m/%d")
-                    check_out = (datetime.utcnow() + timedelta(hours=8, days=1)).strftime("%Y/%m/%d")
+                    check_in = today.strftime("%Y/%m/%d")
+                    check_out = (today + timedelta(days=1)).strftime("%Y/%m/%d")
                 elif "明天" in message:
-                    check_in = (datetime.utcnow() + timedelta(hours=8, days=1)).strftime("%Y/%m/%d")
-                    check_out = (datetime.utcnow() + timedelta(hours=8, days=2)).strftime("%Y/%m/%d")
+                    check_in = (today + timedelta(days=1)).strftime("%Y/%m/%d")
+                    check_out = (today + timedelta(days=2)).strftime("%Y/%m/%d")
                 elif "後天" in message:
-                    check_in = (datetime.utcnow() + timedelta(hours=8, days=2)).strftime("%Y/%m/%d")
-                    check_out = (datetime.utcnow() + timedelta(hours=8, days=3)).strftime("%Y/%m/%d")
+                    check_in = (today + timedelta(days=2)).strftime("%Y/%m/%d")
+                    check_out = (today + timedelta(days=3)).strftime("%Y/%m/%d")
                 elif "週末" in message or "周末" in message:
-                    today = datetime.utcnow() + timedelta(hours=8)
                     days_ahead = 5 - today.weekday()
                     if days_ahead <= 0:
                         days_ahead += 7
                     saturday = today + timedelta(days=days_ahead)
-                    sunday = saturday + timedelta(days=1)
                     check_in = saturday.strftime("%Y/%m/%d")
-                    check_out = sunday.strftime("%Y/%m/%d")
+                    check_out = (saturday + timedelta(days=1)).strftime("%Y/%m/%d")
+                
+                # "下個月X號" or "下月X日"
+                m = re_module.search(r'下個?月\s*(\d{1,2})[號日]?', message)
+                if m:
+                    day = int(m.group(1))
+                    next_month = today.month + 1
+                    year = today.year
+                    if next_month > 12:
+                        next_month = 1
+                        year += 1
+                    try:
+                        ci = datetime(year, next_month, day)
+                        check_in = ci.strftime("%Y/%m/%d")
+                        check_out = (ci + timedelta(days=1)).strftime("%Y/%m/%d")
+                    except ValueError:
+                        pass
+                
+                # "這個月X號" or "本月X日"  
+                m = re_module.search(r'(?:這個?月|本月)\s*(\d{1,2})[號日]?', message)
+                if m:
+                    day = int(m.group(1))
+                    try:
+                        ci = today.replace(day=day)
+                        if ci < today:
+                            ci = ci.replace(month=ci.month + 1) if ci.month < 12 else ci.replace(year=ci.year + 1, month=1)
+                        check_in = ci.strftime("%Y/%m/%d")
+                        check_out = (ci + timedelta(days=1)).strftime("%Y/%m/%d")
+                    except ValueError:
+                        pass
+                
+                # "X月X號/日"
+                m = re_module.search(r'(\d{1,2})月\s*(\d{1,2})[號日]?', message)
+                if m:
+                    month, day = int(m.group(1)), int(m.group(2))
+                    if 1 <= month <= 12 and 1 <= day <= 31:
+                        try:
+                            ci = datetime(today.year, month, day)
+                            if ci < today:
+                                ci = ci.replace(year=ci.year + 1)
+                            check_in = ci.strftime("%Y/%m/%d")
+                            check_out = (ci + timedelta(days=1)).strftime("%Y/%m/%d")
+                        except ValueError:
+                            pass
+                
+                # "X號" or "X日" (assume current or next month)
+                m = re_module.search(r'(?<!\d)(\d{1,2})[號日]', message)
+                if m and not re_module.search(r'\d月', message) and "下" not in message:
+                    day = int(m.group(1))
+                    if 1 <= day <= 31:
+                        try:
+                            ci = today.replace(day=day)
+                            if ci < today:
+                                next_m = ci.month + 1
+                                y = ci.year
+                                if next_m > 12: next_m, y = 1, y + 1
+                                ci = ci.replace(year=y, month=next_m)
+                            check_in = ci.strftime("%Y/%m/%d")
+                            check_out = (ci + timedelta(days=1)).strftime("%Y/%m/%d")
+                        except ValueError:
+                            pass
                 
                 # Query PMS
                 result = await pms.search_all(check_in, check_out)
