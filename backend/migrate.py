@@ -66,6 +66,66 @@ async def ensure_default_passwords():
         print(f"[Password] Fixed password hash for: {email}")
 
 
+
+async def ensure_default_venues():
+    """Ensure required venues exist on every startup.
+    Creates venues with LINE/PMS config if they don't exist."""
+    
+    # Ensure sensan_inn
+    if not await venues_col.find_one({"id": "sensan_inn"}):
+        await venues_col.insert_one({
+            "id": "sensan_inn",
+            "name": "森山寫照",
+            "description": "",
+            "avatar_url": "",
+            "created_at": datetime.utcnow().isoformat(),
+        })
+        print("[Venues] Created: 森山寫照")
+    
+    # Ensure tiansong_inn with LINE and PMS config
+    if not await venues_col.find_one({"id": "tiansong_inn"}):
+        await venues_col.insert_one({
+            "id": "tiansong_inn",
+            "name": "天送幸福和苑",
+            "description": "PMS 串接測試場域",
+            "avatar_url": "",
+            "created_at": datetime.utcnow().isoformat(),
+            "config": {
+                "ai_model": "T1",
+                "greeting_message": "歡迎來到天送幸福和苑！",
+                "handoff_keywords": ["真人", "客服", "人工", "管家"]
+            },
+            "line_credentials": {
+                "channel_id": "2009222522",
+                "channel_secret": "d1c0551f0fc6678f480e2af97df4d085",
+                "user_id": "U7dc6caaff2acf64c01ededc29bcd9da4",
+                "channel_access_token": "b3v0LtGT8z6qGQ3htV93TFJHfzADOIVczVzNyE3X8rH/udlGgA+s51KGGJPoZPSmVU1YtQmOUTJHwyOaXjplZsB5X9FweUR8GX/mHz8Dp/A9tKdqLdFlCk2WBf6J1Kbg/fQjROb+NokYI1ydplO3ZgdB04t89/1O/w1cDnyilFU="
+            },
+            "pms_config": {
+                "provider": "travelmap",
+                "uat_url": "https://booking.travelmap.com.tw/api/CIDDistributor.ashx",
+                "prod_url": "https://booking.taiwantravelmap.com/api/CIDDistributor.ashx",
+                "cid_code": "LakezeEvent",
+                "account_id": "LakezeEvent",
+                "password": "^yEsYWt4uU",
+                "proxy_url": "http://139.59.248.231:8080",
+                "proxy_api_key": "lakeze-pms-proxy-2025",
+                "use_production": False
+            }
+        })
+        print("[Venues] Created: 天送幸福和苑 (with LINE + PMS config)")
+    else:
+        print("[Venues] 天送幸福和苑 already exists")
+    
+    # Clean up old test venues
+    deleted = await venues_col.delete_many({
+        "id": {"$nin": ["sensan_inn", "tiansong_inn"]},
+        "name": {"$in": ["新場域", "測試場域"]}
+    })
+    if deleted.deleted_count > 0:
+        print(f"[Venues] Cleaned up {deleted.deleted_count} test venues")
+
+
 async def migrate():
     """Run full data migration from seed_data.json"""
     if await is_migrated():
