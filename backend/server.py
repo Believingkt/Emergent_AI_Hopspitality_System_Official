@@ -37,7 +37,7 @@ if os.path.exists(_config_path):
 from database import (
     db, users_col, venues_col, tasks_col, knowledge_col,
     batches_col, config_col, counters_col, versions_col,
-    version_items_col, get_next_id, init_indexes
+    version_items_col, bookings_col, get_next_id, init_indexes
 )
 from config_loader import load_config, get_config, get_config_value
 from migrate import migrate
