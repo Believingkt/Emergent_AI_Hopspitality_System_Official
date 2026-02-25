@@ -467,7 +467,7 @@ export const KnowledgeManagementTab = () => {
             data-testid="upload-pdf-btn"
           >
             <FileUp className="w-4 h-4 mr-2" />
-            上傳 PDF
+            上傳檔案
           </Button>
           <Button
             onClick={() => {
