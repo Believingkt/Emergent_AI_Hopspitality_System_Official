@@ -50,6 +50,7 @@ config_col = db["system_config"]
 counters_col = db["counters"]
 versions_col = db["knowledge_versions"]
 version_items_col = db["knowledge_version_items"]
+bookings_col = db["bookings"]
 
 
 async def get_next_id(collection_name: str) -> int:
