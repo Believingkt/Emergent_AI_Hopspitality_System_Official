@@ -5,7 +5,7 @@ import bcrypt
 from datetime import datetime
 from database import (
     db, users_col, venues_col, tasks_col, knowledge_col,
-    batches_col, counters_col, init_indexes
+    batches_col, counters_col, init_indexes, get_next_id
 )
 
 SEED_FILE = os.path.join(os.path.dirname(__file__), "seed_data.json")
