@@ -138,7 +138,8 @@ export const VenueProvider = ({ children }) => {
       );
       return { success: true, data: response.data.config || response.data };
     } catch (error) {
-      return { success: false, error: error.response?.data?.error || '更新失敗' };
+      console.error('[VenueContext] updateVenueConfig error:', error.response?.status, error.response?.data);
+      return { success: false, error: error.response?.data?.detail || error.response?.data?.error || '更新失敗' };
     }
   };
 
