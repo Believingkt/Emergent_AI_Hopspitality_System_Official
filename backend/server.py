@@ -41,6 +41,7 @@ from database import (
 )
 from config_loader import load_config, get_config, get_config_value
 from migrate import migrate
+from pms_client import PMS_UAT_URL, PMS_PROD_URL
 
 app = FastAPI(title="Lakeze 多場域 AI 管家協作平台")
 
