@@ -190,6 +190,13 @@ export const KnowledgeManagementTab = () => {
   const [uploadResult, setUploadResult] = useState(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const pdfInputRef = useRef(null);
+
+  // Version management state
+  const [versions, setVersions] = useState([]);
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [isRollingBack, setIsRollingBack] = useState(false);
+  const [hasUnpublishedChanges, setHasUnpublishedChanges] = useState(false);
+  const [lastUploadCount, setLastUploadCount] = useState(0);
   
   const venueId = currentVenue?.id || 'sensan_inn';
 
