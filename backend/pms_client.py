@@ -26,13 +26,7 @@ class PMSClient:
     async def search_all(self, check_in: str, check_out: str) -> dict:
         """
         Search available rooms for given dates.
-        
-        Args:
-            check_in: Check-in date (YYYY/MM/DD)
-            check_out: Check-out date (YYYY/MM/DD)
-        
-        Returns:
-            API response with hotel/room availability
+        Routes through proxy if proxy_url is configured.
         """
         if self.use_mock:
             print(f"[PMS] Using mock data (no API credentials)")
@@ -52,8 +46,13 @@ class PMSClient:
         }
         
         try:
+            # Route through proxy if configured
+            if self.proxy_url:
+                return await self._request_via_proxy(payload, headers)
+            
+            # Direct request (only works with whitelisted IP)
             async with httpx.AsyncClient(timeout=15) as client:
-                print(f"[PMS] SearchAll: {check_in} ~ {check_out} (URL: {self.base_url})")
+                print(f"[PMS] SearchAll: {check_in} ~ {check_out} (Direct: {self.base_url})")
                 resp = await client.post(self.base_url, json=payload, headers=headers)
                 
                 if resp.status_code == 200:
@@ -71,6 +70,45 @@ class PMSClient:
         except Exception as e:
             print(f"[PMS] Request Error: {e}")
             return {"Status": False, "Message": str(e), "HostelList": []}
+    
+    async def _request_via_proxy(self, payload: dict, headers: dict) -> dict:
+        """Send PMS request through the fixed-IP proxy server"""
+        try:
+            proxy_body = {
+                "target_url": self.base_url,
+                "payload": payload,
+                "headers": headers
+            }
+            
+            async with httpx.AsyncClient(timeout=20) as client:
+                print(f"[PMS] SearchAll via proxy: {self.proxy_url}")
+                resp = await client.post(
+                    f"{self.proxy_url}/relay",
+                    json=proxy_body,
+                    headers={
+                        "X-Proxy-Key": self.proxy_api_key,
+                        "Content-Type": "application/json"
+                    }
+                )
+                
+                if resp.status_code == 200:
+                    proxy_result = resp.json()
+                    pms_data = proxy_result.get("body", {})
+                    
+                    if isinstance(pms_data, dict) and pms_data.get("Status"):
+                        print(f"[PMS] Proxy success: {len(pms_data.get('HostelList', []))} hotels")
+                        return pms_data
+                    elif isinstance(pms_data, dict):
+                        return {"Status": False, "Message": pms_data.get("Message", "查詢失敗"), "HostelList": []}
+                    else:
+                        return {"Status": False, "Message": "Unexpected response format", "HostelList": []}
+                else:
+                    print(f"[PMS] Proxy error: {resp.status_code} {resp.text}")
+                    return {"Status": False, "Message": f"Proxy error: {resp.status_code}", "HostelList": []}
+        
+        except Exception as e:
+            print(f"[PMS] Proxy request error: {e}")
+            return {"Status": False, "Message": f"Proxy error: {str(e)}", "HostelList": []}
     
     def parse_rooms_summary(self, data: dict) -> list:
         """Parse API response into a simplified room list for AI consumption"""
