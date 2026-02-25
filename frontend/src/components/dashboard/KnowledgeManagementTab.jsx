@@ -887,7 +887,7 @@ export const KnowledgeManagementTab = () => {
                   <input
                     ref={pdfInputRef}
                     type="file"
-                    accept="application/pdf"
+                    accept=".pdf,.docx,.doc,.jpg,.jpeg,.png,.webp,.gif,.md,.txt,.zip"
                     className="hidden"
                     onChange={(e) => {
                       const file = e.target.files?.[0];
