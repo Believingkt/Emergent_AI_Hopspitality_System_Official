@@ -382,6 +382,7 @@ export const KnowledgeManagementTab = () => {
       toast.success('知識更新成功！');
       setShowEditDialog(false);
       setSelectedItem(null);
+      setHasUnpublishedChanges(true);
       fetchKnowledge();
     } catch (err) {
       console.error('Failed to edit knowledge:', err);
