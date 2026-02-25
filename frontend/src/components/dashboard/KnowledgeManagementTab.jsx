@@ -858,10 +858,10 @@ export const KnowledgeManagementTab = () => {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <FileUp className="w-5 h-5 text-[#8B5CF6]" />
-              上傳 PDF 知識文件
+              上傳知識文件
             </DialogTitle>
             <DialogDescription className="text-[#8b949e]">
-              上傳場域相關的 PDF 文件，AI 會自動擷取並分類知識
+              上傳場域相關文件，Claude AI 會自動擷取並分類知識
             </DialogDescription>
           </DialogHeader>
           
