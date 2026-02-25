@@ -469,8 +469,11 @@ export const KnowledgeManagementTab = () => {
       
       setUploadResult(response.data);
       toast.success(`成功從 ${file.name} 提取 ${response.data.total_extracted} 條知識！`);
+      setHasUnpublishedChanges(true);
+      setLastUploadCount(response.data.total_extracted || 0);
       fetchKnowledge();
       fetchStats();
+      fetchVersions();
     } catch (err) {
       const errMsg = err.response?.data?.detail || '上傳失敗，請稍後再試';
       toast.error(errMsg);
