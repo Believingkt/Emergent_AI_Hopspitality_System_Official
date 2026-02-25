@@ -404,6 +404,7 @@ export const KnowledgeManagementTab = () => {
       toast.success('知識已停用');
       setShowDeleteDialog(false);
       setSelectedItem(null);
+      setHasUnpublishedChanges(true);
       fetchKnowledge();
       fetchStats();
     } catch (err) {
