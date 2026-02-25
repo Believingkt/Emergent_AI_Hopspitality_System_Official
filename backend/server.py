@@ -1504,13 +1504,27 @@ async def line_webhook(venue_id: str, request: Request):
                             {"$set": {"ai_response": ai_response, "agent_mode": "ai"}}
                         )
                         
-                        # Send AI reply via LINE
-                        if access_token and reply_token:
-                            await line_reply_message(
-                                reply_token,
-                                [{"type": "text", "text": ai_response}],
-                                access_token
-                            )
+                        # Check if we should send room cards (Flex Message)
+                        booking_keywords = ["訂房", "預訂", "要訂", "想訂", "幫我訂", "我要住", "空房", "有房", "可以訂"]
+                        should_send_cards = any(kw in msg_text for kw in booking_keywords)
+                        
+                        if should_send_cards and access_token and reply_token:
+                            # Try to build Flex Message with room cards
+                            try:
+                                flex_msg = await build_room_flex_message(venue_id, user_id, msg_text)
+                                if flex_msg:
+                                    await line_reply_message(
+                                        reply_token,
+                                        [{"type": "text", "text": ai_response}, flex_msg],
+                                        access_token
+                                    )
+                                else:
+                                    await line_reply_message(reply_token, [{"type": "text", "text": ai_response}], access_token)
+                            except Exception as flex_err:
+                                print(f"[LINE Webhook] Flex message error: {flex_err}")
+                                await line_reply_message(reply_token, [{"type": "text", "text": ai_response}], access_token)
+                        elif access_token and reply_token:
+                            await line_reply_message(reply_token, [{"type": "text", "text": ai_response}], access_token)
                 except Exception as e:
                     print(f"[LINE Webhook] AI reply error: {e}")
             
