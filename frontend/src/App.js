@@ -87,6 +87,8 @@ const AppRoutes = () => {
             } 
           />
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/booking/new" element={<BookingPage />} />
+          <Route path="/booking/:bookingId" element={<BookingPage />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
         <Toaster 
