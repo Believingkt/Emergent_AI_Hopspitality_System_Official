@@ -16,11 +16,13 @@ class PMSClient:
     """Client for TravelMap CID Distributor API"""
     
     def __init__(self, account_id: str = "", password: str = "", cid_code: str = "LakezeEvent", 
-                 use_production: bool = False):
+                 use_production: bool = False, proxy_url: str = "", proxy_api_key: str = ""):
         self.account_id = account_id
         self.password = password
         self.cid_code = cid_code
         self.base_url = PMS_PROD_URL if use_production else PMS_UAT_URL
+        self.proxy_url = proxy_url.rstrip("/") if proxy_url else ""
+        self.proxy_api_key = proxy_api_key or "lakeze-pms-proxy-2025"
         self.use_mock = not (account_id and password)
     
     async def search_all(self, check_in: str, check_out: str) -> dict:
