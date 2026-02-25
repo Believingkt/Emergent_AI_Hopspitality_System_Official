@@ -1227,20 +1227,39 @@ async def get_managers(user: dict = Depends(get_current_user)):
     users = await users_col.find({}).to_list(50)
     return [{"email": u["email"], "name": u["name"], "role": u["role"]} for u in users]
 
-# ============ Venue Config (compatibility) ============
+# ============ Venue Config (per-venue settings) ============
 
 @app.get("/api/venues/{venue_id}/config")
 async def get_venue_config(venue_id: str, user: dict = Depends(get_current_user)):
     venue = await venues_col.find_one({"id": venue_id})
     if not venue:
         raise HTTPException(404, "場域不存在")
+    
+    config = venue.get("config", {})
     return {
         "venue_id": venue_id,
-        "ai_model": "gpt-4o-mini",
-        "ai_knowledge_base_url": "",
-        "greeting_message": f"歡迎來到{venue['name']}！",
-        "handoff_keywords": ["真人", "客服", "人工", "管家"]
+        "ai_model": config.get("ai_model", "T1"),
+        "ai_knowledge_base_url": config.get("ai_knowledge_base_url", ""),
+        "greeting_message": config.get("greeting_message", f"歡迎來到{venue['name']}！"),
+        "handoff_keywords": config.get("handoff_keywords", ["真人", "客服", "人工", "管家"])
     }
+
+@app.put("/api/venues/{venue_id}/config")
+async def update_venue_config(venue_id: str, body: dict, user: dict = Depends(get_current_user)):
+    venue = await venues_col.find_one({"id": venue_id})
+    if not venue:
+        raise HTTPException(404, "場域不存在")
+    
+    existing = venue.get("config", {})
+    updated = {
+        "ai_model": body.get("ai_model", existing.get("ai_model", "T1")),
+        "ai_knowledge_base_url": body.get("ai_knowledge_base_url", existing.get("ai_knowledge_base_url", "")),
+        "greeting_message": body.get("greeting_message", existing.get("greeting_message", "")),
+        "handoff_keywords": body.get("handoff_keywords", existing.get("handoff_keywords", ["真人", "客服", "人工", "管家"])),
+    }
+    
+    await venues_col.update_one({"id": venue_id}, {"$set": {"config": updated}})
+    return {"success": True, "config": updated}
 
 # ============ LINE Credentials (per-venue) ============
 
