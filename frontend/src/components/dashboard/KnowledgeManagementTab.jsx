@@ -345,15 +345,18 @@ export const KnowledgeManagementTab = () => {
     setShowDeleteDialog(true);
   };
 
-  // PDF 上傳處理
+  // File upload handler (supports PDF, Word, Images, Markdown, ZIP)
   const handlePdfUpload = async (file) => {
     if (!file) return;
-    if (file.type !== 'application/pdf') {
-      toast.error('只支援 PDF 格式的檔案');
+    const allowedExts = ['pdf', 'docx', 'doc', 'jpg', 'jpeg', 'png', 'webp', 'gif', 'md', 'txt', 'zip'];
+    const ext = file.name.split('.').pop()?.toLowerCase();
+    if (!allowedExts.includes(ext)) {
+      toast.error(`不支援 .${ext} 格式。支援：PDF, Word, 圖片, Markdown, ZIP`);
       return;
     }
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error('檔案大小不能超過 10MB');
+    const maxSize = ext === 'zip' ? 20 * 1024 * 1024 : 10 * 1024 * 1024;
+    if (file.size > maxSize) {
+      toast.error(`檔案大小不能超過 ${ext === 'zip' ? '20' : '10'}MB`);
       return;
     }
     
@@ -366,19 +369,19 @@ export const KnowledgeManagementTab = () => {
       formData.append('file', file);
       
       const response = await axios.post(
-        `${API_URL}/api/venues/${venueId}/knowledge/upload-pdf`,
+        `${API_URL}/api/venues/${venueId}/knowledge/upload-file`,
         formData,
         { 
           headers: { 
             Authorization: `Bearer ${token}`,
             'Content-Type': 'multipart/form-data'
           },
-          timeout: 60000
+          timeout: 90000
         }
       );
       
       setUploadResult(response.data);
-      toast.success(`成功從 PDF 提取 ${response.data.total_extracted} 條知識！`);
+      toast.success(`成功從 ${file.name} 提取 ${response.data.total_extracted} 條知識！`);
       fetchKnowledge();
       fetchStats();
     } catch (err) {
