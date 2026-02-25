@@ -898,8 +898,8 @@ export const KnowledgeManagementTab = () => {
                   {isUploading ? (
                     <div className="space-y-3">
                       <Loader2 className="w-10 h-10 animate-spin text-[#FF6B35] mx-auto" />
-                      <p className="text-white font-medium">AI 正在分析文件內容...</p>
-                      <p className="text-[#8b949e] text-sm">解析 PDF → 提取知識 → 智能分類</p>
+                      <p className="text-white font-medium">Claude AI 正在分析文件...</p>
+                      <p className="text-[#8b949e] text-sm">解析內容 → 提取知識 → 智能分類</p>
                       <div className="w-48 h-2 bg-[#27272a] rounded-full mx-auto overflow-hidden">
                         <div className="h-full bg-gradient-to-r from-[#FF6B35] to-[#8B5CF6] rounded-full animate-pulse" style={{width: '60%'}} />
                       </div>
