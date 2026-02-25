@@ -115,7 +115,70 @@ async def ensure_default_venues():
         })
         print("[Venues] Created: 天送幸福和苑 (with LINE + PMS config)")
     else:
-        print("[Venues] 天送幸福和苑 already exists")
+        # Ensure config is set even if venue already exists
+        await venues_col.update_one(
+            {"id": "tiansong_inn", "config": {"$exists": False}},
+            {"$set": {"config": {"ai_model": "T1", "greeting_message": "歡迎來到天送幸福和苑！", "handoff_keywords": ["真人", "客服", "人工", "管家"]}}}
+        )
+        # Ensure LINE credentials exist
+        venue = await venues_col.find_one({"id": "tiansong_inn"})
+        if not venue.get("line_credentials", {}).get("channel_access_token"):
+            await venues_col.update_one({"id": "tiansong_inn"}, {"$set": {
+                "line_credentials": {
+                    "channel_id": "2009222522",
+                    "channel_secret": "d1c0551f0fc6678f480e2af97df4d085",
+                    "user_id": "U7dc6caaff2acf64c01ededc29bcd9da4",
+                    "channel_access_token": "b3v0LtGT8z6qGQ3htV93TFJHfzADOIVczVzNyE3X8rH/udlGgA+s51KGGJPoZPSmVU1YtQmOUTJHwyOaXjplZsB5X9FweUR8GX/mHz8Dp/A9tKdqLdFlCk2WBf6J1Kbg/fQjROb+NokYI1ydplO3ZgdB04t89/1O/w1cDnyilFU="
+                }
+            }})
+            print("[Venues] Updated LINE credentials for 天送幸福和苑")
+        # Ensure PMS config exists
+        if not venue.get("pms_config", {}).get("account_id"):
+            await venues_col.update_one({"id": "tiansong_inn"}, {"$set": {
+                "pms_config": {
+                    "provider": "travelmap",
+                    "uat_url": "https://booking.travelmap.com.tw/api/CIDDistributor.ashx",
+                    "prod_url": "https://booking.taiwantravelmap.com/api/CIDDistributor.ashx",
+                    "cid_code": "LakezeEvent",
+                    "account_id": "LakezeEvent",
+                    "password": "^yEsYWt4uU",
+                    "proxy_url": "http://139.59.248.231:8080",
+                    "proxy_api_key": "lakeze-pms-proxy-2025",
+                    "use_production": False
+                }
+            }})
+            print("[Venues] Updated PMS config for 天送幸福和苑")
+        print("[Venues] 天送幸福和苑 verified")
+    
+    # Seed basic knowledge for tiansong_inn if empty
+    knowledge_count = await knowledge_col.count_documents({"venue_id": "tiansong_inn"})
+    if knowledge_count == 0:
+        now = datetime.utcnow().isoformat()
+        base_knowledge = [
+            {"title": "住宿概要", "content": "天送幸福和苑為模擬訂房測試場域，提供多種房型選擇。可透過 PMS 系統即時查詢空房與價格。", "category": "service"},
+            {"title": "訂房方式", "content": "客戶可直接在 LINE 對話中詢問空房，AI 會即時查詢 PMS 系統並提供可訂房型、價格和庫存。點擊訂房按鈕即可進入訂房頁面完成預訂。", "category": "service"},
+            {"title": "入住時間", "content": "入住時間為下午 15:00 後，退房時間為隔日上午 11:00 前。", "category": "rules"},
+            {"title": "付款方式", "content": "目前支援線上信用卡付款。訂房完成後會透過 LINE 發送訂房確認資訊。", "category": "pricing"},
+            {"title": "取消政策", "content": "入住前 3 天可免費取消。入住前 1-2 天取消收取 50% 費用。入住當天取消或未到不予退款。", "category": "rules"},
+            {"title": "加人費用", "content": "成人加人費用依房型而異，兒童（8歲以下）另有優惠價格。詳細費用會在查詢房型時一併顯示。", "category": "pricing"},
+        ]
+        for i, k in enumerate(base_knowledge):
+            kid = await get_next_id("knowledge")
+            await knowledge_col.insert_one({
+                "id": kid,
+                "venue_id": "tiansong_inn",
+                "title": k["title"],
+                "content": k["content"],
+                "category": k["category"],
+                "source_type": "manual",
+                "status": "approved",
+                "is_active": True,
+                "ai_confidence": None,
+                "batch_id": None,
+                "created_at": now,
+                "updated_at": now,
+            })
+        print(f"[Venues] Seeded {len(base_knowledge)} knowledge items for 天送幸福和苑")
     
     # Clean up old test venues
     deleted = await venues_col.delete_many({
