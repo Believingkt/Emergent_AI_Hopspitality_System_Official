@@ -448,6 +448,9 @@ export const KnowledgeManagementTab = () => {
     setIsUploading(true);
     setUploadResult(null);
     
+    // Auto-snapshot current state before upload
+    await autoSnapshotBeforeUpload();
+    
     try {
       const formData = new FormData();
       formData.append('file', file);
