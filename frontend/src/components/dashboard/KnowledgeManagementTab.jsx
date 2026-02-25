@@ -1133,7 +1133,7 @@ export const KnowledgeManagementTab = () => {
                   <div className="flex items-start gap-2">
                     <Lightbulb className="w-4 h-4 text-[#FF6B35] flex-shrink-0 mt-0.5" />
                     <p className="text-[#8b949e] text-xs">
-                      這些知識已自動生效，AI 下次對話時會使用。你可以隨時在知識列表中編輯或調整分類。
+                      這些知識已匯入，請在知識列表中<span className="text-white font-medium">逐條檢查和編輯</span>，確認無誤後點擊<span className="text-amber-400 font-medium">「確認並發布版本」</span>。如果不滿意，可以隨時<span className="text-red-400 font-medium">回滾</span>到上傳前的版本。
                     </p>
                   </div>
                 </div>
