@@ -923,12 +923,13 @@ export const KnowledgeManagementTab = () => {
                 
                 {/* 支援說明 */}
                 <div className="bg-[#0d1117] rounded-xl p-3 space-y-1.5">
-                  <p className="text-[#8b949e] text-xs font-medium">適合上傳的文件：</p>
+                  <p className="text-[#8b949e] text-xs font-medium">支援的檔案格式：</p>
                   <div className="flex flex-wrap gap-2">
-                    {['價目表', '場域簡介', '房型說明', '注意事項', '交通指南', '餐飲菜單'].map(item => (
+                    {['PDF 文件', 'Word 文件', 'JPG/PNG 圖片', 'Markdown', '純文字', 'ZIP 壓縮檔'].map(item => (
                       <span key={item} className="text-xs bg-[#27272a] text-[#a1a1aa] px-2 py-1 rounded-md">{item}</span>
                     ))}
                   </div>
+                  <p className="text-[#52525b] text-xs mt-1">💡 圖片會由 Claude AI Vision 直接辨識內容</p>
                 </div>
               </div>
             ) : uploadResult.error ? (
