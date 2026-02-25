@@ -1583,6 +1583,112 @@ async def line_webhook(venue_id: str, request: Request):
     
     return {"status": "ok"}
 
+async def build_room_flex_message(venue_id: str, user_id: str, message: str):
+    """Build LINE Flex Message with room cards for booking"""
+    from pms_client import get_pms_client
+    
+    try:
+        pms = await get_pms_client(venue_id, venues_col)
+        
+        # Determine dates
+        tomorrow = (datetime.utcnow() + timedelta(hours=8, days=1)).strftime("%Y/%m/%d")
+        day_after = (datetime.utcnow() + timedelta(hours=8, days=2)).strftime("%Y/%m/%d")
+        check_in, check_out = tomorrow, day_after
+        
+        if "今天" in message or "今晚" in message:
+            check_in = (datetime.utcnow() + timedelta(hours=8)).strftime("%Y/%m/%d")
+            check_out = (datetime.utcnow() + timedelta(hours=8, days=1)).strftime("%Y/%m/%d")
+        elif "後天" in message:
+            check_in = (datetime.utcnow() + timedelta(hours=8, days=2)).strftime("%Y/%m/%d")
+            check_out = (datetime.utcnow() + timedelta(hours=8, days=3)).strftime("%Y/%m/%d")
+        
+        result = await pms.search_all(check_in, check_out)
+        rooms = pms.parse_rooms_summary(result)
+        
+        if not rooms:
+            return None
+        
+        # Build booking URL base
+        app_url = os.environ.get("APP_URL", "https://manager.lakeze.com")
+        
+        # Build carousel of room cards (max 10)
+        bubbles = []
+        for room in rooms[:5]:
+            if room["inventory"] <= 0:
+                continue
+            
+            booking_params = (
+                f"venue_id={venue_id}&room_code={room['room_code']}&room_name={room['room_name']}"
+                f"&rate_name={room['rate_name']}&check_in={check_in}&check_out={check_out}"
+                f"&price_before_tax={room['price_before_tax']}&price_after_tax={room['price_after_tax']}"
+                f"&currency={room['currency']}&max_occupancy={room['max_occupancy']}"
+                f"&line_user_id={user_id}"
+            )
+            if room['photos']:
+                booking_params += f"&room_photo={room['photos'][0]}"
+            
+            booking_link = f"{app_url}/booking/new?{booking_params}"
+            
+            bubble = {
+                "type": "bubble",
+                "size": "kilo",
+                "body": {
+                    "type": "box",
+                    "layout": "vertical",
+                    "contents": [
+                        {"type": "text", "text": room["room_name"], "weight": "bold", "size": "lg", "color": "#FFFFFF"},
+                        {"type": "text", "text": room["rate_name"] or "標準房價", "size": "xs", "color": "#00B4D8", "margin": "sm"},
+                        {"type": "separator", "margin": "lg", "color": "#27272A"},
+                        {"type": "box", "layout": "horizontal", "margin": "lg", "contents": [
+                            {"type": "text", "text": "價格", "size": "sm", "color": "#8B949E", "flex": 1},
+                            {"type": "text", "text": f"NT$ {room['price_after_tax']:,.0f}", "size": "lg", "weight": "bold", "color": "#FF6B35", "align": "end", "flex": 2}
+                        ]},
+                        {"type": "box", "layout": "horizontal", "margin": "sm", "contents": [
+                            {"type": "text", "text": "庫存", "size": "sm", "color": "#8B949E", "flex": 1},
+                            {"type": "text", "text": f"剩 {room['inventory']} 間", "size": "sm", "color": "#22C55E", "align": "end", "flex": 2}
+                        ]},
+                        {"type": "box", "layout": "horizontal", "margin": "sm", "contents": [
+                            {"type": "text", "text": "日期", "size": "sm", "color": "#8B949E", "flex": 1},
+                            {"type": "text", "text": f"{check_in} ~ {check_out}", "size": "xs", "color": "#FFFFFF", "align": "end", "flex": 2}
+                        ]},
+                    ],
+                    "backgroundColor": "#18181B",
+                    "paddingAll": "16px"
+                },
+                "footer": {
+                    "type": "box",
+                    "layout": "vertical",
+                    "contents": [
+                        {
+                            "type": "button",
+                            "action": {"type": "uri", "label": "立即預訂", "uri": booking_link},
+                            "style": "primary",
+                            "color": "#FF6B35",
+                            "height": "md"
+                        }
+                    ],
+                    "backgroundColor": "#18181B",
+                    "paddingAll": "12px"
+                }
+            }
+            bubbles.append(bubble)
+        
+        if not bubbles:
+            return None
+        
+        if len(bubbles) == 1:
+            return {"type": "flex", "altText": "查看可訂房型", "contents": bubbles[0]}
+        
+        return {
+            "type": "flex",
+            "altText": f"查看 {len(bubbles)} 個可訂房型",
+            "contents": {"type": "carousel", "contents": bubbles}
+        }
+    
+    except Exception as e:
+        print(f"[Flex] Error building room cards: {e}")
+        return None
+
 async def generate_ai_reply(venue_id: str, user_id: str, message: str) -> str:
     """Generate AI reply based on venue knowledge base + PMS real-time data"""
     from pms_client import get_pms_client
