@@ -378,5 +378,7 @@ async def get_pms_client(venue_id: str, venues_col) -> PMSClient:
         account_id=config.get("account_id", ""),
         password=config.get("password", ""),
         cid_code=config.get("cid_code", "LakezeEvent"),
-        use_production=config.get("use_production", False)
+        use_production=config.get("use_production", False),
+        proxy_url=config.get("proxy_url", ""),
+        proxy_api_key=config.get("proxy_api_key", ""),
     )
