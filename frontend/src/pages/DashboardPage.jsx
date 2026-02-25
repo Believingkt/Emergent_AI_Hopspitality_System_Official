@@ -166,6 +166,14 @@ export default function DashboardPage() {
                   <BookOpen className="w-4 h-4" />
                   <span>知識管理</span>
                 </TabsTrigger>
+                <TabsTrigger 
+                  value="bookings"
+                  className="data-[state=active]:bg-[#FF6B35] data-[state=active]:text-white text-[#a1a1aa] rounded-lg px-4 transition-all duration-300 flex items-center gap-2"
+                  data-testid="tab-bookings"
+                >
+                  <CalendarCheck className="w-4 h-4" />
+                  <span>訂房管理</span>
+                </TabsTrigger>
               </TabsList>
 
               {/* Overview Tab */}
