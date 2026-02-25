@@ -604,6 +604,74 @@ export const KnowledgeManagementTab = () => {
         />
       </div>
 
+      {/* Version Management Bar */}
+      {(hasUnpublishedChanges || versions.length > 0) && (
+        <div className={`rounded-xl border-2 p-4 ${
+          hasUnpublishedChanges 
+            ? 'bg-amber-500/5 border-amber-500/30' 
+            : 'bg-[#0d1117] border-[#27272a]'
+        }`}>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              {hasUnpublishedChanges ? (
+                <>
+                  <div className="w-8 h-8 rounded-lg bg-amber-500/15 flex items-center justify-center">
+                    <AlertTriangle className="w-4 h-4 text-amber-400" />
+                  </div>
+                  <div>
+                    <p className="text-amber-400 font-medium text-sm">
+                      有未發布的變更{lastUploadCount > 0 ? `（新增 ${lastUploadCount} 條知識）` : ''}
+                    </p>
+                    <p className="text-[#8b949e] text-xs">請檢查知識內容，確認後發布新版本</p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="w-8 h-8 rounded-lg bg-[#22c55e]/15 flex items-center justify-center">
+                    <CheckCircle2 className="w-4 h-4 text-[#22c55e]" />
+                  </div>
+                  <div>
+                    <p className="text-[#22c55e] font-medium text-sm">
+                      目前版本：{versions.find(v => v.is_current)?.version_number || '未發布'}
+                    </p>
+                    <p className="text-[#8b949e] text-xs">
+                      共 {versions.length} 個版本{versions.find(v => v.is_current)?.description ? ` · ${versions.find(v => v.is_current).description}` : ''}
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              {versions.length >= 2 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRollback}
+                  disabled={isRollingBack}
+                  className="border-red-500/30 text-red-400 hover:bg-red-500/10 text-xs"
+                >
+                  {isRollingBack ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <RefreshCw className="w-3 h-3 mr-1" />}
+                  回滾上一版
+                </Button>
+              )}
+              <Button
+                size="sm"
+                onClick={() => handlePublish(hasUnpublishedChanges ? '確認變更後發布' : '')}
+                disabled={isPublishing}
+                className={`text-xs ${
+                  hasUnpublishedChanges 
+                    ? 'bg-amber-500 hover:bg-amber-600 text-white' 
+                    : 'bg-[#22c55e] hover:bg-[#16a34a] text-white'
+                }`}
+              >
+                {isPublishing ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <CheckCircle2 className="w-3 h-3 mr-1" />}
+                {hasUnpublishedChanges ? '確認並發布版本' : '發布快照'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 篩選和搜尋 */}
       <div className="bg-[#0d1117] rounded-xl border border-[#27272a] p-4">
         <div className="flex flex-col md:flex-row gap-4">
