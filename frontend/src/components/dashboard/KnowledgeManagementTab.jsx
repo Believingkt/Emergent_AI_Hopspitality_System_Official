@@ -349,6 +349,7 @@ export const KnowledgeManagementTab = () => {
       toast.success('知識新增成功！');
       setShowAddDialog(false);
       setFormData({ title: '', content: '', category: 'other' });
+      setHasUnpublishedChanges(true);
       fetchKnowledge();
       fetchStats();
     } catch (err) {
