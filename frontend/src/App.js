@@ -8,6 +8,7 @@ import { Toaster } from "./components/ui/sonner";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import SettingsPage from "./pages/SettingsPage";
+import BookingPage from "./pages/BookingPage";
 import { Loader2 } from "lucide-react";
 import "./App.css";
 
