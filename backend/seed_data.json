@@ -1979,19 +1979,5 @@
       }
     ],
     "venue_id": "sensan_inn"
-  },
-  "users": [
-    {
-      "email": "kenneth@lakeze.com",
-      "name": "Kenneth",
-      "role": "admin",
-      "password": "lakeze2026"
-    },
-    {
-      "email": "test@lakeze.com",
-      "name": "測試管家",
-      "role": "manager",
-      "password": "test2026"
-    }
-  ]
+  }
 }

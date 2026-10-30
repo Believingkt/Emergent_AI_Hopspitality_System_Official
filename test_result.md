@@ -248,7 +248,7 @@ test_plan:
 
 agent_communication:
     - agent: "main"
-    - message: "新增 PDF 知識上傳功能(含AI智能分類)和空白知識庫引導。後端: POST /api/venues/{id}/knowledge/upload-pdf。前端: 上傳PDF按鈕+拖曳Dialog+空白引導頁。登入: kenneth@lakeze.com / lakeze2026"
+    - message: "新增 PDF 知識上傳功能(含AI智能分類)和空白知識庫引導。後端: POST /api/venues/{id}/knowledge/upload-pdf。前端: 上傳PDF按鈕+拖曳Dialog+空白引導頁。登入: kenneth@lakeze.com"
     - agent: "testing"
     - message: "✅ 後端測試完成 - 所有27項測試通過: Venue CRUD APIs (建立/更新/頭貼上傳)、認證、Knowledge管理、Tasks查詢 全部正常運作。系統穩定無重大問題。"
     - agent: "testing"

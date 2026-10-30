@@ -29,6 +29,17 @@ import {
   DialogDescription,
   DialogFooter,
 } from '../components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '../components/ui/alert-dialog';
+import { generatePassword } from '../lib/utils';
 import { toast } from 'sonner';
 import {
   Building2,
@@ -47,7 +58,9 @@ import {
   Pencil,
   Check,
   X,
-  ImagePlus
+  ImagePlus,
+  Trash2,
+  Wand2
 } from 'lucide-react';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
@@ -59,7 +72,7 @@ const AI_MODELS = [
 ];
 
 export default function SettingsPage() {
-  const { token, isAdmin } = useAuth();
+  const { token, isAdmin, user: currentUser, logout } = useAuth();
   const { venues, getVenueConfig, updateVenueConfig, updateVenue, uploadAvatar, fetchVenues } = useVenue();
   
   const [selectedVenue, setSelectedVenue] = useState(null);
@@ -79,6 +92,10 @@ export default function SettingsPage() {
   const [addManagerOpen, setAddManagerOpen] = useState(false);
   const [newManager, setNewManager] = useState({ name: '', email: '', password: '', role: 'manager' });
   const [addingManager, setAddingManager] = useState(false);
+  const [editManager, setEditManager] = useState(null);
+  const [savingManager, setSavingManager] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deletingManager, setDeletingManager] = useState(false);
 
   // Fetch managers
   const fetchManagers = async () => {
@@ -181,6 +198,52 @@ export default function SettingsPage() {
       toast.error(error.response?.data?.detail || '新增失敗');
     } finally {
       setAddingManager(false);
+    }
+  };
+
+  const openEditManager = (manager) => {
+    setEditManager({ originalEmail: manager.email, name: manager.name, email: manager.email, role: manager.role, password: '' });
+  };
+
+  // Update manager name / email / role / password
+  const handleUpdateManager = async () => {
+    setSavingManager(true);
+    const { originalEmail, password, ...fields } = editManager;
+    try {
+      const response = await axios.put(
+        `${API_URL}/api/managers/${encodeURIComponent(originalEmail)}`,
+        { ...fields, ...(password ? { password } : {}) },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setEditManager(null);
+      if (response.data.relogin_required) {
+        toast.success('帳號已更新，請用新的帳密重新登入');
+        logout();
+        return;
+      }
+      toast.success('帳號已更新');
+      fetchManagers();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || '更新失敗');
+    } finally {
+      setSavingManager(false);
+    }
+  };
+
+  const handleDeleteManager = async () => {
+    setDeletingManager(true);
+    try {
+      await axios.delete(
+        `${API_URL}/api/managers/${encodeURIComponent(deleteTarget.email)}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success('帳號已刪除');
+      fetchManagers();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || '刪除失敗');
+    } finally {
+      setDeletingManager(false);
+      setDeleteTarget(null);
     }
   };
 
@@ -550,9 +613,9 @@ export default function SettingsPage() {
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                       {managers.map((manager) => (
                         <div
-                          key={manager.id}
+                          key={manager.email}
                           className="p-4 bg-[#27272a]/50 rounded-xl border border-[#27272a] hover:border-[#FF6B35]/50 transition-all duration-300"
-                          data-testid={`manager-card-${manager.id}`}
+                          data-testid={`manager-card-${manager.email}`}
                         >
                           <div className="flex items-start gap-3">
                             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FF6B35] to-[#00B4D8] flex items-center justify-center flex-shrink-0">
@@ -580,6 +643,30 @@ export default function SettingsPage() {
                                 {manager.email}
                               </p>
                             </div>
+                          </div>
+                          <div className="flex justify-end gap-2 mt-3">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => openEditManager(manager)}
+                              className="text-[#a1a1aa] hover:text-white hover:bg-[#27272a] rounded-lg"
+                              data-testid={`edit-manager-${manager.email}`}
+                            >
+                              <Pencil className="w-4 h-4 mr-1" />
+                              編輯帳密
+                            </Button>
+                            {manager.email !== currentUser?.email && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setDeleteTarget(manager)}
+                                className="text-[#a1a1aa] hover:text-red-400 hover:bg-red-500/10 rounded-lg"
+                                data-testid={`delete-manager-${manager.email}`}
+                              >
+                                <Trash2 className="w-4 h-4 mr-1" />
+                                刪除
+                              </Button>
+                            )}
                           </div>
                         </div>
                       ))}
@@ -639,14 +726,26 @@ export default function SettingsPage() {
                 <Shield className="w-4 h-4 text-[#FF6B35]" />
                 密碼
               </Label>
-              <Input
-                type="password"
-                value={newManager.password}
-                onChange={(e) => setNewManager({ ...newManager, password: e.target.value })}
-                placeholder="設定密碼"
-                className="bg-[#27272a]/50 border-[#27272a] text-white placeholder:text-[#52525b] rounded-lg"
-                data-testid="new-manager-password"
-              />
+              <div className="flex gap-2">
+                <Input
+                  value={newManager.password}
+                  onChange={(e) => setNewManager({ ...newManager, password: e.target.value })}
+                  placeholder="至少 10 字元，含英文與數字"
+                  autoComplete="new-password"
+                  className="bg-[#27272a]/50 border-[#27272a] text-white placeholder:text-[#52525b] rounded-lg font-mono"
+                  data-testid="new-manager-password"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setNewManager({ ...newManager, password: generatePassword() })}
+                  className="border-[#27272a] text-[#a1a1aa] hover:bg-[#27272a] hover:text-white rounded-lg shrink-0"
+                >
+                  <Wand2 className="w-4 h-4 mr-1" />
+                  產生
+                </Button>
+              </div>
+              <p className="text-xs text-[#71717a]">建立後請將密碼交給使用者，他可以點左下角頭像自行修改</p>
             </div>
 
             <div className="space-y-2">
@@ -690,6 +789,140 @@ export default function SettingsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Edit Manager Dialog */}
+      <Dialog open={!!editManager} onOpenChange={(open) => !open && setEditManager(null)}>
+        <DialogContent className="bg-[#18181b] border-[#27272a] rounded-xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-white">編輯帳號</DialogTitle>
+            <DialogDescription className="text-[#a1a1aa]">
+              修改登入帳號、姓名、角色，或重設密碼
+            </DialogDescription>
+          </DialogHeader>
+
+          {editManager && (
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2 text-white">
+                  <User className="w-4 h-4 text-[#FF6B35]" />
+                  姓名
+                </Label>
+                <Input
+                  value={editManager.name}
+                  onChange={(e) => setEditManager({ ...editManager, name: e.target.value })}
+                  className="bg-[#27272a]/50 border-[#27272a] text-white placeholder:text-[#52525b] rounded-lg"
+                  data-testid="edit-manager-name"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2 text-white">
+                  <Mail className="w-4 h-4 text-[#FF6B35]" />
+                  登入帳號（電子郵件）
+                </Label>
+                <Input
+                  type="email"
+                  value={editManager.email}
+                  onChange={(e) => setEditManager({ ...editManager, email: e.target.value })}
+                  className="bg-[#27272a]/50 border-[#27272a] text-white placeholder:text-[#52525b] rounded-lg"
+                  data-testid="edit-manager-email"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2 text-white">
+                  <Lock className="w-4 h-4 text-[#FF6B35]" />
+                  新密碼
+                </Label>
+                <div className="flex gap-2">
+                  <Input
+                    value={editManager.password}
+                    onChange={(e) => setEditManager({ ...editManager, password: e.target.value })}
+                    placeholder="留空表示不變更"
+                    autoComplete="new-password"
+                    className="bg-[#27272a]/50 border-[#27272a] text-white placeholder:text-[#52525b] rounded-lg font-mono"
+                    data-testid="edit-manager-password"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setEditManager({ ...editManager, password: generatePassword() })}
+                    className="border-[#27272a] text-[#a1a1aa] hover:bg-[#27272a] hover:text-white rounded-lg shrink-0"
+                  >
+                    <Wand2 className="w-4 h-4 mr-1" />
+                    產生
+                  </Button>
+                </div>
+                <p className="text-xs text-[#71717a]">至少 10 字元，需包含英文與數字。變更後該帳號需重新登入</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-white">角色</Label>
+                <Select
+                  value={editManager.role}
+                  onValueChange={(value) => setEditManager({ ...editManager, role: value })}
+                >
+                  <SelectTrigger className="bg-[#27272a]/50 border-[#27272a] text-white rounded-lg">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#18181b] border-[#27272a] rounded-lg">
+                    <SelectItem value="manager" className="text-white hover:bg-[#27272a] focus:bg-[#27272a] focus:text-white">管家</SelectItem>
+                    <SelectItem value="admin" className="text-white hover:bg-[#27272a] focus:bg-[#27272a] focus:text-white">管理員</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setEditManager(null)}
+              className="border-[#27272a] text-[#a1a1aa] hover:bg-[#27272a] hover:text-white rounded-lg"
+            >
+              取消
+            </Button>
+            <Button
+              onClick={handleUpdateManager}
+              disabled={savingManager || !editManager?.name || !editManager?.email}
+              className="bg-[#FF6B35] hover:bg-[#E55A2B] text-white rounded-full transition-all duration-300"
+              data-testid="confirm-edit-manager-btn"
+            >
+              {savingManager ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4 mr-2" />
+              )}
+              儲存
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Manager Confirmation */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent className="bg-[#18181b] border-[#27272a] rounded-xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white">刪除帳號</AlertDialogTitle>
+            <AlertDialogDescription className="text-[#a1a1aa]">
+              確定要刪除 {deleteTarget?.name}（{deleteTarget?.email}）嗎？刪除後無法登入，此動作無法復原。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-[#27272a] text-[#a1a1aa] bg-transparent hover:bg-[#27272a] hover:text-white rounded-lg">
+              取消
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteManager}
+              disabled={deletingManager}
+              className="bg-red-600 hover:bg-red-700 text-white rounded-lg"
+              data-testid="confirm-delete-manager-btn"
+            >
+              刪除
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

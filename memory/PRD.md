@@ -140,7 +140,7 @@
 
 ## 測試帳號
 - **Email**: kenneth@lakeze.com
-- **Password**: lakeze2026
+- **Password**: （請向管理員索取，可在「系統設定 → 管家管理」重設）
 
 ## 已知問題
 - **CORS 問題**：預覽環境 URL 需要在後端 FRONTEND_URL 中配置

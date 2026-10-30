@@ -95,11 +95,11 @@ async def startup():
         user_count = await users_col.count_documents({})
         print(f"[Server] Ready! Users in DB: {user_count}")
         if user_count == 0:
-            print("[Server] WARNING: No users in database! Attempting to create default users...")
-            from migrate import ensure_default_passwords
-            await ensure_default_passwords()
+            print("[Server] WARNING: No users in database! Attempting to create initial admin...")
+            from migrate import ensure_initial_admin
+            await ensure_initial_admin()
             user_count = await users_col.count_documents({})
-            print(f"[Server] After password fix: {user_count} users")
+            print(f"[Server] After bootstrap: {user_count} users")
     except Exception as e:
         print(f"[Server] User count check failed: {e}")
 
@@ -136,9 +136,10 @@ class RollbackRequest(BaseModel):
 
 # ============ Auth Helpers ============
 
-def create_token(email: str) -> str:
+def create_token(email: str, token_version: int = 0) -> str:
     payload = {
         "sub": email,
+        "tv": token_version,
         "iat": datetime.utcnow(),
         "exp": datetime.utcnow() + timedelta(hours=24),
         "type": "access",
@@ -151,6 +152,18 @@ def verify_password(plain: str, hashed: str) -> bool:
     return bcrypt.checkpw(plain.encode(), hashed.encode())
 
 
+def hash_password(plain: str) -> str:
+    return bcrypt.hashpw(plain.encode(), bcrypt.gensalt()).decode()
+
+
+def validate_password_strength(password: str):
+    """At least 10 characters, containing both letters and digits"""
+    if len(password) < 10:
+        raise HTTPException(400, "密碼至少需要 10 個字元")
+    if not any(c.isalpha() for c in password) or not any(c.isdigit() for c in password):
+        raise HTTPException(400, "密碼需同時包含英文字母與數字")
+
+
 async def get_current_user(authorization: Optional[str] = Header(None)) -> dict:
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="未提供認證 Token")
@@ -161,9 +174,14 @@ async def get_current_user(authorization: Optional[str] = Header(None)) -> dict:
         user = await users_col.find_one({"email": email})
         if not user:
             raise HTTPException(status_code=401, detail="用戶不存在")
+        # Tokens issued before a password change are no longer valid
+        if payload.get("tv", 0) != user.get("token_version", 0):
+            raise HTTPException(status_code=401, detail="密碼已變更，請重新登入")
         return {"email": user["email"], "name": user["name"], "role": user["role"]}
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token 已過期")
+    except HTTPException:
+        raise
     except Exception:
         raise HTTPException(status_code=401, detail="Token 無效")
 
@@ -213,7 +231,7 @@ async def root():
 @app.post("/api/auth/login")
 async def login(req: LoginRequest):
     try:
-        user = await users_col.find_one({"email": req.email})
+        user = await users_col.find_one({"email": req.email.lower()})
     except Exception as db_err:
         print(f"[Login] Database error when finding user '{req.email}': {db_err}")
         raise HTTPException(status_code=500, detail=f"資料庫連線錯誤: {str(db_err)[:100]}")
@@ -243,7 +261,7 @@ async def login(req: LoginRequest):
         print(f"[Login] Password verification error for '{req.email}': {e}")
         raise HTTPException(status_code=401, detail="密碼驗證異常，請聯繫管理員")
 
-    token = create_token(user["email"])
+    token = create_token(user["email"], user.get("token_version", 0))
     print(f"[Login] Success: {user['email']} ({user.get('role', 'unknown')})")
     return {
         "access_token": token,
@@ -253,6 +271,25 @@ async def login(req: LoginRequest):
 @app.get("/api/auth/me")
 async def get_me(user: dict = Depends(get_current_user)):
     return {"user": user}
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
+
+
+@app.put("/api/auth/password")
+async def change_own_password(req: ChangePasswordRequest, user: dict = Depends(get_current_user)):
+    db_user = await users_col.find_one({"email": user["email"]})
+    if not verify_password(req.current_password, db_user["password_hash"]):
+        raise HTTPException(400, "目前密碼不正確")
+    validate_password_strength(req.new_password)
+    await users_col.update_one(
+        {"email": user["email"]},
+        {"$set": {"password_hash": hash_password(req.new_password), "updated_at": datetime.utcnow().isoformat()},
+         "$inc": {"token_version": 1}}
+    )
+    return {"success": True, "message": "密碼已更新，請重新登入"}
 
 # ============ Venues ============
 
@@ -1351,6 +1388,111 @@ async def refresh_config(user: dict = Depends(get_current_user)):
 async def get_managers(user: dict = Depends(get_current_user)):
     users = await users_col.find({}).to_list(50)
     return [{"email": u["email"], "name": u["name"], "role": u["role"]} for u in users]
+
+
+VALID_ROLES = {"admin", "manager"}
+
+
+class ManagerCreate(BaseModel):
+    email: EmailStr
+    name: str
+    password: str
+    role: str = "manager"
+
+
+class ManagerUpdate(BaseModel):
+    email: Optional[EmailStr] = None
+    name: Optional[str] = None
+    role: Optional[str] = None
+    password: Optional[str] = None
+
+
+def require_admin(user: dict):
+    if user.get("role") != "admin":
+        raise HTTPException(403, "權限不足")
+
+
+async def ensure_admin_remains(excluding_email: str):
+    others = await users_col.count_documents({"role": "admin", "email": {"$ne": excluding_email}})
+    if others == 0:
+        raise HTTPException(400, "至少需要保留一位管理員")
+
+
+@app.post("/api/managers")
+async def create_manager(req: ManagerCreate, user: dict = Depends(get_current_user)):
+    require_admin(user)
+    email = req.email.lower()
+    if req.role not in VALID_ROLES:
+        raise HTTPException(400, "角色不正確")
+    if not req.name.strip():
+        raise HTTPException(400, "請輸入姓名")
+    if await users_col.find_one({"email": email}):
+        raise HTTPException(400, "此電子郵件已被使用")
+    validate_password_strength(req.password)
+    await users_col.insert_one({
+        "email": email,
+        "name": req.name.strip(),
+        "role": req.role,
+        "password_hash": hash_password(req.password),
+        "token_version": 0,
+        "created_at": datetime.utcnow().isoformat(),
+    })
+    return {"email": email, "name": req.name.strip(), "role": req.role}
+
+
+@app.put("/api/managers/{email}")
+async def update_manager(email: str, req: ManagerUpdate, user: dict = Depends(get_current_user)):
+    require_admin(user)
+    target = await users_col.find_one({"email": email})
+    if not target:
+        raise HTTPException(404, "找不到此帳號")
+
+    updates = {"updated_at": datetime.utcnow().isoformat()}
+    bump_token = False
+    if req.name is not None:
+        if not req.name.strip():
+            raise HTTPException(400, "請輸入姓名")
+        updates["name"] = req.name.strip()
+    if req.role is not None and req.role != target["role"]:
+        if req.role not in VALID_ROLES:
+            raise HTTPException(400, "角色不正確")
+        if target["role"] == "admin":
+            await ensure_admin_remains(email)
+        updates["role"] = req.role
+    if req.email is not None and req.email.lower() != email:
+        new_email = req.email.lower()
+        if await users_col.find_one({"email": new_email}):
+            raise HTTPException(400, "此電子郵件已被使用")
+        updates["email"] = new_email
+        bump_token = True
+    if req.password:
+        validate_password_strength(req.password)
+        updates["password_hash"] = hash_password(req.password)
+        bump_token = True
+
+    op = {"$set": updates}
+    if bump_token:
+        op["$inc"] = {"token_version": 1}
+    await users_col.update_one({"email": email}, op)
+    updated = await users_col.find_one({"email": updates.get("email", email)})
+    return {
+        "email": updated["email"], "name": updated["name"], "role": updated["role"],
+        "relogin_required": bump_token and email == user["email"],
+    }
+
+
+@app.delete("/api/managers/{email}")
+async def delete_manager(email: str, user: dict = Depends(get_current_user)):
+    require_admin(user)
+    if email == user["email"]:
+        raise HTTPException(400, "不能刪除自己的帳號")
+    target = await users_col.find_one({"email": email})
+    if not target:
+        raise HTTPException(404, "找不到此帳號")
+    if target["role"] == "admin":
+        await ensure_admin_remains(email)
+    await users_col.delete_one({"email": email})
+    return {"success": True}
 
 # ============ Venue Config (per-venue settings) ============
 

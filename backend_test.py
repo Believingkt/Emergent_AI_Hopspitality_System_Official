@@ -18,7 +18,7 @@ API_BASE = f"{BACKEND_URL}/api"
 
 # Test credentials
 TEST_EMAIL = "kenneth@lakeze.com"
-TEST_PASSWORD = "lakeze2026"
+TEST_PASSWORD = os.environ.get("TEST_PASSWORD", "")
 
 class BackendTester:
     def __init__(self):

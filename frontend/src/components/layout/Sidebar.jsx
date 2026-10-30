@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -11,12 +12,14 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '../ui/tooltip';
+import { ChangePasswordDialog } from '../settings/ChangePasswordDialog';
 
 export const Sidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout, isAdmin } = useAuth();
   const { theme, toggleTheme, isDark } = useTheme();
+  const [passwordOpen, setPasswordOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -102,15 +105,23 @@ export const Sidebar = () => {
         <TooltipProvider delayDuration={0}>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Avatar className="w-8 h-8 bg-gradient-to-br from-[#FF6B35] to-[#00B4D8] cursor-default">
-                <AvatarFallback className="bg-transparent text-white text-xs font-medium">
-                  {user?.name?.charAt(0) || <User className="w-4 h-4" />}
-                </AvatarFallback>
-              </Avatar>
+              <button
+                type="button"
+                onClick={() => setPasswordOpen(true)}
+                className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6B35]"
+                data-testid="account-btn"
+              >
+                <Avatar className="w-8 h-8 bg-gradient-to-br from-[#FF6B35] to-[#00B4D8]">
+                  <AvatarFallback className="bg-transparent text-white text-xs font-medium">
+                    {user?.name?.charAt(0) || <User className="w-4 h-4" />}
+                  </AvatarFallback>
+                </Avatar>
+              </button>
             </TooltipTrigger>
             <TooltipContent side="right" className="bg-[#27272a] text-white border-[#3f3f46]">
               <div className="text-sm font-medium">{user?.name}</div>
               <div className="text-xs text-[#a1a1aa]">{user?.email}</div>
+              <div className="text-xs text-[#FF6B35] mt-1">點擊修改密碼</div>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
@@ -134,6 +145,8 @@ export const Sidebar = () => {
           </Tooltip>
         </TooltipProvider>
       </div>
+
+      <ChangePasswordDialog open={passwordOpen} onOpenChange={setPasswordOpen} />
     </div>
   );
 };
