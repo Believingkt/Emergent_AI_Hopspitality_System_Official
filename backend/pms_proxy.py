@@ -39,7 +39,9 @@ ALLOWED_TARGETS = [
 ]
 
 # Simple API key for proxy authentication
-PROXY_API_KEY = os.environ.get("PROXY_API_KEY", "lakeze-pms-proxy-2025")
+PROXY_API_KEY = os.environ.get("PROXY_API_KEY", "")
+if not PROXY_API_KEY:
+    raise RuntimeError("PROXY_API_KEY environment variable is required")
 
 
 @app.get("/health")

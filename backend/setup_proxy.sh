@@ -6,6 +6,9 @@
 
 echo "🚀 正在設定 PMS Proxy..."
 
+# 金鑰可用 PROXY_API_KEY=xxx bash setup_proxy.sh 指定，未指定則隨機產生
+PROXY_API_KEY="${PROXY_API_KEY:-$(openssl rand -hex 24)}"
+
 # 更新系統
 apt-get update -y && apt-get upgrade -y
 
@@ -38,7 +41,7 @@ ALLOWED_TARGETS = [
     "https://booking.taiwantravelmap.com/api/CIDDistributor.ashx",
 ]
 
-PROXY_API_KEY = os.environ.get("PROXY_API_KEY", "lakeze-pms-proxy-2025")
+PROXY_API_KEY = os.environ["PROXY_API_KEY"]
 
 @app.get("/health")
 async def health():
@@ -72,7 +75,7 @@ if __name__ == "__main__":
 PYEOF
 
 # 建立 systemd 服務（開機自動啟動）
-cat > /etc/systemd/system/pms-proxy.service << 'SVCEOF'
+cat > /etc/systemd/system/pms-proxy.service << SVCEOF
 [Unit]
 Description=PMS API Proxy
 After=network.target
@@ -81,7 +84,7 @@ After=network.target
 Type=simple
 User=root
 WorkingDirectory=/opt/pms-proxy
-Environment=PROXY_API_KEY=lakeze-pms-proxy-2025
+Environment=PROXY_API_KEY=${PROXY_API_KEY}
 ExecStart=/opt/pms-proxy/venv/bin/uvicorn proxy:app --host 0.0.0.0 --port 8080
 Restart=always
 RestartSec=5
@@ -106,7 +109,8 @@ echo ""
 echo "📍 Proxy URL: http://$(curl -s ifconfig.me):8080"
 echo "📍 Health Check: http://$(curl -s ifconfig.me):8080/health"
 echo ""
-echo "🔑 Proxy API Key: lakeze-pms-proxy-2025"
+echo "🔑 Proxy API Key: ${PROXY_API_KEY}"
+echo "   請設定到 Railway backend 的 PMS_PROXY_API_KEY"
 echo "📌 固定 IP: $(curl -s ifconfig.me)"
 echo ""
 echo "請將此 IP 提供給 PMS 提供方加入白名單"

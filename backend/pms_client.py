@@ -21,8 +21,10 @@ class PMSClient:
         self.password = password
         self.cid_code = cid_code
         self.base_url = PMS_PROD_URL if use_production else PMS_UAT_URL
+        # The relay proxy is shared infrastructure: env vars take precedence over per-venue values
+        proxy_url = os.environ.get("PMS_PROXY_URL") or proxy_url
         self.proxy_url = proxy_url.rstrip("/") if proxy_url else ""
-        self.proxy_api_key = proxy_api_key or "lakeze-pms-proxy-2025"
+        self.proxy_api_key = os.environ.get("PMS_PROXY_API_KEY") or proxy_api_key
         self.use_mock = not (account_id and password)
     
     async def search_all(self, check_in: str, check_out: str) -> dict:

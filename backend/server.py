@@ -1407,6 +1407,14 @@ class ManagerUpdate(BaseModel):
     password: Optional[str] = None
 
 
+def mask_secret(value: str) -> str:
+    if not value:
+        return ""
+    if len(value) <= 8:
+        return "••••••••"
+    return value[:4] + "••••••••" + value[-4:]
+
+
 def require_admin(user: dict):
     if user.get("role") != "admin":
         raise HTTPException(403, "權限不足")
@@ -1532,13 +1540,19 @@ async def update_venue_config(venue_id: str, body: dict, user: dict = Depends(ge
 
 @app.get("/api/venues/{venue_id}/line-credentials")
 async def get_line_credentials(venue_id: str, user: dict = Depends(get_current_user)):
-    """Get LINE OA credentials for a venue"""
+    """Get LINE OA credentials for a venue; secrets are masked"""
+    require_admin(user)
     venue = await venues_col.find_one({"id": venue_id})
     if not venue:
         raise HTTPException(404, "場域不存在")
-    
+
     creds = venue.get("line_credentials", {})
-    return {"credentials": creds, "venue_id": venue_id}
+    return {"credentials": {
+        "channel_id": creds.get("channel_id", ""),
+        "user_id": creds.get("user_id", ""),
+        "channel_access_token": mask_secret(creds.get("channel_access_token", "")),
+        "channel_secret": mask_secret(creds.get("channel_secret", "")),
+    }, "venue_id": venue_id}
 
 @app.put("/api/venues/{venue_id}/line-credentials")
 async def update_line_credentials(venue_id: str, body: dict, user: dict = Depends(get_current_user)):
@@ -1550,11 +1564,13 @@ async def update_line_credentials(venue_id: str, body: dict, user: dict = Depend
     if not venue:
         raise HTTPException(404, "場域不存在")
     
+    existing = venue.get("line_credentials", {})
     creds = {
-        "channel_access_token": body.get("channel_access_token", ""),
-        "user_id": body.get("user_id", ""),
-        "channel_id": body.get("channel_id", ""),
-        "channel_secret": body.get("channel_secret", ""),
+        "user_id": body.get("user_id", existing.get("user_id", "")),
+        "channel_id": body.get("channel_id", existing.get("channel_id", "")),
+        # Secrets are only sent when changed; blank keeps the stored value
+        "channel_access_token": body.get("channel_access_token") or existing.get("channel_access_token", ""),
+        "channel_secret": body.get("channel_secret") or existing.get("channel_secret", ""),
     }
     
     await venues_col.update_one({"id": venue_id}, {"$set": {"line_credentials": creds}})
@@ -2432,12 +2448,13 @@ async def update_pms_config(venue_id: str, body: dict, user: dict = Depends(get_
     
     existing = venue.get("pms_config", {})
     updated = {
+        **existing,
         "provider": body.get("provider", existing.get("provider", "travelmap")),
         "uat_url": body.get("uat_url", existing.get("uat_url", PMS_UAT_URL)),
         "prod_url": body.get("prod_url", existing.get("prod_url", PMS_PROD_URL)),
         "cid_code": body.get("cid_code", existing.get("cid_code", "LakezeEvent")),
         "account_id": body.get("account_id", existing.get("account_id", "")),
-        "password": body.get("password", existing.get("password", "")),
+        "password": body.get("password") or existing.get("password", ""),
         "use_production": body.get("use_production", existing.get("use_production", False)),
     }
     

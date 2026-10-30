@@ -23,53 +23,39 @@ import {
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 export const LineOACredentials = ({ venueId, token }) => {
-  const [credentials, setCredentials] = useState({
-    channel_access_token: '',
-    user_id: '',
-    channel_id: '',
-    channel_secret: ''
-  });
+  // Token and secret come back masked; they are only sent when the user types a new value
+  const EMPTY = { channel_access_token: '', user_id: '', channel_id: '', channel_secret: '' };
+  const [saved, setSaved] = useState(EMPTY);
+  const [credentials, setCredentials] = useState(EMPTY);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [originalCredentials, setOriginalCredentials] = useState(null);
-  
+
+  const loadCredentials = async () => {
+    if (!venueId || !token) return;
+    setIsLoading(true);
+    try {
+      const response = await axios.get(`${API_URL}/api/venues/${venueId}/line-credentials`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setSaved({ ...EMPTY, ...(response.data.credentials || {}) });
+    } catch (error) {
+      toast.error(error.response?.data?.detail || '無法載入 LINE OA 憑證');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const loadCredentials = async () => {
-      if (!venueId || !token) return;
-      setIsLoading(true);
-      try {
-        const response = await axios.get(`${API_URL}/api/venues/${venueId}/line-credentials`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const data = response.data.credentials || {};
-        setCredentials({
-          channel_access_token: data.channel_access_token || '',
-          user_id: data.user_id || '',
-          channel_id: data.channel_id || '',
-          channel_secret: data.channel_secret || ''
-        });
-        setOriginalCredentials({
-          channel_access_token: data.channel_access_token || '',
-          user_id: data.user_id || '',
-          channel_id: data.channel_id || '',
-          channel_secret: data.channel_secret || ''
-        });
-      } catch (error) {
-        console.log('Using local storage for credentials');
-        const stored = localStorage.getItem(`line_credentials_${venueId}`);
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          setCredentials(parsed);
-          setOriginalCredentials(parsed);
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    };
     loadCredentials();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [venueId, token]);
-  
+
+  const startEditing = () => {
+    setCredentials({ ...EMPTY, user_id: saved.user_id, channel_id: saved.channel_id });
+    setIsEditing(true);
+  };
+
   const handleSave = async () => {
     setIsSaving(true);
     try {
@@ -79,25 +65,27 @@ export const LineOACredentials = ({ venueId, token }) => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       toast.success('LINE OA 憑證已更新');
-    } catch (error) {
-      console.log('Using local storage to save credentials');
-      localStorage.setItem(`line_credentials_${venueId}`, JSON.stringify(credentials));
-      toast.success('LINE OA 憑證已儲存（本地）');
-    } finally {
-      setOriginalCredentials({ ...credentials });
       setIsEditing(false);
+      await loadCredentials();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || '儲存失敗');
+    } finally {
       setIsSaving(false);
     }
   };
-  
+
   const handleCancel = () => {
-    setCredentials({ ...originalCredentials });
     setIsEditing(false);
   };
-  
-  const hasChanges = JSON.stringify(credentials) !== JSON.stringify(originalCredentials);
-  const hasAnyCredential = Object.values(credentials).some(v => v);
-  
+
+  const hasChanges = Boolean(
+    credentials.channel_access_token || credentials.channel_secret ||
+    credentials.user_id !== saved.user_id || credentials.channel_id !== saved.channel_id
+  );
+  const hasAnyCredential = Object.values(saved).some(v => v);
+  const fieldValue = (key) => (isEditing ? credentials[key] : saved[key]);
+  const secretPlaceholder = (key, fallback) => (saved[key] ? '已設定，留空表示不變更' : fallback);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-8">
@@ -123,7 +111,7 @@ export const LineOACredentials = ({ venueId, token }) => {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setIsEditing(true)}
+            onClick={startEditing}
             className="border-[#27272a] text-[#a1a1aa] hover:text-white hover:bg-[#27272a]"
           >
             <Pencil className="w-4 h-4 mr-2" />
@@ -212,17 +200,17 @@ export const LineOACredentials = ({ venueId, token }) => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <SecureCredentialField
           label="Channel Access Token"
-          value={credentials.channel_access_token}
+          value={fieldValue('channel_access_token')}
           onChange={(val) => setCredentials({ ...credentials, channel_access_token: val })}
           isEditing={isEditing}
-          placeholder="輸入 Channel Access Token"
+          placeholder={secretPlaceholder('channel_access_token', '輸入 Channel Access Token')}
           icon={Key}
           description="LINE Developers Console 中的長效 Token"
         />
         
         <SecureCredentialField
           label="User ID"
-          value={credentials.user_id}
+          value={fieldValue('user_id')}
           onChange={(val) => setCredentials({ ...credentials, user_id: val })}
           isEditing={isEditing}
           placeholder="輸入 User ID"
@@ -232,7 +220,7 @@ export const LineOACredentials = ({ venueId, token }) => {
         
         <SecureCredentialField
           label="Channel ID"
-          value={credentials.channel_id}
+          value={fieldValue('channel_id')}
           onChange={(val) => setCredentials({ ...credentials, channel_id: val })}
           isEditing={isEditing}
           placeholder="輸入 Channel ID"
@@ -242,10 +230,10 @@ export const LineOACredentials = ({ venueId, token }) => {
         
         <SecureCredentialField
           label="Channel Secret"
-          value={credentials.channel_secret}
+          value={fieldValue('channel_secret')}
           onChange={(val) => setCredentials({ ...credentials, channel_secret: val })}
           isEditing={isEditing}
-          placeholder="輸入 Channel Secret"
+          placeholder={secretPlaceholder('channel_secret', '輸入 Channel Secret')}
           icon={Lock}
           description="用於驗證 Webhook 請求的密鑰"
         />
@@ -268,7 +256,7 @@ export const LineOACredentials = ({ venueId, token }) => {
               此設定需由工程師協助修改，以避免系統當機或無法使用。
             </p>
             <div className="bg-[#0d1117] rounded-md p-2 font-mono text-xs text-[#8b949e]">
-              {process.env.REACT_APP_BACKEND_URL}/webhook/{venueId || 'venue_id'}
+              {process.env.REACT_APP_BACKEND_URL}/api/webhook/{venueId || 'venue_id'}
             </div>
             <p className="text-xs text-[#52525b] mt-2">
               請將上述 URL 設定至 LINE Developers Console 的 Webhook URL 欄位
@@ -283,7 +271,7 @@ export const LineOACredentials = ({ venueId, token }) => {
           <div className="text-xs text-[#8b949e]">
             <p className="font-medium text-white mb-1">安全提示</p>
             <ul className="space-y-1">
-              <li>• 憑證僅在點擊眼睛圖示時顯示完整內容</li>
+              <li>• Token 與 Secret 儲存後只會顯示前後幾碼，修改時直接填入新值即可</li>
               <li>• 修改前請確保您有正確的憑證資訊</li>
               <li>• 這些憑證用於連接您的 LINE Official Account</li>
             </ul>
