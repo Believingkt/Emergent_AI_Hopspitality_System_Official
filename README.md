@@ -1,6 +1,6 @@
 # Lakeze 多場域 AI 管家協作平台
 
-- `backend/` — FastAPI + MongoDB，部署在 Railway（設定見 `backend/railway.json`）
+- `backend/` — FastAPI + MongoDB，部署在 Railway（啟動指令見 `backend/Procfile`，服務設定在 Railway 專案 lakeze-ai-hospitality）
 - `frontend/` — React (CRA + craco)，透過 `REACT_APP_BACKEND_URL` 連到後端
 
 ## Railway 部署（後端）
