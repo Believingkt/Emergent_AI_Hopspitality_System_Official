@@ -100,6 +100,6 @@ async def get_config() -> dict:
 
 
 async def get_config_value(key: str) -> str:
-    """Get a specific config value"""
+    """Get a specific config value; falls back to the uppercase env var (e.g. OPENAI_API_KEY)"""
     config = await get_config()
-    return config.get(key, "")
+    return config.get(key) or os.environ.get(key.upper(), "")

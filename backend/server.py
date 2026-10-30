@@ -46,7 +46,8 @@ from pms_client import PMS_UAT_URL, PMS_PROD_URL
 app = FastAPI(title="Lakeze 多場域 AI 管家協作平台")
 
 # Ensure uploads directory exists
-UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "uploads")
+# On Railway, set UPLOAD_DIR to a mounted volume path (e.g. /data/uploads) so files survive redeploys
+UPLOAD_DIR = os.environ.get("UPLOAD_DIR") or os.path.join(os.path.dirname(__file__), "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 # Mount static files for uploads
@@ -54,7 +55,8 @@ app.mount("/api/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    # Comma-separated list, e.g. "https://manager.lakeze.com,https://xxx.up.railway.app"; defaults to all origins
+    allow_origins=[o.strip() for o in os.environ.get("CORS_ORIGINS", "*").split(",") if o.strip()],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -2303,4 +2305,4 @@ async def update_pms_config(venue_id: str, body: dict, user: dict = Depends(get_
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8001)
+    uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 8001)))
